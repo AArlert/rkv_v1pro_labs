@@ -17,7 +17,7 @@ VFILES   = $(SIMDIR)/constrained_random.sv \
 # Environment variables
 #############################
 VCOMP    = vlog -work $(LIBDIR)/work -sv -timescale=1ns/1ps -l comp.log
-RUN      = vsim -work $(LIBDIR)/work $(TB) -l run.log -sv_seed $(SEED)
+RUN      = vsim -voptargs=+acc -work $(LIBDIR)/work $(TB) -l run.log -sv_seed $(SEED)
 
 comp:
 	$(VCOMP) $(VFILES)

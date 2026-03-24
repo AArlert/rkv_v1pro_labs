@@ -15,7 +15,7 @@ VFILES  = $(SIMDIR)/$(TB).v
 # Environment variables
 #############################
 VCOMP   = vlog -work $(LIBDIR)/work -sv -timescale=1ns/1ps -l comp.log +incdir+$(SIMDIR)/../mcdt
-RUN     = vsim -work $(LIBDIR)/work $(TB) -l run.log 
+RUN     = vsim -voptargs=+acc -work $(LIBDIR)/work $(TB) -l run.log 
 
 comp:
 	$(VCOMP) $(DFILES) $(VFILES)
