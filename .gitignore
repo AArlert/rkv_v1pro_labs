@@ -1,0 +1,35 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+*.swo
+
+# Common logs / transcripts
+*.log
+transcript
+
+# Verilog/SystemVerilog simulation outputs (ModelSim/Questa)
+work/
+modelsim.ini
+vsim.wlf
+*.wlf
+*.vcd
+*.vpd
+*.fsdb
+
+# Questa database/temp artifacts
+*.qdb
+*.qpg
+*.qtl
+_temp/
+_tempmsg/
+@_opt/
+@_opt*/
+_data/
+exempt*
+
+# Keep repo clean from local backup/temp files
+*~
+*.tmp
+*.bak
