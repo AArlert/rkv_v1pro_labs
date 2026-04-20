@@ -243,7 +243,7 @@ ppa-lab/
 - 所有新增目标（`smoke/regress/coverage`）需在 Makefile 中可直接执行并可复现
 
 # 10 下一步事项
-1. 在 `lab1/` 落地最小可运行工程：补齐 `doc/rtl/svtb/{tb,sim}` 目录与基础文件
+1. 在 `lab1/` 落地最小可运行工程：补齐 `doc/rtl/svtb/{tb,sim}` 目录与基础文件；编写 `ppa_apb_slave_if.sv`、`ppa_packet_sram.sv`
 2. 先完成 APB + CSR + PKT_MEM 的 3 条必做 testcase（默认值、地址映射、读通路）
 3. 补充统一 Makefile 入口，先实现 `comp/run/rung/clean`，再扩展 `smoke/regress/coverage`
 4. 在 `lab4/doc/testplan.md` 建立用例到覆盖点映射，形成可追踪验收清单
