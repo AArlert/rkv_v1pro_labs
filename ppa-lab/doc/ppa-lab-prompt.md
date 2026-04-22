@@ -112,6 +112,7 @@ ppa-lab/
 │   └── ppa-lab-prompt.md
 ├── lab1/
 │   ├── doc/
+│   │   ├── log.md
 │   │   ├── ppa-lab-design-prompt.md
 │   │   └── testplan.md
 │   ├── rtl/
@@ -233,18 +234,22 @@ ppa-lab/
 
 # 8 验收流程
 1. 设计阶段：根据 SPEC 文档实现 RTL 代码，优先保证接口、寄存器和状态机语义正确
-2. 验证阶段：编写 testcase 并运行仿真，覆盖正常路径、边界条件和错误路径
-3. 验收阶段：检查波形和结果，确认 CSR/中断/错误标志与预期一致
-4. 迭代阶段：根据反馈修复问题并完善设计，更新 testplan 与回归集合
+2. 检验阶段：检查 RTL 代码设计逻辑、执行 make rung 检查波形，检验设计是否和 SPEC 文档一致
+3. 验证阶段：编写 testcase 并运行仿真，覆盖正常路径、边界条件和错误路径
+4. 验收阶段：检查波形和结果，确认 CSR/中断/错误标志与预期一致
+5. 迭代阶段：根据反馈修复问题并完善设计，更新 testplan 与回归集合
 
-# 9 注意事项
+# 9 记录日志
+在 /labX/doc/log.md 中写入 #8 验收流程 规定的每个阶段的执行记录
+
+# 10 注意事项
 - 规格优先级以 `ppa-lite-spec.md` 为准，prompt 文档用于实施指引，不替代 SPEC
 - 不要编辑仿真生成物（`work/`、`*.wlf`、`*.log` 等）
 - 不要将 MCDT 的功能规格直接迁移到 PPA，仅借鉴验证结构与工程组织
 - 每个 lab 都应保留最小可复现 testcase，避免只依赖随机回归
 - 所有新增目标（`smoke/regress/coverage`）需在 Makefile 中可直接执行并可复现
 
-# 10 下一步事项
+# 11 下一步事项
 1. 在 `lab1/` 落地最小可运行工程：补齐 `doc/rtl/svtb/{tb,sim}` 目录与基础文件；编写 `ppa_apb_slave_if.sv`、`ppa_packet_sram.sv`
 2. 先完成 APB + CSR + PKT_MEM 的 3 条必做 testcase（默认值、地址映射、读通路）
 3. 补充统一 Makefile 入口，先实现 `comp/run/rung/clean`，再扩展 `smoke/regress/coverage`
