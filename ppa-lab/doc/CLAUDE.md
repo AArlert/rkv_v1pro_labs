@@ -1,65 +1,63 @@
-# CLAUDE.md
+# 1 编码前思考
 
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+**不要假设。不要隐藏困惑。呈现权衡**
 
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+在实现之前：
+- **明确说明假设** — 如果不确定，询问而不是猜测
+- **呈现多种解释** — 当存在歧义时，不要默默选择
+- **适时提出异议** — 如果存在更简单的方法，说出来
+- **困惑时停下来** — 指出不清楚的地方并要求澄清
 
-## 1. Think Before Coding
+# 2 简洁优先
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
+**用最少的代码解决问题。不要过度推测。**
 
-Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+- 不要添加要求之外的功能
+- 不要为一次性代码创建抽象
+- 不要添加未要求的"灵活性"或"可配置性"
+- 不要为不可能发生的场景做错误处理
+- 如果 200 行代码可以写成 50 行，重写它
 
-## 2. Simplicity First
+**检验标准：** 资深工程师会觉得这过于复杂吗？如果是，简化
 
-**Minimum code that solves the problem. Nothing speculative.**
+# 3 精准修改
 
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
+**只碰必须碰的。只清理自己造成的混乱。**
 
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+编辑现有代码时：
+- 不要"改进"相邻的代码、注释或格式
+- 不要重构没坏的东西
+- 匹配现有风格，即使你更倾向于不同的写法
+- 如果注意到无关的死代码，提一下 —— 不要删除它
 
-## 3. Surgical Changes
+当你的改动产生孤儿代码时：
+- 删除因你的改动而变得无用的导入/变量/函数
+- 不要删除预先存在的死代码，除非被要求
 
-**Touch only what you must. Clean up only your own mess.**
+**检验标准：** 每一行修改都应该能直接追溯到用户的请求
 
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
+# 4 目标驱动执行
 
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
+**定义成功标准。循环验证直到达成。**
 
-The test: Every changed line should trace directly to the user's request.
+将指令式任务转化为可验证的目标：
 
-## 4. Goal-Driven Execution
+| 不要这样做... | 转化为... |
+|--------------|-----------------|
+| "添加验证" | "为无效输入编写测试，然后让它们通过" |
+| "修复 bug" | "编写重现 bug 的测试，然后让它通过" |
+| "重构 X" | "确保重构前后测试都能通过" |
 
-**Define success criteria. Loop until verified.**
+对于多步骤任务，说明一个简短的计划：
 
-Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
 ```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
+1. [步骤] → 验证: [检查]
+2. [步骤] → 验证: [检查]
+3. [步骤] → 验证: [检查]
 ```
 
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+强有力的成功标准让 LLM 能够独立循环执行。弱标准（"让它工作"）需要不断澄清。
 
 ---
 
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+**这些准则在以下情况下有效**：差异中的不必要更改更少，因过度复杂而进行的重写更少，并且在实施之前而非错误发生之后出现需要澄清的问题。 

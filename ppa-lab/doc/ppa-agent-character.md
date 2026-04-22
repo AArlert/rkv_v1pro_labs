@@ -1,4 +1,21 @@
-Agent 角色建议如下：
+# 0 通用准则
+所有 Agent 都要按需执行的：
+- 写入/检查/修订文档：
+  - /labX/doc/ppa-lab-design-prompt.md
+  - /labX/doc/log.md
+  - /labX/doc/testplan.md
+  - 其他有必要的文档
+- 写入/检查/修订代码：
+  - labX/rtl/*.sv
+  - labX/svtb/tb/*.sv
+  - labX/svtb/sim/Makefile
+  - 其他有必要的代码、测试文件等
+
+所有 AGENT 禁止执行的：
+- 修改 /ppa-lab/doc/CLAUDE.md
+- 修改 /ppa-lab/doc/ppa-lab-prompt.md
+- 修改 /ppa-lab/doc/ppa-lite-spec.md
+- 修改其他 lab 的文档和代码
 
 # 1 DUT Agent
 职责：
