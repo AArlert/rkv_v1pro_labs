@@ -53,9 +53,9 @@ Transform tasks into verifiable goals:
 
 For multi-step tasks, state a brief plan:
 ```
-1. [Step] â verify: [check]
-2. [Step] â verify: [check]
-3. [Step] â verify: [check]
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
 ```
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
