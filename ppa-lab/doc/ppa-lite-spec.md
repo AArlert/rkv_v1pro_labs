@@ -1,4 +1,5 @@
 ---
+aliases: 实验说明
 created: 2026-04-13
 description: 一份课程设计文档，介绍了PPA-Lite（APB包处理加速器）的四阶段实验项目，涵盖SystemVerilog设计、UVM验证、模块集成和回归测试等
 obsidianUIMode: preview
