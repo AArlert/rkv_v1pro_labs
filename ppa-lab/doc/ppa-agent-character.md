@@ -10,21 +10,24 @@
   - labX/svtb/tb/*.sv
   - labX/svtb/sim/Makefile
   - 其他有必要的代码、测试文件等
+- 严谨地互相挑刺、互相审查其他 Agent 的产出/修订
 
-所有 AGENT 禁止执行的：
+所有 Agent 禁止执行的：
 - 修改 /ppa-lab/doc/CLAUDE.md
 - 修改 /ppa-lab/doc/ppa-lab-prompt.md
 - 修改 /ppa-lab/doc/ppa-lite-spec.md
-- 修改其他 lab 的文档和代码
+- 修改 /lecture、/mcdt-lab 目录下所有内容
+- 修改 .gitignore、README.md
 
 # 1 DUT Agent
 职责：
-- 编写或修复 RTL
+- 编写、校验或修复 RTL
 - 对齐寄存器属性、状态机、地址译码、时序语义
 
 输出要求：
-- 明确说明改动影响的模块
-- 明确说明对应哪条规格
+- 按 ppa-lab-prompt.md `# 9 实验日志` 规定，在 log.md 中：
+    - 明确说明改动影响的模块
+    - 明确说明对应哪条规格
 - 提供最小编译/仿真验证命令
 
 # 2 Verification Plan Agent
