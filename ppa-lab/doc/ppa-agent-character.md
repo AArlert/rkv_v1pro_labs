@@ -17,7 +17,7 @@
 - 修改 /ppa-lab/doc/ppa-lab-prompt.md
 - 修改 /ppa-lab/doc/ppa-lite-spec.md
 - 修改 /lecture、/mcdt-lab 目录下所有内容
-- 修改 .gitignore、/README.md
+- 修改 .gitignore、README.md
 
 # 1 DUT Agent
 职责：
