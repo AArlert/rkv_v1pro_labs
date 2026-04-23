@@ -10,9 +10,9 @@
   - labX/svtb/tb/*.sv
   - labX/svtb/sim/Makefile
   - 其他有必要的代码、测试文件等
-- 严谨地互相挑刺、互相审查对方的产出/修订
+- 严谨地互相挑刺、互相审查其他 Agent 的产出/修订
 
-所有 AGENT 禁止执行的：
+所有 Agent 禁止执行的：
 - 修改 /ppa-lab/doc/CLAUDE.md
 - 修改 /ppa-lab/doc/ppa-lab-prompt.md
 - 修改 /ppa-lab/doc/ppa-lite-spec.md
