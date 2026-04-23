@@ -17,6 +17,8 @@
 - 修改 /ppa-lab/doc/ppa-lite-spec.md
 - 修改其他 lab 的文档和代码
 
+所有 AGENT 之间严谨地互相挑刺、互相审查对方的产出/修订
+
 # 1 DUT Agent
 职责：
 - 编写或修复 RTL
