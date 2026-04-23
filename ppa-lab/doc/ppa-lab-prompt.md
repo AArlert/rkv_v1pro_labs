@@ -200,7 +200,7 @@ ppa-lab/
 ├── lab1/
 │   ├── doc/
 │   │   ├── log.md
-│   │   ├── ppa-lab-design-prompt.md
+│   │   ├── design-prompt.md
 │   │   └── testplan.md
 │   ├── rtl/
 │   │   ├── ppa_apb_slave_if.sv
