@@ -1,10 +1,10 @@
 # Lab1 实验日志
 
-## 2 校验阶段
+## 2 审查阶段
 
-校验目标：逐项检查 RTL 代码（`ppa_apb_slave_if.sv`、`ppa_packet_sram.sv`）及 TB（`ppa_tb.sv`）与 `ppa-lite-spec.md` 的一致性
+审查目标：逐项检查 RTL 代码（`ppa_apb_slave_if.sv`、`ppa_packet_sram.sv`）及 TB（`ppa_tb.sv`）与 `ppa-lite-spec.md` 的一致性
 
-校验时间：2026-04-23
+审查时间：2026-04-23
 
 ---
 
@@ -12,39 +12,39 @@
 
 对照 spec 2.3 节 M1 端口表，逐项检查：
 
-| 信号 | 方向 | 位宽 | RTL 实现 | 结论 |
-|------|------|------|----------|------|
-| PCLK | input | 1 | `input logic PCLK` | PASS |
-| PRESETn | input | 1 | `input logic PRESETn` | PASS |
-| PSEL | input | 1 | `input logic PSEL` | PASS |
-| PENABLE | input | 1 | `input logic PENABLE` | PASS |
-| PWRITE | input | 1 | `input logic PWRITE` | PASS |
-| PADDR | input | 12 | `input logic [11:0] PADDR` | PASS |
-| PWDATA | input | 32 | `input logic [31:0] PWDATA` | PASS |
-| PRDATA | output | 32 | `output logic [31:0] PRDATA` | PASS |
-| PREADY | output | 1 | `output logic PREADY` | PASS |
-| PSLVERR | output | 1 | `output logic PSLVERR` | PASS |
-| enable_o | output | 1 | `output logic enable_o` | PASS |
-| start_o | output | 1 | `output logic start_o` | PASS |
-| algo_mode_o | output | 1 | `output logic algo_mode_o` | PASS |
-| type_mask_o | output | 4 | `output logic [3:0] type_mask_o` | PASS |
-| exp_pkt_len | output | 6 | `output logic [5:0] exp_pkt_len_o` | PASS（注1） |
-| done_irq_en_o | output | 1 | `output logic done_irq_en_o` | PASS |
-| err_irq_en_o | output | 1 | `output logic err_irq_en_o` | PASS |
-| pkt_mem_we_o | output | 1 | `output logic pkt_mem_we_o` | PASS |
-| pkt_mem_addr_o | output | 3 | `output logic [2:0] pkt_mem_addr_o` | PASS |
-| pkt_mem_wdata_o | output | 32 | `output logic [31:0] pkt_mem_wdata_o` | PASS |
-| busy_i | input | 1 | `input logic busy_i` | PASS |
-| done_i | input | 1 | `input logic done_i` | PASS |
-| format_ok_i | input | 1 | `input logic format_ok_i` | PASS |
-| length_error_i | input | 1 | `input logic length_error_i` | PASS |
-| type_error_i | input | 1 | `input logic type_error_i` | PASS |
-| chk_error_i | input | 1 | `input logic chk_error_i` | PASS |
-| res_pkt_len_i | input | 6 | `input logic [5:0] res_pkt_len_i` | PASS |
-| res_pkt_type_i | input | 8 | `input logic [7:0] res_pkt_type_i` | PASS |
-| res_payload_sum_i | input | 8 | `input logic [7:0] res_payload_sum_i` | PASS |
-| res_payload_xor_i | input | 8 | `input logic [7:0] res_payload_xor_i` | PASS |
-| irq_o | output | 1 | `output logic irq_o` | PASS |
+| 信号                | 方向     | 位宽  | RTL 实现                                | 结论       |
+| ----------------- | ------ | --- | ------------------------------------- | -------- |
+| PCLK              | input  | 1   | `input logic PCLK`                    | PASS     |
+| PRESETn           | input  | 1   | `input logic PRESETn`                 | PASS     |
+| PSEL              | input  | 1   | `input logic PSEL`                    | PASS     |
+| PENABLE           | input  | 1   | `input logic PENABLE`                 | PASS     |
+| PWRITE            | input  | 1   | `input logic PWRITE`                  | PASS     |
+| PADDR             | input  | 12  | `input logic [11:0] PADDR`            | PASS     |
+| PWDATA            | input  | 32  | `input logic [31:0] PWDATA`           | PASS     |
+| PRDATA            | output | 32  | `output logic [31:0] PRDATA`          | PASS     |
+| PREADY            | output | 1   | `output logic PREADY`                 | PASS     |
+| PSLVERR           | output | 1   | `output logic PSLVERR`                | PASS     |
+| enable_o          | output | 1   | `output logic enable_o`               | PASS     |
+| start_o           | output | 1   | `output logic start_o`                | PASS     |
+| algo_mode_o       | output | 1   | `output logic algo_mode_o`            | PASS     |
+| type_mask_o       | output | 4   | `output logic [3:0] type_mask_o`      | PASS     |
+| exp_pkt_len       | output | 6   | `output logic [5:0] exp_pkt_len_o`    | PASS（注1） |
+| done_irq_en_o     | output | 1   | `output logic done_irq_en_o`          | PASS     |
+| err_irq_en_o      | output | 1   | `output logic err_irq_en_o`           | PASS     |
+| pkt_mem_we_o      | output | 1   | `output logic pkt_mem_we_o`           | PASS     |
+| pkt_mem_addr_o    | output | 3   | `output logic [2:0] pkt_mem_addr_o`   | PASS     |
+| pkt_mem_wdata_o   | output | 32  | `output logic [31:0] pkt_mem_wdata_o` | PASS     |
+| busy_i            | input  | 1   | `input logic busy_i`                  | PASS     |
+| done_i            | input  | 1   | `input logic done_i`                  | PASS     |
+| format_ok_i       | input  | 1   | `input logic format_ok_i`             | PASS     |
+| length_error_i    | input  | 1   | `input logic length_error_i`          | PASS     |
+| type_error_i      | input  | 1   | `input logic type_error_i`            | PASS     |
+| chk_error_i       | input  | 1   | `input logic chk_error_i`             | PASS     |
+| res_pkt_len_i     | input  | 6   | `input logic [5:0] res_pkt_len_i`     | PASS     |
+| res_pkt_type_i    | input  | 8   | `input logic [7:0] res_pkt_type_i`    | PASS     |
+| res_payload_sum_i | input  | 8   | `input logic [7:0] res_payload_sum_i` | PASS     |
+| res_payload_xor_i | input  | 8   | `input logic [7:0] res_payload_xor_i` | PASS     |
+| irq_o             | output | 1   | `output logic irq_o`                  | PASS     |
 
 > 注1：spec 端口表中写 `exp_pkt_len`（缺少 `_o` 后缀），但 M3 端口表中对应输入为 `exp_pkt_len_i`，RTL 使用 `exp_pkt_len_o` 更符合命名一致性。判定为 spec 笔误，RTL 正确
 
