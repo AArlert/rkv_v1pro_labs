@@ -132,7 +132,7 @@ module ppa_tb;
 	// ========================================================================
 	// 比较辅助 task
 	// ========================================================================
-	task automatic check(input string name, input logic [31:0] actual, input logic [31:0] expected);
+	task automatic check_word(input string name, input logic [31:0] actual, input logic [31:0] expected);
 		if (actual === expected) begin
 			$display("[PASS] %s: got 0x%08h", name, actual);
 			pass_cnt++;
@@ -142,7 +142,7 @@ module ppa_tb;
 		end
 	endtask
 
-	task automatic check1(input string name, input logic actual, input logic expected);
+	task automatic check_flag(input string name, input logic actual, input logic expected);
 		if (actual === expected) begin
 			$display("[PASS] %s: got %0b", name, actual);
 			pass_cnt++;
@@ -190,15 +190,15 @@ module ppa_tb;
 		pulse_start();
 		wait_done();
 
-		check("TC1 res_pkt_len",  {26'd0, res_pkt_len_o},  32'd8);
-		check("TC1 res_pkt_type", {24'd0, res_pkt_type_o}, 32'h01);
-		check("TC1 res_payload_sum", {24'd0, res_payload_sum_o}, 32'h0A);  // 1+2+3+4=10=0x0A
-		check("TC1 res_payload_xor", {24'd0, res_payload_xor_o}, 32'h04);  // 1^2^3^4=0x04
-		check1("TC1 done_o",        done_o,        1'b1);
-		check1("TC1 format_ok_o",   format_ok_o,   1'b1);
-		check1("TC1 length_error",  length_error_o, 1'b0);
-		check1("TC1 type_error",    type_error_o,   1'b0);
-		check1("TC1 chk_error",     chk_error_o,    1'b0);
+		check_word("TC1 res_pkt_len",  {26'd0, res_pkt_len_o},  32'd8);
+		check_word("TC1 res_pkt_type", {24'd0, res_pkt_type_o}, 32'h01);
+		check_word("TC1 res_payload_sum", {24'd0, res_payload_sum_o}, 32'h0A);  // 1+2+3+4=10=0x0A
+		check_word("TC1 res_payload_xor", {24'd0, res_payload_xor_o}, 32'h04);  // 1^2^3^4=0x04
+		check_flag("TC1 done_o",        done_o,        1'b1);
+		check_flag("TC1 format_ok_o",   format_ok_o,   1'b1);
+		check_flag("TC1 length_error",  length_error_o, 1'b0);
+		check_flag("TC1 type_error",    type_error_o,   1'b0);
+		check_flag("TC1 chk_error",     chk_error_o,    1'b0);
 
 		repeat(3) @(posedge clk);
 
@@ -219,9 +219,9 @@ module ppa_tb;
 		pulse_start();
 		wait_done();
 
-		check1("TC2a done_o",        done_o,         1'b1);
-		check1("TC2a length_error",  length_error_o, 1'b1);
-		check1("TC2a format_ok_o",   format_ok_o,    1'b0);
+		check_flag("TC2a done_o",        done_o,         1'b1);
+		check_flag("TC2a length_error",  length_error_o, 1'b1);
+		check_flag("TC2a format_ok_o",   format_ok_o,    1'b0);
 
 		repeat(3) @(posedge clk);
 
@@ -242,9 +242,9 @@ module ppa_tb;
 		pulse_start();
 		wait_done();
 
-		check1("TC2b done_o",        done_o,         1'b1);
-		check1("TC2b length_error",  length_error_o, 1'b1);
-		check1("TC2b format_ok_o",   format_ok_o,    1'b0);
+		check_flag("TC2b done_o",        done_o,         1'b1);
+		check_flag("TC2b length_error",  length_error_o, 1'b1);
+		check_flag("TC2b format_ok_o",   format_ok_o,    1'b0);
 
 		repeat(3) @(posedge clk);
 
@@ -271,20 +271,20 @@ module ppa_tb;
 		start_i <= 1'b0;
 
 		// start 有效后第 1 拍检查 busy_o
-		check1("TC3 busy after start (frame1)", busy_o, 1'b1);
-		check1("TC3 done cleared after start",  done_o, 1'b0);
+		check_flag("TC3 busy after start (frame1)", busy_o, 1'b1);
+		check_flag("TC3 done cleared after start",  done_o, 1'b0);
 
 		wait_done();
-		check1("TC3 done_o frame1",       done_o,       1'b1);
-		check1("TC3 busy_o in DONE",      busy_o,       1'b0);
-		check("TC3 res_pkt_len frame1",   {26'd0, res_pkt_len_o}, 32'd4);
-		check("TC3 res_pkt_type frame1",  {24'd0, res_pkt_type_o}, 32'h01);
-		check("TC3 res_payload_sum frame1", {24'd0, res_payload_sum_o}, 32'h00);
-		check("TC3 res_payload_xor frame1", {24'd0, res_payload_xor_o}, 32'h00);
+		check_flag("TC3 done_o frame1",       done_o,       1'b1);
+		check_flag("TC3 busy_o in DONE",      busy_o,       1'b0);
+		check_word("TC3 res_pkt_len frame1",   {26'd0, res_pkt_len_o}, 32'd4);
+		check_word("TC3 res_pkt_type frame1",  {24'd0, res_pkt_type_o}, 32'h01);
+		check_word("TC3 res_payload_sum frame1", {24'd0, res_payload_sum_o}, 32'h00);
+		check_word("TC3 res_payload_xor frame1", {24'd0, res_payload_xor_o}, 32'h00);
 
 		// done_o 在 DONE 态持续保持
 		repeat(3) @(posedge clk);
-		check1("TC3 done_o held in DONE", done_o, 1'b1);
+		check_flag("TC3 done_o held in DONE", done_o, 1'b1);
 
 		// --- 第二帧：pkt_len=8 ---
 		begin
@@ -308,18 +308,18 @@ module ppa_tb;
 		start_i <= 1'b0;
 
 		// done 应清零
-		check1("TC3 done cleared for frame2", done_o, 1'b0);
-		check1("TC3 busy after start (frame2)", busy_o, 1'b1);
+		check_flag("TC3 done cleared for frame2", done_o, 1'b0);
+		check_flag("TC3 busy after start (frame2)", busy_o, 1'b1);
 
 		wait_done();
-		check1("TC3 done_o frame2", done_o, 1'b1);
-		check("TC3 res_pkt_len frame2",  {26'd0, res_pkt_len_o},  32'd8);
-		check("TC3 res_pkt_type frame2", {24'd0, res_pkt_type_o}, 32'h02);
+		check_flag("TC3 done_o frame2", done_o, 1'b1);
+		check_word("TC3 res_pkt_len frame2",  {26'd0, res_pkt_len_o},  32'd8);
+		check_word("TC3 res_pkt_type frame2", {24'd0, res_pkt_type_o}, 32'h02);
 		// payload sum: 0xAA+0xBB+0xCC+0xDD = 782 = 0x30E, 8-bit truncated = 0x0E
-		check("TC3 res_payload_sum frame2", {24'd0, res_payload_sum_o}, 32'h0E);
+		check_word("TC3 res_payload_sum frame2", {24'd0, res_payload_sum_o}, 32'h0E);
 		// payload xor: 0xAA^0xBB^0xCC^0xDD
 		// 0xAA^0xBB = 0x11, 0xCC^0xDD = 0x11, 0x11^0x11 = 0x00
-		check("TC3 res_payload_xor frame2", {24'd0, res_payload_xor_o}, 32'h00);
+		check_word("TC3 res_payload_xor frame2", {24'd0, res_payload_xor_o}, 32'h00);
 
 		repeat(3) @(posedge clk);
 
@@ -340,8 +340,8 @@ module ppa_tb;
 		pulse_start();
 		wait_done();
 
-		check1("TC4a type_error",  type_error_o,  1'b1);
-		check1("TC4a format_ok_o", format_ok_o,   1'b0);
+		check_flag("TC4a type_error",  type_error_o,  1'b1);
+		check_flag("TC4a format_ok_o", format_ok_o,   1'b0);
 
 		repeat(3) @(posedge clk);
 
@@ -363,8 +363,8 @@ module ppa_tb;
 		pulse_start();
 		wait_done();
 
-		check1("TC4b type_error",  type_error_o,  1'b1);
-		check1("TC4b format_ok_o", format_ok_o,   1'b0);
+		check_flag("TC4b type_error",  type_error_o,  1'b1);
+		check_flag("TC4b format_ok_o", format_ok_o,   1'b0);
 
 		type_mask_i = 4'b1111;  // 恢复默认
 
@@ -388,8 +388,8 @@ module ppa_tb;
 		pulse_start();
 		wait_done();
 
-		check1("TC5a chk_error",   chk_error_o,   1'b1);
-		check1("TC5a format_ok_o", format_ok_o,    1'b0);
+		check_flag("TC5a chk_error",   chk_error_o,   1'b1);
+		check_flag("TC5a format_ok_o", format_ok_o,    1'b0);
 
 		repeat(3) @(posedge clk);
 
@@ -411,8 +411,8 @@ module ppa_tb;
 		pulse_start();
 		wait_done();
 
-		check1("TC5b chk_error",   chk_error_o,   1'b0);  // 旁路，不报错
-		check1("TC5b format_ok_o", format_ok_o,    1'b1);
+		check_flag("TC5b chk_error",   chk_error_o,   1'b0);  // 旁路，不报错
+		check_flag("TC5b format_ok_o", format_ok_o,    1'b1);
 
 		algo_mode_i = 1;  // 恢复默认
 
@@ -441,9 +441,9 @@ module ppa_tb;
 		pulse_start();
 		wait_done();
 
-		check("TC5c res_payload_sum", {24'd0, res_payload_sum_o}, 32'h0A);
-		check("TC5c res_payload_xor", {24'd0, res_payload_xor_o}, 32'h04);
-		check1("TC5c format_ok_o",    format_ok_o,    1'b1);
+		check_word("TC5c res_payload_sum", {24'd0, res_payload_sum_o}, 32'h0A);
+		check_word("TC5c res_payload_xor", {24'd0, res_payload_xor_o}, 32'h04);
+		check_flag("TC5c format_ok_o",    format_ok_o,    1'b1);
 
 		repeat(3) @(posedge clk);
 
