@@ -244,8 +244,8 @@ module ppa_packet_proc_core (
 							eff_total_words <= 4'd1;
 							payload_len     <= 6'd0;
 						end else begin
-							// (pkt_len + 3) >> 2 = ceil(pkt_len / 4)
-							eff_total_words <= ({2'b00, mem_rd_data_i[5:0]} + 8'd3) >> 2;
+							// ceil(pkt_len/4): 8-bit 运算后取低 4 位（最大值 8，4-bit 足够）
+							eff_total_words <= 4'(({2'b00, mem_rd_data_i[5:0]} + 8'd3) >> 2);
 							payload_len     <= mem_rd_data_i[5:0] - 6'd4;
 						end
 
