@@ -34,7 +34,7 @@
 职责：
 - 把规格转成 testcase 矩阵、检查点矩阵、覆盖点矩阵
 - 维护 testplan 与验收映射
-- 开发和维护 UVM 验证环境和 testcase
+- 开发维护 UVM 验证环境和 testcase
 
 输出要求：
 - 每条 testcase 必须写明输入摘要、预期输出、覆盖目标、优先级
