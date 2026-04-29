@@ -1,5 +1,14 @@
 # Lab1 实验日志
 
+## AI 入口摘要（Harness）
+
+- 新 AI 默认先读 `status.md`、`handoff.md`、`acceptance.md`，不要通读本日志。
+- 当前状态：审查完成，Review 结论 123/123 PASS；验证补强待做。
+- 下一步：补 `testplan.md`，优先补 TC2 SRAM 回读程序化比对，再补 PSLVERR/IRQ testcase。
+- 本日志保留为人工阅读与历史审计文件；需要证据时按章节追溯。
+
+---
+
 ## 2 审查阶段
 
 审查目标：逐项检查 RTL 代码（`ppa_apb_slave_if.sv`、`ppa_packet_sram.sv`）及 TB（`ppa_tb.sv`）与 `ppa-lite-spec.md` 的一致性

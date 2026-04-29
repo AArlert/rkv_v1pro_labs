@@ -1,5 +1,14 @@
 # Lab2 实验日志
 
+## AI 入口摘要（Harness）
+
+- 新 AI 默认先读 `status.md`、`handoff.md`、`acceptance.md`，不要通读本日志。
+- 当前状态：设计与审查完成，Review 结论 78/78 PASS；边界覆盖补强待做。
+- 下一步：Lab3 集成优先验证 M1 写入与 M3 解析的 byte order；Lab2 可补 pkt_len=32、exp_pkt_len_i 非零、pkt_len=0 testcase。
+- 本日志保留为人工阅读与历史审计文件；需要证据时按章节追溯。
+
+---
+
 ## 1 设计阶段
 
 设计时间：2026-04-28
