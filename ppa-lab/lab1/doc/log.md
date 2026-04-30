@@ -1,5 +1,16 @@
 # Lab1 实验日志
 
+## Status（新 Agent 只读此段）
+
+- **当前阶段**：✅ 审查完成，已交付
+- **最后更新**：2026-04-23
+- **结论**：M1+M2 RTL 与 spec 完全一致，123 项全 PASS
+- **遗留**：5 项 LOW-MEDIUM 限制（详见 risk-register.md）
+- **下一步**：进入 Lab3 顶层集成
+- **责任 Agent**：Integration Agent
+
+---
+
 ## 2 审查阶段
 
 审查目标：逐项检查 RTL 代码（`ppa_apb_slave_if.sv`、`ppa_packet_sram.sv`）及 TB（`ppa_tb.sv`）与 `ppa-lite-spec.md` 的一致性
