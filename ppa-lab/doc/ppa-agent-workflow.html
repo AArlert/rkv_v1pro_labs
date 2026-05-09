@@ -618,7 +618,7 @@
       <rect x="30" y="280" width="760" height="100" rx="10" fill="var(--surface2)" stroke="var(--border)" stroke-width="1"/>
       <text x="410" y="305" text-anchor="middle" class="node-label" fill="var(--accent)" font-size="13">Handoff Protocol (every session exit)</text>
       <text x="410" y="328" text-anchor="middle" fill="var(--text2)" font-size="11">Each Agent writes to handoff.md: what was done / what remains / pitfalls / minimal verification command / next steps</text>
-      <text x="410" y="350" text-anchor="middle" fill="var(--text2)" font-size="11">Then updates: status.md + feature-matrix.md + log.md + risk-register.md (if needed)</text>
+      <text x="410" y="350" text-anchor="middle" fill="var(--text2)" font-size="11">Then updates: ppa-status.md + ppa-feature-matrix.md + log.md + ppa-risk-register.md (if needed)</text>
       <text x="410" y="370" text-anchor="middle" fill="var(--text2)" font-size="11">Principle: one session covers all feature-matrix rows for the current lab. Graceful interrupt if context runs out.</text>
 
       <defs>
@@ -649,7 +649,7 @@
       <h3>Onboarding (Entry)</h3>
       <div class="timeline">
         <div class="timeline-item">
-          <div class="step-title">1. Read status.md</div>
+          <div class="step-title">1. Read ppa-status.md</div>
           <div class="step-desc">Current progress, blockers, next steps (&le;30s)</div>
         </div>
         <div class="timeline-item">
@@ -657,7 +657,7 @@
           <div class="step-desc">What the previous Agent left behind (&le;2min)</div>
         </div>
         <div class="timeline-item">
-          <div class="step-title">3. Read feature-matrix.md</div>
+          <div class="step-title">3. Read ppa-feature-matrix.md</div>
           <div class="step-desc">Which features are done, which are pending (&le;2min)</div>
         </div>
         <div class="timeline-item">
@@ -679,7 +679,7 @@
         </div>
         <div class="timeline-item">
           <div class="step-title">7. Update status</div>
-          <div class="step-desc">Refresh status.md, feature-matrix.md, log.md</div>
+          <div class="step-desc">Refresh ppa-status.md, ppa-feature-matrix.md, log.md</div>
         </div>
       </div>
       <p style="margin-top:16px; font-size:.86rem;">If time/context runs out mid-work: write handoff + status, then exit gracefully.</p>
@@ -797,21 +797,21 @@
       <text x="420" y="118" text-anchor="middle" fill="var(--red)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">CLAUDE.md defines the reading order of everything below</text>
 
       <!-- ===== Shared state row ===== -->
-      <!-- status.md -->
+      <!-- ppa-status.md -->
       <rect x="30" y="170" width="170" height="55" rx="8" fill="var(--surface2)" stroke="var(--green)" stroke-width="1.2"/>
-      <text x="115" y="192" text-anchor="middle" class="node-label" fill="var(--green)" font-size="11">status.md</text>
+      <text x="115" y="192" text-anchor="middle" class="node-label" fill="var(--green)" font-size="11">ppa-status.md</text>
       <text x="115" y="208" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">Progress Dashboard</text>
       <text x="115" y="220" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">Blockers + Next Steps</text>
 
-      <!-- feature-matrix.md -->
+      <!-- ppa-feature-matrix.md -->
       <rect x="240" y="170" width="200" height="55" rx="8" fill="var(--surface2)" stroke="var(--green)" stroke-width="1.2"/>
-      <text x="340" y="192" text-anchor="middle" class="node-label" fill="var(--green)" font-size="11">feature-matrix.md</text>
+      <text x="340" y="192" text-anchor="middle" class="node-label" fill="var(--green)" font-size="11">ppa-feature-matrix.md</text>
       <text x="340" y="208" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">Task Board (pick rows to work on)</text>
       <text x="340" y="220" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">Spec &harr; Impl &harr; Test Traceability</text>
 
-      <!-- risk-register.md -->
+      <!-- ppa-risk-register.md -->
       <rect x="480" y="170" width="170" height="55" rx="8" fill="var(--surface2)" stroke="var(--green)" stroke-width="1.2"/>
-      <text x="565" y="192" text-anchor="middle" class="node-label" fill="var(--green)" font-size="11">risk-register.md</text>
+      <text x="565" y="192" text-anchor="middle" class="node-label" fill="var(--green)" font-size="11">ppa-risk-register.md</text>
       <text x="565" y="208" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">Escalation Path</text>
       <text x="565" y="220" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">Assumptions + Ambiguities</text>
 
@@ -918,8 +918,8 @@
         <div class="doc-purpose">Technical Specification &mdash; the single source of truth</div>
         <div class="doc-how">
           <b>What it does for the Agent:</b> When the Agent needs to know <i>what</i> to implement or verify, this is the authoritative answer. It defines APB protocol timing, CSR register layouts, FSM behavior, error codes, and more. All other documents defer to it when conflicts arise.<br>
-          <b>How the Agent uses it:</b> The Agent does NOT read the entire spec upfront. Instead, it uses <code>Spec &sect;</code> references from <code>feature-matrix.md</code> to jump to exactly the sections needed for the current task. For example, when implementing F1-03 (CSR address mapping), the Agent reads &sect;3.2 of the spec.<br>
-          <b>Guard rail:</b> No Agent may modify this file. If a spec error is found, the Agent logs it in <code>risk-register.md</code> as an RFC.
+          <b>How the Agent uses it:</b> The Agent does NOT read the entire spec upfront. Instead, it uses <code>Spec &sect;</code> references from <code>ppa-feature-matrix.md</code> to jump to exactly the sections needed for the current task. For example, when implementing F1-03 (CSR address mapping), the Agent reads &sect;3.2 of the spec.<br>
+          <b>Guard rail:</b> No Agent may modify this file. If a spec error is found, the Agent logs it in <code>ppa-risk-register.md</code> as an RFC.
         </div>
       </div>
     </div>
@@ -957,7 +957,7 @@
   <div class="doc-detail-grid">
     <div class="doc-detail">
       <div class="doc-left">
-        <code>status.md</code>
+        <code>ppa-status.md</code>
         <span class="doc-badge badge-rw">Read + Write</span>
       </div>
       <div class="doc-right">
@@ -965,13 +965,13 @@
         <div class="doc-how">
           <b>On entry (first file read, &le;30s):</b> Tells the Agent the current project phase, what's been completed, what's blocked, and what the recommended next step is. This is a <b>decision accelerator</b> &mdash; the Agent immediately knows whether to start Lab3, debug a failure, or wait for a dependency.<br>
           <b>On exit (mandatory update):</b> The Agent refreshes the milestones table, in-progress items, and blocker list to reflect the session's work. The "next steps" section is especially important &mdash; it's a direct instruction to the next Agent.<br>
-          <b>Why this matters:</b> Without status.md, every new Agent session would need to re-derive the project state from git history and code inspection. This file makes onboarding instant.
+          <b>Why this matters:</b> Without ppa-status.md, every new Agent session would need to re-derive the project state from git history and code inspection. This file makes onboarding instant.
         </div>
       </div>
     </div>
     <div class="doc-detail">
       <div class="doc-left">
-        <code>feature-matrix.md</code>
+        <code>ppa-feature-matrix.md</code>
         <span class="doc-badge badge-rw">Read + Write</span>
       </div>
       <div class="doc-right">
@@ -986,7 +986,7 @@
     </div>
     <div class="doc-detail">
       <div class="doc-left">
-        <code>risk-register.md</code>
+        <code>ppa-risk-register.md</code>
         <span class="doc-badge badge-rw">Read + Write</span>
       </div>
       <div class="doc-right">
@@ -1026,7 +1026,7 @@
         <div class="doc-purpose">Test Matrix &mdash; maps features to testcases with coverage goals</div>
         <div class="doc-how">
           <b>Created by:</b> VPlan Agent, after RTL compiles. Each entry specifies: input stimulus summary, expected output, coverage target, and priority (P0/P1/P2).<br>
-          <b>Guard rail:</b> No TB code may be written without a testplan first. This prevents ad-hoc testing and ensures systematic coverage. The testcase names here must match those in <code>feature-matrix.md</code>.
+          <b>Guard rail:</b> No TB code may be written without a testplan first. This prevents ad-hoc testing and ensures systematic coverage. The testcase names here must match those in <code>ppa-feature-matrix.md</code>.
         </div>
       </div>
     </div>
@@ -1052,7 +1052,7 @@
         <div class="doc-purpose">Quality Gate &mdash; machine-checkable criteria that must all PASS to complete a lab</div>
         <div class="doc-how">
           <b>Purpose:</b> Eliminates subjective "good enough" judgments. Each criterion is a concrete, verifiable check (e.g., "make comp exits with 0 errors," "tc_apb_basic_rw reports PASS"). The Review Agent executes each criterion and records PASS/FAIL.<br>
-          <b>On failure:</b> FAIL items are logged to <code>risk-register.md</code> and trigger a new iteration cycle. The lab cannot be signed off until all mandatory criteria pass.
+          <b>On failure:</b> FAIL items are logged to <code>ppa-risk-register.md</code> and trigger a new iteration cycle. The lab cannot be signed off until all mandatory criteria pass.
         </div>
       </div>
     </div>
