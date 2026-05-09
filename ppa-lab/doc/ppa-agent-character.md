@@ -13,14 +13,14 @@
 
 ### 0.2 所有 Agent 禁止执行的
 
-- 修改 `ppa-lite-spec.md`（spec 笔误需走 RFC 流程：在 risk-register.md 登记）
+- 修改 `ppa-lite-spec.md`（spec 笔误需走 RFC 流程：在 ppa-risk-register.md 登记）
 - 修改 `/lecture`、`/mcdt-lab` 目录下所有内容
 - 修改 `.gitignore`、`README.md`
 - 修改已有的 DUT/TB 的 `.sv` 文件（除非是当前任务明确要求的目标文件）
 
 ### 0.3 Doc 演进规则
 
-`CLAUDE.md`、`ppa-lab-prompt.md`、`ppa-agent-character.md` 可由用户授权修改，或通过在 `risk-register.md` 提出 RFC 后经批准修改。
+`CLAUDE.md`、`ppa-lab-prompt.md`、`ppa-agent-character.md` 可由用户授权修改，或通过在 `ppa-risk-register.md` 提出 RFC 后经批准修改。
 
 ---
 
@@ -29,19 +29,19 @@
 **职责**：编写、校验或修复 RTL
 
 **输入契约**（开工前必须已具备）：
-- `labX/doc/design-prompt.md` 已就绪
-- `feature-matrix.md` 中目标行状态为 TODO 或 WIP
+- `labX/doc/design-prompt.md` 已就绪（由 DUT Agent 在开始编写 RTL 之前撰写）
+- `ppa-feature-matrix.md` 中目标行状态为 #TODO 或 #WIP
 
 **触发条件**：新 lab 启动时的 RTL 实现阶段，或 VDebug Agent 回报 RTL bug 时
 
 **输出要求**：
 - RTL 文件通过 `make comp`（0 error, 0 warning 或已知可接受 warning）
 - 在 `log.md` 中记录改动影响的模块和对应 spec 章节
-- 更新 `feature-matrix.md` 中相关行状态为 DONE
+- 更新 `ppa-feature-matrix.md` 中相关行状态为 #DONE
 
-**终止条件**：所有目标 feature-matrix 行状态为 DONE 且 `make comp` 通过
+**终止条件**：所有目标 feature-matrix 行状态为 #DONE 且 `make comp` 通过
 
-**升级路径**：遇到 spec 歧义 → 在 `risk-register.md` 登记假设并继续
+**升级路径**：遇到 spec 歧义 → 在 `ppa-risk-register.md` 登记假设并继续
 
 ---
 
@@ -59,7 +59,7 @@
 - `labX/doc/testplan.md` 完整（每条 testcase 写明输入摘要、预期输出、覆盖目标、优先级）
 - TB 代码实现所有 testcase
 - `make run` 全部 PASS
-- 更新 `feature-matrix.md` 中 TB 状态列
+- 更新 `ppa-feature-matrix.md` 中 TB 状态列
 
 **终止条件**：testplan 中所有 P0 用例 PASS，feature-matrix 的 TB 状态列更新完毕
 
@@ -84,7 +84,7 @@
 
 **终止条件**：root cause 已定位并写入 handoff
 
-**升级路径**：无法定位 → 在 `risk-register.md` 登记为 BLOCKED
+**升级路径**：无法定位 → 在 `ppa-risk-register.md` 登记为 #BLOCKED
 
 ---
 
@@ -93,7 +93,7 @@
 **职责**：维护 Makefile、目录组织、回归入口
 
 **输入契约**：
-- 当前 lab 所有子模块 RTL 已 DONE
+- 当前 lab 所有子模块 RTL 已 #DONE
 - 需要新建/修改 Makefile 或目录结构
 
 **触发条件**：新 lab 启动（创建目录）、Lab4 回归建设
@@ -122,7 +122,7 @@
 - 在 `acceptance.md` 填写 PASS/FAIL
 - 在 `log.md` 中记录审查过程（按 §8 验收流程格式）
 
-**终止条件**：所有必做项 PASS，或 FAIL 项已登记到 risk-register
+**终止条件**：所有必做项 PASS，或 FAIL 项已登记到 ppa-risk-register
 
 ---
 
@@ -146,15 +146,15 @@
 
 一次 Agent 会话的标准流程：
 
-1. **进入** — 读 `status.md` + `handoff.md` + `feature-matrix.md`
-2. **选定范围** — 从 feature-matrix 中选取 ≤3 行作为本次目标
+1. **进入** — 读 `ppa-status.md` + `handoff.md` + `ppa-feature-matrix.md`
+2. **选定范围** — 从 feature-matrix 中选取当前 lab 的所有行作为本次目标
 3. **实施** — 编码/验证/调试
 4. **自验收** — 执行 `acceptance.md` 或 `make run` 判定
 5. **写 handoff** — 追加交接块到 `labX/doc/handoff.md`
-6. **更新 status** — 刷新 `status.md` 的进行中/已完成/阻塞项
+6. **更新 status** — 刷新 `ppa-status.md` 的进行中/已完成/阻塞项
 7. **退出**
 
-**原则**：一次会话推进 feature-matrix 中 ≤3 行。时间/上下文不够时，优雅中断：写好 handoff 和 status 后退出。
+**原则**：一次会话推进 ppa-feature-matrix 中当前 lab 的所有行。时间/上下文不够时，优雅中断：写好 handoff 和 status 后退出。
 
 ---
 
@@ -163,9 +163,8 @@
 | Spec 章节 | 内容 | 主要关注 Agent |
 |-----------|------|---------------|
 | §1~2 | 项目背景、系统架构 | 所有 Agent（概览） |
-| §3 | APB 从接口 + CSR | DUT Agent (Lab1) |
-| §4 | SRAM | DUT Agent (Lab1) |
-| §5 | 包处理核心 FSM | DUT Agent (Lab2) |
-| §6 | 顶层集成 | Integration Agent (Lab3) |
-| §7 | 验证策略 | VPlan / VDebug Agent |
-| §8 | 覆盖率与回归 | Integration Agent (Lab4) |
+| §3~6 | 数据模型、APB 接口、CSR、PKT_MEM | DUT Agent (Lab1) |
+| §7~9 | 处理流程 FSM、done/irq 时序、错误码 | DUT Agent (Lab2) |
+| §2.1 | 顶层集成（ppa_top 连线） | Integration Agent (Lab3) |
+| §10 | 验收测试场景矩阵 | VPlan / VDebug Agent |
+| §11~12 | 阶段拆分、评分标准 | Review / Sign-off Agent |

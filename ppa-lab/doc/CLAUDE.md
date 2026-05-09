@@ -9,9 +9,9 @@
 
 按以下顺序读取，**按需深入，不要通读所有文件**：
 
-1. **`doc/status.md`**（≤30 秒）— 了解当前进度、阻塞项、下一步
+1. **`doc/ppa-status.md`**（≤30 秒）— 了解当前进度、阻塞项、下一步
 2. **当前 lab 的 `labX/doc/handoff.md`**（≤2 分钟）— 了解上一棒留下了什么
-3. **`doc/feature-matrix.md`**（≤2 分钟）— 确认哪些功能已完成、哪些待做
+3. **`doc/ppa-feature-matrix.md`**（≤2 分钟）— 确认哪些功能已完成、哪些待做
 4. **`doc/ppa-agent-character.md`** — 确认自己的角色和职责
 5. **`doc/ppa-lab-prompt.md`** 的相关章节 — 命名规范、目录结构
 6. **`doc/ppa-lite-spec.md`** 的相关章节 — 按 feature-matrix 中的 Spec § 按需查阅
@@ -20,17 +20,18 @@
 
 提交前必须完成：
 
-1. 更新 `doc/status.md` — 反映最新进度
-2. 更新 `doc/feature-matrix.md` — 改动涉及的行改状态
+1. 更新 `doc/ppa-status.md` — 反映最新进度
+2. 更新 `doc/ppa-feature-matrix.md` — 改动涉及的行改状态
 3. 追加 `labX/doc/handoff.md` — 写交接笔记给下一个 Agent
-4. 如有新风险/假设，追加到 `doc/risk-register.md`
+4. 如有新风险/假设，追加到 `doc/ppa-risk-register.md`
 5. 运行 `labX/doc/acceptance.md` 中的判据（如适用）
+6. 在 `labX/doc/log.md` 中记录当前阶段（设计/实现/验证/验收/迭代，各阶段由 ppa-lab-prompt.md §6 §7 定义）的设计/实现细节、挑战、决策理由等
 
 ## 3 通用编码准则
 
 ### 3.1 编码前思考
 
-- **明确说明假设** — 不确定时，记录到 `risk-register.md` 并标注待验证
+- **明确说明假设** — 不确定时，记录到 `ppa-risk-register.md` 并标注待验证
 - **呈现多种解释** — 存在歧义时不要默默选择
 - **困惑时停下来** — 在 `handoff.md` 中记录 Open Question，挂起当前子任务
 
@@ -55,7 +56,7 @@
 |-------------|-----------|
 | "实现 CSR" | "编写 CSR RTL → `make comp` 0 error → tc_csr_default_rw PASS" |
 | "修复 FSM bug" | "编写复现用例 → 定位 → 修复 → 原用例 PASS 且回归不劣化" |
-| "补充 testcase" | "在 testplan 新增行 → 实现 TC → `make run` PASS → 更新 feature-matrix" |
+| "补充 testcase" | "在 testplan 新增行 → 实现 TC → `make run` PASS → 更新 ppa-feature-matrix" |
 
 ## 4 文件优先级（冲突时的裁决顺序）
 
