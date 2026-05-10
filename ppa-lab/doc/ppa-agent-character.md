@@ -26,103 +26,63 @@
 
 ## 1 DUT Agent
 
-**职责**：编写、校验或修复 RTL
+**职责**：编写或修复 RTL（验收流程 §6.1 / §6.5）
 
-**输入契约**（开工前必须已具备）：
-- `labX/doc/design-prompt.md` 已就绪（由 DUT Agent 在开始编写 RTL 之前撰写）
-- `ppa-feature-matrix.md` 中目标行状态为 #TODO 或 #WIP
-
-**触发条件**：新 lab 启动时的 RTL 实现阶段，或 VDebug Agent 回报 RTL bug 时
-
-**输出要求**：
-- RTL 文件通过 `make comp`（0 error, 0 warning 或已知可接受 warning）
-- 在 `log.md` 中记录改动影响的模块和对应 spec 章节
-- 更新 `ppa-feature-matrix.md` 中相关行状态为 #DONE
-
-**终止条件**：所有目标 feature-matrix 行状态为 #DONE 且 `make comp` 通过
-
-**升级路径**：遇到 spec 歧义 → 在 `ppa-risk-register.md` 登记假设并继续
+**输入**：spec 相关章节 + feature-matrix 中 #TODO/#WIP 行
+**触发**：新 lab 启动 | 审查回退 | 迭代归因为 RTL 缺陷
+**产出**：RTL + `make comp` 通过 + `design-prompt.md` + feature-matrix 实现状态 → #DONE
+**交接**：→ Review Agent
+**升级**：spec 歧义 → `ppa-risk-register.md` 登记假设
 
 ---
 
-## 2 Verification Plan Agent
+## 2 Review Agent
 
-**职责**：把规格转成 testcase 矩阵、检查点矩阵、覆盖点矩阵
+**职责**：设计阶段后检查 RTL 与 spec 一致性（验收流程 §6.2）
 
-**输入契约**：
-- DUT Agent 交付的 RTL 已通过编译
-- `labX/doc/design-prompt.md` 和相关 spec 章节已阅读
+**输入**：DUT Agent 交付的 RTL + comp.log + run.log
+**触发**：DUT Agent handoff
+**产出**：一致性检查结果记入 `log.md`，不一致项分类为阻塞性/非阻塞性
+**交接**：无阻塞 → VPlan Agent | 有阻塞 → 回 DUT Agent
 
-**触发条件**：DUT Agent 完成当前 lab RTL 后
+---
 
-**输出要求**：
-- `labX/doc/testplan.md` 完整（每条 testcase 写明输入摘要、预期输出、覆盖目标、优先级）
-- TB 代码实现所有 testcase
-- `make run` 全部 PASS
-- 更新 `ppa-feature-matrix.md` 中 TB 状态列
+## 3 Verification Plan Agent
 
-**终止条件**：testplan 中所有 P0 用例 PASS，feature-matrix 的 TB 状态列更新完毕
+**职责**：编写 testplan、按需补充或升级 TB、维护 Makefile（验收流程 §6.3 / §6.5）
 
+**输入**：审查通过的 RTL + DUT Agent 的最小 TB + `design-prompt.md` + spec
+**触发**：Review Agent handoff | 迭代归因为 TB 缺陷
+**按 lab 分级**：
+- Lab1/2：基于 DUT Agent 最小 TB 补充 feature-matrix 中 TB 为 #TODO 的用例，`make run` 全 PASS 即可
+- Lab3：编写集成级端到端 TB，引入 UVM 基础结构
+- Lab4：将既有 TB 升级为系统化 UVM 验证，建立 `make smoke/regress/cov`
+**产出**：testplan + TB 补充/升级 + feature-matrix TB 列 → #DONE + `make comp/run` 可用
+**交接**：→ Sign-off Agent
 **前置强制**：无 testplan 不允许编写 TB 代码
 
 ---
 
-## 3 Verification Debug Agent
+## 4 Verification Debug Agent
 
-**职责**：分析仿真失败，定位 root cause
+**职责**：分析仿真失败，定位 root cause 并归因（验收流程 §6.3 / §6.5）
 
-**输入契约**：
-- 已有失败的仿真 log 或明确的 mismatch 报告
-- 当前 `make run` 输出可复现
-
-**触发条件**：TB 运行出现 FAIL/ERROR/mismatch
-
-**输出要求**：
-- 记录：失败命令、目录、seed、失败测试名、首个报错点
-- 定位：bug 在 driver / checker / reference model / DUT 的具体文件:行号
-- 在 `handoff.md` 中写明修复建议，指向对应 Agent
-
-**终止条件**：root cause 已定位并写入 handoff
-
-**升级路径**：无法定位 → 在 `ppa-risk-register.md` 登记为 #BLOCKED
+**输入**：失败的仿真 log 或 mismatch 报告，`make run` 可复现
+**触发**：TB 运行 FAIL/ERROR/mismatch | 验收 FAIL 需归因
+**产出**：失败记录（命令/seed/测试名/报错点）+ bug 定位（文件:行号）+ 归因（RTL → DUT / TB → VPlan）
+**交接**：→ DUT Agent（RTL 缺陷）| → VPlan Agent（TB 缺陷）
+**升级**：无法定位 → `ppa-risk-register.md` 登记 #BLOCKED
 
 ---
 
-## 4 Integration Agent
+## 5 Sign-off Agent
 
-**职责**：维护 Makefile、目录组织、回归入口
+**职责**：lab 验收判定（验收流程 §6.4）
 
-**输入契约**：
-- 当前 lab 所有子模块 RTL 已 #DONE
-- 需要新建/修改 Makefile 或目录结构
-
-**触发条件**：新 lab 启动（创建目录）、Lab4 回归建设
-
-**输出要求**：
-- `make comp/run/rung/clean` 可用
-- Lab4 增加 `make smoke/regress/cov`
-- 说明新增目标的依赖和工具
-
-**终止条件**：目标命令在干净环境可复现执行
-
----
-
-## 5 Review / Sign-off Agent
-
-**职责**：每个 lab 收尾时进行结构化审查
-
-**输入契约**：
-- 当前 lab 的 `acceptance.md` 已定义判据
-- DUT + Verification 已声称完成
-
-**触发条件**：lab 进入验收阶段
-
-**输出要求**：
-- 逐项执行 `acceptance.md` 中的判据
-- 在 `acceptance.md` 填写 PASS/FAIL
-- 在 `log.md` 中记录审查过程（按 §8 验收流程格式）
-
-**终止条件**：所有必做项 PASS，或 FAIL 项已登记到 ppa-risk-register
+**输入**：`acceptance.md` 已定义判据 + VPlan Agent 声称 P0 全 PASS
+**触发**：VPlan Agent handoff
+**产出**：`acceptance.md` 逐项 PASS/FAIL + 验收结论记入 `log.md`
+**交接**：全 PASS → lab 关闭 | 存在 FAIL → VDebug Agent 归因 → 迭代
 
 ---
 
@@ -165,6 +125,6 @@
 | §1~2 | 项目背景、系统架构 | 所有 Agent（概览） |
 | §3~6 | 数据模型、APB 接口、CSR、PKT_MEM | DUT Agent (Lab1) |
 | §7~9 | 处理流程 FSM、done/irq 时序、错误码 | DUT Agent (Lab2) |
-| §2.1 | 顶层集成（ppa_top 连线） | Integration Agent (Lab3) |
+| §2.1 | 顶层集成（ppa_top 连线） | VPlan Agent (Lab3) |
 | §10 | 验收测试场景矩阵 | VPlan / VDebug Agent |
-| §11~12 | 阶段拆分、评分标准 | Review / Sign-off Agent |
+| §11~12 | 阶段拆分、评分标准 | Sign-off Agent |

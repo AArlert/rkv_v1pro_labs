@@ -204,11 +204,42 @@ ppa-lab/
 - 各 lab 目录结构保持同构
 
 # 6 验收流程
-1. **设计阶段**：根据 spec 实现 RTL，保证接口/寄存器/状态机语义正确
-2. **审查阶段**：检查 RTL 与 spec 一致性（由 Review Agent 执行）
-3. **验证阶段**：编写 testcase 并运行仿真
-4. **验收阶段**：按 `acceptance.md` 逐项判定 PASS/FAIL
-5. **迭代阶段**：修复问题、更新 testplan、完善回归
+
+每个 lab 按以下阶段推进。各 Agent 的输入契约、产出要求与终止条件详见 `ppa-agent-character.md`。每个阶段结束时执行 `CLAUDE.md § 2 收尾流程`（更新 status、feature-matrix、handoff）。
+
+```text
+设计 ──→ 审查 ──→ 验证 ──→ 验收 ⇄ 迭代
+DUT     Review    VPlan   Sign-off 按归因
+Agent   Agent    +VDebug   Agent   分配
+  ↑              │                  │
+  └── 阻塞性不一致 ┘                  ↓ 全 PASS
+                                 lab 关闭
+```
+
+1. **设计阶段**（DUT Agent）
+   - 根据 spec 实现 RTL，撰写 `design-prompt.md`，提供最小验证 TB
+   - **出口**：`make comp` 0 error；用户执行 `make run` 确认基本功能
+   - **交付物**：RTL 文件、comp.log、run.log
+   - **feature-matrix**：目标行实现状态 → #DONE
+
+2. **审查阶段**（Review Agent）
+   - 检查 RTL 实现与 spec 的一致性，结果记入 `log.md`
+   - **出口**：无阻塞性不一致 → 进入验证；有阻塞性不一致 → handoff 回 DUT Agent 修复后重审
+
+3. **验证阶段**（VPlan Agent；失败分析由 VDebug Agent 协助）
+   - 先写 `testplan.md`，再实现 TB 代码，用户执行 `make run` 运行全部用例
+   - **出口**：testplan 中 P0 用例全 PASS
+   - **feature-matrix**：TB 状态列 → #DONE；验证通过的行 → #VERIFIED
+
+4. **验收阶段**（Sign-off Agent）
+   - 按 `acceptance.md` 逐项判定 PASS/FAIL，验收结论记入 `log.md`
+   - **出口**：全部必做项 PASS → **当前 lab 关闭**；存在 FAIL → 进入迭代
+
+5. **迭代阶段**（按 FAIL 归因分配：RTL 缺陷 → DUT Agent，TB 缺陷 → VPlan Agent）
+   - 修复问题、补充回归用例、更新 testplan
+   - **出口**：修复完成 → **回到第 4 步重新验收**
+
+> **闭环约束**：迭代阶段不直接关闭 lab，必须经第 4 步验收确认全部 PASS。
 
 # 7 实验日志
 `labX/doc/log.md` 按阶段记录：
