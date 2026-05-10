@@ -57,6 +57,7 @@ module ppa_tb;
 
 	int pass_cnt = 0;
 	int fail_cnt = 0;
+	logic slverr_val;
 
 	// ========================================================================
 	// DUT 实例化
@@ -170,6 +171,37 @@ module ppa_tb;
 		@(posedge PCLK);
 		check($sformatf("SRAM Word[%0d]", word_idx), sram_rd_data, expected);
 		sram_rd_en = 0;
+	endtask
+
+	task automatic apb_write_with_slverr(input logic [11:0] addr, input logic [31:0] data, output logic slverr);
+		@(posedge PCLK);
+		PSEL    <= 1'b1;
+		PENABLE <= 1'b0;
+		PWRITE  <= 1'b1;
+		PADDR   <= addr;
+		PWDATA  <= data;
+		@(posedge PCLK);
+		PENABLE <= 1'b1;
+		@(posedge PCLK);
+		slverr = PSLVERR;
+		PSEL    <= 1'b0;
+		PENABLE <= 1'b0;
+		PWRITE  <= 1'b0;
+	endtask
+
+	task automatic apb_read_with_slverr(input logic [11:0] addr, output logic [31:0] data, output logic slverr);
+		@(posedge PCLK);
+		PSEL    <= 1'b1;
+		PENABLE <= 1'b0;
+		PWRITE  <= 1'b0;
+		PADDR   <= addr;
+		@(posedge PCLK);
+		PENABLE <= 1'b1;
+		@(posedge PCLK);
+		data = PRDATA;
+		slverr = PSLVERR;
+		PSEL    <= 1'b0;
+		PENABLE <= 1'b0;
 	endtask
 
 	// ========================================================================
@@ -300,6 +332,190 @@ module ppa_tb;
 
 		apb_read(12'h028, rd_data);
 		check("ERR_FLAG (no error)", rd_data, 32'h0000_0000);
+
+		// ==============================================================
+		// TC4: tc_slverr_reserved - 保留/越界/非对齐地址 PSLVERR
+		// ==============================================================
+		$display("\n========== TC4: tc_slverr_reserved ==========");
+
+		apb_write_with_slverr(12'h02C, 32'hAAAA_BBBB, slverr_val);
+		check("SLVERR wr 0x02C reserved", {31'b0, slverr_val}, 32'h1);
+
+		apb_read_with_slverr(12'h02C, rd_data, slverr_val);
+		check("SLVERR rd 0x02C reserved", {31'b0, slverr_val}, 32'h1);
+
+		apb_write_with_slverr(12'h030, 32'hAAAA_BBBB, slverr_val);
+		check("SLVERR wr 0x030 reserved", {31'b0, slverr_val}, 32'h1);
+
+		apb_write_with_slverr(12'h060, 32'hAAAA_BBBB, slverr_val);
+		check("SLVERR wr 0x060 OOB", {31'b0, slverr_val}, 32'h1);
+
+		apb_read_with_slverr(12'h100, rd_data, slverr_val);
+		check("SLVERR rd 0x100 OOB", {31'b0, slverr_val}, 32'h1);
+
+		apb_write_with_slverr(12'h003, 32'hAAAA_BBBB, slverr_val);
+		check("SLVERR wr 0x003 unaligned", {31'b0, slverr_val}, 32'h1);
+
+		// ==============================================================
+		// TC5: tc_ro_write_protect - RO 寄存器写保护
+		// ==============================================================
+		$display("\n========== TC5: tc_ro_write_protect ==========");
+
+		apb_write_with_slverr(12'h008, 32'hFFFF_FFFF, slverr_val);
+		check("SLVERR wr STATUS", {31'b0, slverr_val}, 32'h1);
+		apb_read(12'h008, rd_data);
+		check("STATUS unchanged", rd_data, 32'h0000_000A);
+
+		apb_write_with_slverr(12'h018, 32'hFFFF_FFFF, slverr_val);
+		check("SLVERR wr RES_PKT_LEN", {31'b0, slverr_val}, 32'h1);
+		apb_read(12'h018, rd_data);
+		check("RES_PKT_LEN unchanged", rd_data, 32'h0000_0008);
+
+		apb_write_with_slverr(12'h01C, 32'hFFFF_FFFF, slverr_val);
+		check("SLVERR wr RES_PKT_TYPE", {31'b0, slverr_val}, 32'h1);
+		apb_read(12'h01C, rd_data);
+		check("RES_PKT_TYPE unchanged", rd_data, 32'h0000_0002);
+
+		apb_write_with_slverr(12'h020, 32'hFFFF_FFFF, slverr_val);
+		check("SLVERR wr RES_PAYLOAD_SUM", {31'b0, slverr_val}, 32'h1);
+		apb_read(12'h020, rd_data);
+		check("RES_PAYLOAD_SUM unchanged", rd_data, 32'h0000_00AB);
+
+		apb_write_with_slverr(12'h024, 32'hFFFF_FFFF, slverr_val);
+		check("SLVERR wr RES_PAYLOAD_XOR", {31'b0, slverr_val}, 32'h1);
+		apb_read(12'h024, rd_data);
+		check("RES_PAYLOAD_XOR unchanged", rd_data, 32'h0000_00CD);
+
+		apb_write_with_slverr(12'h028, 32'hFFFF_FFFF, slverr_val);
+		check("SLVERR wr ERR_FLAG", {31'b0, slverr_val}, 32'h1);
+		apb_read(12'h028, rd_data);
+		check("ERR_FLAG unchanged", rd_data, 32'h0000_0000);
+
+		// ==============================================================
+		// TC6: tc_w1p_start - W1P 行为
+		// ==============================================================
+		$display("\n========== TC6: tc_w1p_start ==========");
+
+		busy_stub = 0;
+
+		apb_write(12'h000, 32'h0000_0001);
+		apb_write(12'h000, 32'h0000_0003);
+		@(posedge PCLK);
+		check("start_o pulse", {31'b0, start_o}, 32'h1);
+		@(posedge PCLK);
+		check("start_o deasserted", {31'b0, start_o}, 32'h0);
+
+		apb_read(12'h000, rd_data);
+		check("CTRL start reads 0", rd_data, 32'h0000_0001);
+
+		apb_write(12'h000, 32'h0000_0000);
+		apb_write(12'h000, 32'h0000_0002);
+		@(posedge PCLK);
+		check("start_o no pulse (enable=0)", {31'b0, start_o}, 32'h0);
+
+		apb_write(12'h000, 32'h0000_0001);
+		busy_stub = 1;
+		apb_write(12'h000, 32'h0000_0003);
+		@(posedge PCLK);
+		check("start_o no pulse (busy=1)", {31'b0, start_o}, 32'h0);
+		busy_stub = 0;
+
+		// ==============================================================
+		// TC7: tc_rw1c_irq_sta - RW1C 行为
+		// ==============================================================
+		$display("\n========== TC7: tc_rw1c_irq_sta ==========");
+
+		done_stub = 0;
+		repeat(2) @(posedge PCLK);
+
+		apb_write(12'h00C, 32'h0000_0001);
+
+		done_stub = 1;
+		repeat(2) @(posedge PCLK);
+
+		apb_read(12'h010, rd_data);
+		check("IRQ_STA done_irq set", rd_data, 32'h0000_0001);
+
+		apb_write(12'h010, 32'h0000_0001);
+		repeat(1) @(posedge PCLK);
+
+		apb_read(12'h010, rd_data);
+		check("IRQ_STA done_irq cleared", rd_data, 32'h0000_0000);
+
+		// ==============================================================
+		// TC8: tc_busy_write_protect - busy 写保护
+		// ==============================================================
+		$display("\n========== TC8: tc_busy_write_protect ==========");
+
+		busy_stub = 0;
+
+		apb_write_with_slverr(12'h040, 32'h1234_5678, slverr_val);
+		check("SLVERR wr PKT_MEM busy=0", {31'b0, slverr_val}, 32'h0);
+
+		repeat(2) @(posedge PCLK);
+
+		busy_stub = 1;
+		apb_write_with_slverr(12'h040, 32'hDEAD_BEEF, slverr_val);
+		check("SLVERR wr PKT_MEM busy=1", {31'b0, slverr_val}, 32'h1);
+
+		busy_stub = 0;
+		sram_read_check(0, 32'h1234_5678);
+
+		// ==============================================================
+		// TC9: tc_irq_logic - 中断路径完整
+		// ==============================================================
+		$display("\n========== TC9: tc_irq_logic ==========");
+
+		done_stub = 0;
+		length_error_stub = 0;
+		type_error_stub = 0;
+		chk_error_stub = 0;
+		repeat(2) @(posedge PCLK);
+		apb_write(12'h00C, 32'h0000_0000);
+		apb_write(12'h010, 32'h0000_0003);
+
+		apb_write(12'h00C, 32'h0000_0001);
+		done_stub = 1;
+		repeat(2) @(posedge PCLK);
+		check("irq_o=1 (done_irq)", {31'b0, irq_o}, 32'h1);
+
+		apb_write(12'h010, 32'h0000_0001);
+		repeat(1) @(posedge PCLK);
+		check("irq_o=0 (done_irq cleared)", {31'b0, irq_o}, 32'h0);
+
+		done_stub = 0;
+		repeat(2) @(posedge PCLK);
+		apb_write(12'h00C, 32'h0000_0002);
+		length_error_stub = 1;
+		done_stub = 1;
+		repeat(2) @(posedge PCLK);
+		check("irq_o=1 (err_irq)", {31'b0, irq_o}, 32'h1);
+
+		apb_write(12'h010, 32'h0000_0002);
+		repeat(1) @(posedge PCLK);
+		check("irq_o=0 (err_irq cleared)", {31'b0, irq_o}, 32'h0);
+		length_error_stub = 0;
+
+		// ==============================================================
+		// TC10: tc_rw_readback - RW 寄存器写后读
+		// ==============================================================
+		$display("\n========== TC10: tc_rw_readback ==========");
+
+		apb_write(12'h000, 32'h0000_0001);
+		apb_read(12'h000, rd_data);
+		check("CTRL readback", rd_data, 32'h0000_0001);
+
+		apb_write(12'h004, 32'h0000_00A0);
+		apb_read(12'h004, rd_data);
+		check("CFG readback", rd_data, 32'h0000_00A0);
+
+		apb_write(12'h00C, 32'h0000_0003);
+		apb_read(12'h00C, rd_data);
+		check("IRQ_EN readback", rd_data, 32'h0000_0003);
+
+		apb_write(12'h014, 32'h0000_0020);
+		apb_read(12'h014, rd_data);
+		check("PKT_LEN_EXP readback", rd_data, 32'h0000_0020);
 
 		// ==============================================================
 		// 测试结束
