@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PPA-Lite Agent Workflow</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #0f1117;
+    --bg-elevated: #161a26;
+    --surface: #181b24;
+    --surface2: #1e2230;
+    --border: #2a2e3b;
+    --text: #e0e0e6;
+    --text2: #9498a8;
+    --accent: #6c8cff;
+    --accent2: #4a6adf;
+    --green: #4ade80;
+    --yellow: #facc15;
+    --orange: #fb923c;
+    --red: #f87171;
+    --purple: #a78bfa;
+    --cyan: #22d3ee;
+    --radius: 10px;
+    --green-tr: rgba(74,222,128,0.08);
+    --red-tr: rgba(248,113,113,0.04);
+    --green-tr2: rgba(74,222,128,0.04);
+    --cyan-tr: rgba(34,211,238,0.04);
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #ffffff;
+      --bg-elevated: #f0f1f5;
+      --surface: #f5f6f9;
+      --surface2: #eceef2;
+      --border: #d2d5de;
+      --text: #1a1c26;
+      --text2: #555a6e;
+      --accent: #4060d0;
+      --accent2: #3350b8;
+      --green: #16a34a;
+      --yellow: #a16207;
+      --orange: #c2410c;
+      --red: #dc2626;
+      --purple: #7c3aed;
+      --cyan: #0e7490;
+      --green-tr: rgba(22,163,74,0.08);
+      --red-tr: rgba(220,38,38,0.05);
+      --green-tr2: rgba(22,163,74,0.05);
+      --cyan-tr: rgba(14,116,144,0.05);
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 64px 20px 48px;
+    background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  header p { color: var(--text2); margin-top: 10px; font-size: 1.05rem; }
+
+  /* Section */
+  section { padding: 56px 0; }
+  section + section { border-top: 1px solid var(--border); }
+  h2 {
+    font-size: 1.55rem;
+    margin-bottom: 28px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--accent2);
+    color: #fff;
+    font-size: .85rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  h3 { font-size: 1.1rem; margin: 24px 0 12px; color: var(--accent); font-weight: 600; }
+  p, li { color: var(--text2); }
+  p + p { margin-top: 10px; }
+
+  /* Diagram container */
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 36px 28px;
+    margin: 20px 0 28px;
+    overflow-x: auto;
+  }
+  .diagram svg { display: block; margin: 0 auto; }
+
+  /* Agent cards */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    gap: 18px;
+    margin-top: 20px;
+  }
+  .agent-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    transition: border-color .2s;
+  }
+  .agent-card:hover { border-color: var(--accent); }
+  .agent-card .tag {
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    padding: 3px 9px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  .agent-card h4 { font-size: 1.05rem; margin-bottom: 6px; }
+  .agent-card p { font-size: .88rem; }
+  .agent-card ul { margin-top: 8px; padding-left: 18px; font-size: .86rem; }
+  .agent-card li { margin-bottom: 3px; }
+
+  .tag-dut    { background: rgba(74,222,128,.15); color: var(--green); }
+  .tag-vplan  { background: rgba(34,211,238,.15); color: var(--cyan); }
+  .tag-vdebug { background: rgba(251,146,60,.15); color: var(--orange); }
+  .tag-integ  { background: rgba(167,139,250,.15); color: var(--purple); }
+  .tag-review { background: rgba(250,204,21,.15); color: var(--yellow); }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 36px;
+    margin: 20px 0;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 13px; top: 6px; bottom: 6px;
+    width: 2px;
+    background: var(--border);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 22px;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -28px; top: 7px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: var(--bg);
+  }
+  .timeline-item .step-title {
+    font-weight: 600;
+    color: var(--text);
+    font-size: .95rem;
+  }
+  .timeline-item .step-desc {
+    color: var(--text2);
+    font-size: .86rem;
+    margin-top: 2px;
+  }
+
+  /* Doc table */
+  .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: .88rem;
+  }
+  .doc-table th, .doc-table td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-table th {
+    color: var(--text2);
+    font-weight: 600;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .doc-table td { color: var(--text); }
+  .doc-table code {
+    background: var(--surface2);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: .84rem;
+    color: var(--accent);
+  }
+  .doc-table tr:hover td { background: var(--surface); }
+
+  /* Lab progress bar */
+  .lab-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .lab-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    text-align: center;
+  }
+  .lab-block .lab-id {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 6px;
+  }
+  .lab-block .lab-title {
+    font-size: .9rem;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .lab-block .lab-mod {
+    font-size: .78rem;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+  .lab-block .lab-status {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 10px;
+  }
+  .s-done   { background: rgba(74,222,128,.15); color: var(--green); }
+  .s-todo   { background: rgba(156,163,175,.15); color: #9ca3af; }
+
+  /* Arrows in SVG */
+  .arrow-label {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 11px;
+    fill: var(--text2);
+  }
+  .node-label {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-weight: 600;
+  }
+
+  /* Doc detail cards */
+  .doc-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-top: 18px;
+  }
+  .doc-detail {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 18px;
+    transition: border-color .2s;
+  }
+  .doc-detail:hover { border-color: var(--accent); }
+  .doc-detail .doc-left {
+    border-right: 1px solid var(--border);
+    padding-right: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .doc-detail .doc-left code {
+    font-size: .95rem;
+    color: var(--accent);
+    background: var(--surface2);
+    padding: 3px 8px;
+    border-radius: 5px;
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+  .doc-detail .doc-left .doc-badge {
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 4px;
+    width: fit-content;
+  }
+  .badge-readonly { background: rgba(248,113,113,.12); color: var(--red); }
+  .badge-rw { background: rgba(74,222,128,.12); color: var(--green); }
+  .badge-write { background: rgba(34,211,238,.12); color: var(--cyan); }
+  .doc-detail .doc-right { font-size: .88rem; }
+  .doc-detail .doc-right .doc-purpose {
+    color: var(--text);
+    font-weight: 600;
+    font-size: .92rem;
+    margin-bottom: 8px;
+  }
+  .doc-detail .doc-right .doc-how {
+    color: var(--text2);
+    line-height: 1.65;
+  }
+  .doc-detail .doc-right .doc-how b { color: var(--text); font-weight: 600; }
+  .doc-group-label {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin: 32px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  @media (max-width: 700px) {
+    .doc-detail { grid-template-columns: 1fr; }
+    .doc-detail .doc-left { border-right: none; border-bottom: 1px solid var(--border); padding-bottom: 12px; padding-right: 0; }
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 36px 20px;
+    color: var(--text2);
+    font-size: .8rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    header h1 { font-size: 1.6rem; }
+    .lab-bar { grid-template-columns: repeat(2, 1fr); }
+    .agent-grid { grid-template-columns: 1fr; }
+    .diagram { padding: 20px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>PPA-Lite Agent Workflow</h1>
+    <p>APB 数据包处理加速器 &mdash; AI Agent 协作总览</p>
+  </div>
+</header>
+
+<main class="container">
+
+<!-- =========== 1. 项目概述 =========== -->
+<section>
+  <h2><span class="num">1</span>项目概述</h2>
+  <p>PPA-Lite 是一款基于 APB 3.0 总线接口的可编程数据包处理加速器。项目分为 4 个 Lab，每个 Lab 在前一个的基础上逐步推进，由专职 AI Agent 遵循结构化协作协议进行开发与验证。</p>
+
+  <div class="lab-bar">
+    <div class="lab-block">
+      <div class="lab-id" style="color:var(--green)">Lab 1</div>
+      <div class="lab-title">APB Slave + SRAM</div>
+      <div class="lab-mod">M1 + M2</div>
+      <div class="lab-status s-done">VERIFIED</div>
+    </div>
+    <div class="lab-block">
+      <div class="lab-id" style="color:var(--cyan)">Lab 2</div>
+      <div class="lab-title">数据包处理核</div>
+      <div class="lab-mod">M3 (FSM)</div>
+      <div class="lab-status s-done">VERIFIED</div>
+    </div>
+    <div class="lab-block">
+      <div class="lab-id" style="color:var(--purple)">Lab 3</div>
+      <div class="lab-title">顶层集成</div>
+      <div class="lab-mod">ppa_top</div>
+      <div class="lab-status s-todo">TODO</div>
+    </div>
+    <div class="lab-block">
+      <div class="lab-id" style="color:var(--orange)">Lab 4</div>
+      <div class="lab-title">回归 + 覆盖率</div>
+      <div class="lab-mod">smoke / regress / cov</div>
+      <div class="lab-status s-todo">TODO</div>
+    </div>
+  </div>
+</section>
+
+<!-- =========== 2. 系统架构 =========== -->
+<section>
+  <h2><span class="num">2</span>系统架构</h2>
+  <p>PPA-Lite 系统由三个核心模块集成到顶层封装中。数据从 APB 总线经由 CSR/PKT_MEM 流入 SRAM，再由 FSM 核心处理。</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 820 310" width="820" height="310" xmlns="http://www.w3.org/2000/svg">
+      <!-- APB Bus -->
+      <rect x="20" y="120" width="110" height="60" rx="8" fill="var(--surface2)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="75" y="147" text-anchor="middle" class="node-label" fill="var(--accent)" font-size="13">APB 3.0</text>
+      <text x="75" y="165" text-anchor="middle" fill="var(--text2)" font-size="10">主机总线</text>
+
+      <!-- Arrow bus -> M1 -->
+      <line x1="130" y1="150" x2="190" y2="150" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+
+      <!-- M1: APB Slave IF -->
+      <rect x="190" y="90" width="170" height="120" rx="8" fill="var(--surface2)" stroke="var(--green)" stroke-width="1.5"/>
+      <text x="275" y="118" text-anchor="middle" class="node-label" fill="var(--green)" font-size="12">M1: APB Slave IF</text>
+      <text x="275" y="138" text-anchor="middle" fill="var(--text2)" font-size="10">ppa_apb_slave_if.sv</text>
+      <line x1="210" y1="152" x2="340" y2="152" stroke="var(--border)" stroke-width="0.5"/>
+      <text x="275" y="170" text-anchor="middle" fill="var(--text2)" font-size="10">CSR 寄存器</text>
+      <text x="275" y="186" text-anchor="middle" fill="var(--text2)" font-size="10">PKT_MEM 映射</text>
+      <text x="275" y="202" text-anchor="middle" fill="var(--text2)" font-size="10">IRQ 逻辑</text>
+
+      <!-- Arrow M1 -> M2 -->
+      <line x1="360" y1="135" x2="420" y2="135" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+      <text x="390" y="128" text-anchor="middle" class="arrow-label">写端口</text>
+
+      <!-- M2: SRAM -->
+      <rect x="420" y="90" width="170" height="120" rx="8" fill="var(--surface2)" stroke="var(--cyan)" stroke-width="1.5"/>
+      <text x="505" y="118" text-anchor="middle" class="node-label" fill="var(--cyan)" font-size="12">M2: Packet SRAM</text>
+      <text x="505" y="138" text-anchor="middle" fill="var(--text2)" font-size="10">ppa_packet_sram.sv</text>
+      <line x1="440" y1="152" x2="570" y2="152" stroke="var(--border)" stroke-width="0.5"/>
+      <text x="505" y="170" text-anchor="middle" fill="var(--text2)" font-size="10">8 x 32-bit</text>
+      <text x="505" y="186" text-anchor="middle" fill="var(--text2)" font-size="10">双端口同步 SRAM</text>
+
+      <!-- Arrow M2 -> M3 -->
+      <line x1="590" y1="135" x2="630" y2="135" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+      <text x="610" y="128" text-anchor="middle" class="arrow-label">读</text>
+
+      <!-- M3: Proc Core -->
+      <rect x="630" y="90" width="170" height="120" rx="8" fill="var(--surface2)" stroke="var(--purple)" stroke-width="1.5"/>
+      <text x="715" y="118" text-anchor="middle" class="node-label" fill="var(--purple)" font-size="12">M3: Proc Core</text>
+      <text x="715" y="138" text-anchor="middle" fill="var(--text2)" font-size="10">ppa_packet_proc_core.sv</text>
+      <line x1="650" y1="152" x2="780" y2="152" stroke="var(--border)" stroke-width="0.5"/>
+      <text x="715" y="170" text-anchor="middle" fill="var(--text2)" font-size="10">三状态 FSM</text>
+      <text x="715" y="186" text-anchor="middle" fill="var(--text2)" font-size="10">头部解析 + 校验</text>
+      <text x="715" y="202" text-anchor="middle" fill="var(--text2)" font-size="10">Payload sum / XOR</text>
+
+      <!-- Return: M3 -> M1 (status/done/irq) -->
+      <path d="M715,210 L715,260 L275,260 L275,210" fill="none" stroke="var(--orange)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrowOrange)"/>
+      <text x="495" y="278" text-anchor="middle" fill="var(--orange)" font-size="10">busy / done / err_flags / result &rarr; STATUS CSR &rarr; IRQ</text>
+
+      <!-- Top wrapper label -->
+      <rect x="170" y="55" width="650" height="225" rx="12" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="6,4"/>
+      <text x="495" y="75" text-anchor="middle" fill="var(--border)" font-size="11">ppa_top (Lab 3)</text>
+
+      <!-- Arrow defs -->
+      <defs>
+        <marker id="arrowBlue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--accent2)" stroke-width="1"/>
+        </marker>
+        <marker id="arrowOrange" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--orange)" stroke-width="1"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+</section>
+
+<!-- =========== 3. Agent 角色 =========== -->
+<section>
+  <h2><span class="num">3</span>Agent 角色</h2>
+  <p>五个专职 Agent 通过 Handoff 协议协同工作。每个 Agent 有明确的输入契约、触发条件、输出要求和终止判据。</p>
+
+  <div class="agent-grid">
+    <div class="agent-card">
+      <span class="tag tag-dut">DUT</span>
+      <h4>DUT Agent</h4>
+      <p>编写、验证并修复 RTL 代码。</p>
+      <ul>
+        <li><b>触发：</b>新 Lab 开始，或 VDebug 上报 RTL 缺陷</li>
+        <li><b>输入：</b>design-prompt.md 就绪，feature-matrix 中存在 #TODO/#WIP 行</li>
+        <li><b>输出：</b>RTL 通过 <code>make comp</code>，feature-matrix 更新为 #DONE</li>
+        <li><b>退出：</b>所有目标行 #DONE 且编译无报错</li>
+      </ul>
+    </div>
+    <div class="agent-card">
+      <span class="tag tag-vplan">VPLAN</span>
+      <h4>Verification Plan Agent</h4>
+      <p>将 spec 转化为测试用例矩阵并实现 TB。</p>
+      <ul>
+        <li><b>触发：</b>DUT Agent 完成当前 Lab 的 RTL</li>
+        <li><b>输入：</b>已编译的 RTL + design-prompt + spec</li>
+        <li><b>输出：</b>testplan.md 完整，TB 代码通过 <code>make run</code></li>
+        <li><b>退出：</b>所有 P0 测试用例 PASS，TB 状态列已更新</li>
+      </ul>
+    </div>
+    <div class="agent-card">
+      <span class="tag tag-vdebug">VDEBUG</span>
+      <h4>Verification Debug Agent</h4>
+      <p>分析仿真失败，定位根本原因。</p>
+      <ul>
+        <li><b>触发：</b>TB 上报 FAIL / ERROR / mismatch</li>
+        <li><b>输入：</b>失败的仿真日志，可复现的 <code>make run</code></li>
+        <li><b>输出：</b>定位到根本原因（file:line），修复建议写入 handoff</li>
+        <li><b>退出：</b>根本原因已记录，或在 risk-register 标注 #BLOCKED</li>
+      </ul>
+    </div>
+    <div class="agent-card">
+      <span class="tag tag-integ">INTEGRATION</span>
+      <h4>Integration Agent</h4>
+      <p>维护 Makefile、目录结构和回归测试入口。</p>
+      <ul>
+        <li><b>触发：</b>新 Lab 环境搭建或 Lab 4 回归构建</li>
+        <li><b>输入：</b>当前 Lab 所有子模块 RTL 已 #DONE</li>
+        <li><b>输出：</b><code>make comp/run/clean</code> 正常运行；Lab 4 新增 smoke/regress/cov</li>
+        <li><b>退出：</b>在干净环境中各目标可复现</li>
+      </ul>
+    </div>
+    <div class="agent-card">
+      <span class="tag tag-review">REVIEW</span>
+      <h4>Review / Sign-off Agent</h4>
+      <p>在每个 Lab 完成时进行结构化评审。</p>
+      <ul>
+        <li><b>触发：</b>Lab 进入验收阶段</li>
+        <li><b>输入：</b>acceptance.md 已定义，DUT 与验证声称完成</li>
+        <li><b>输出：</b>acceptance.md 中每条判据已评定 PASS/FAIL</li>
+        <li><b>退出：</b>所有必选项 PASS，或将 FAIL 项记录到 risk-register</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- =========== 4. Agent 协作流程 =========== -->
+<section>
+  <h2><span class="num">4</span>Agent 协作流程</h2>
+  <p>Agent 之间通过结构化 Handoff 记录交接工作。下图展示单个 Lab 内的典型流程。</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 820 400" width="820" height="400" xmlns="http://www.w3.org/2000/svg">
+      <!-- DUT Agent -->
+      <rect x="30" y="60" width="140" height="52" rx="8" fill="var(--surface2)" stroke="var(--green)" stroke-width="1.5"/>
+      <text x="100" y="83" text-anchor="middle" class="node-label" fill="var(--green)" font-size="12">DUT Agent</text>
+      <text x="100" y="100" text-anchor="middle" fill="var(--text2)" font-size="9">编写 RTL</text>
+
+      <!-- Arrow DUT -> VPlan -->
+      <line x1="170" y1="86" x2="250" y2="86" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#arrowBlue2)"/>
+      <text x="210" y="78" text-anchor="middle" class="arrow-label">RTL 就绪</text>
+
+      <!-- VPlan Agent -->
+      <rect x="250" y="60" width="140" height="52" rx="8" fill="var(--surface2)" stroke="var(--cyan)" stroke-width="1.5"/>
+      <text x="320" y="83" text-anchor="middle" class="node-label" fill="var(--cyan)" font-size="12">VPlan Agent</text>
+      <text x="320" y="100" text-anchor="middle" fill="var(--text2)" font-size="9">Testplan + TB</text>
+
+      <!-- Arrow VPlan -> sim -->
+      <line x1="390" y1="86" x2="460" y2="86" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#arrowBlue2)"/>
+      <text x="425" y="78" text-anchor="middle" class="arrow-label">make run</text>
+
+      <!-- Decision: PASS? -->
+      <polygon points="530,56 590,86 530,116 470,86" fill="var(--surface2)" stroke="var(--yellow)" stroke-width="1.5"/>
+      <text x="530" y="90" text-anchor="middle" class="node-label" fill="var(--yellow)" font-size="11">PASS?</text>
+
+      <!-- YES -> Review -->
+      <line x1="590" y1="86" x2="650" y2="86" stroke="var(--green)" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+      <text x="620" y="78" text-anchor="middle" fill="var(--green)" font-size="10">YES</text>
+
+      <!-- Review Agent -->
+      <rect x="650" y="60" width="140" height="52" rx="8" fill="var(--surface2)" stroke="var(--yellow)" stroke-width="1.5"/>
+      <text x="720" y="83" text-anchor="middle" class="node-label" fill="var(--yellow)" font-size="12">Review Agent</text>
+      <text x="720" y="100" text-anchor="middle" fill="var(--text2)" font-size="9">acceptance.md</text>
+
+      <!-- NO -> VDebug -->
+      <line x1="530" y1="116" x2="530" y2="180" stroke="var(--red)" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+      <text x="545" y="150" text-anchor="start" fill="var(--red)" font-size="10">FAIL</text>
+
+      <!-- VDebug Agent -->
+      <rect x="460" y="180" width="140" height="52" rx="8" fill="var(--surface2)" stroke="var(--orange)" stroke-width="1.5"/>
+      <text x="530" y="203" text-anchor="middle" class="node-label" fill="var(--orange)" font-size="12">VDebug Agent</text>
+      <text x="530" y="220" text-anchor="middle" fill="var(--text2)" font-size="9">根本原因分析</text>
+
+      <!-- VDebug -> DUT (RTL bug) -->
+      <path d="M460,206 L100,206 L100,112" fill="none" stroke="var(--orange)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrowOrange2)"/>
+      <text x="280" y="198" text-anchor="middle" fill="var(--orange)" font-size="10">RTL 缺陷 &rarr; 修复 RTL</text>
+
+      <!-- VDebug -> VPlan (TB bug) -->
+      <path d="M530,180 L530,160 L420,160 L420,112 L320,112" fill="none" stroke="var(--orange)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrowOrange2)"/>
+      <text x="420" y="152" text-anchor="middle" fill="var(--orange)" font-size="10">TB 缺陷</text>
+
+      <!-- Review -> Sign-off -->
+      <line x1="720" y1="112" x2="720" y2="170" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#arrowBlue2)"/>
+
+      <!-- Sign-off box -->
+      <rect x="650" y="170" width="140" height="44" rx="8" fill="var(--green-tr)" stroke="var(--green)" stroke-width="1.5"/>
+      <text x="720" y="197" text-anchor="middle" class="node-label" fill="var(--green)" font-size="12">Lab 签收</text>
+
+      <!-- Integration Agent (side) -->
+      <rect x="30" y="170" width="140" height="52" rx="8" fill="var(--surface2)" stroke="var(--purple)" stroke-width="1.5"/>
+      <text x="100" y="193" text-anchor="middle" class="node-label" fill="var(--purple)" font-size="12">Integration Agent</text>
+      <text x="100" y="210" text-anchor="middle" fill="var(--text2)" font-size="9">Makefile + 目录</text>
+
+      <!-- Integration supports the whole flow -->
+      <path d="M100,170 L100,145 L100,140" fill="none" stroke="var(--purple)" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="100" y="137" text-anchor="middle" fill="var(--purple)" font-size="9">环境搭建</text>
+
+      <!-- Handoff protocol annotation -->
+      <rect x="30" y="280" width="760" height="100" rx="10" fill="var(--surface2)" stroke="var(--border)" stroke-width="1"/>
+      <text x="410" y="305" text-anchor="middle" class="node-label" fill="var(--accent)" font-size="13">Handoff 协议（每次会话退出时执行）</text>
+      <text x="410" y="328" text-anchor="middle" fill="var(--text2)" font-size="11">每个 Agent 退出时写入 handoff.md：已完成内容 / 剩余工作 / 注意事项 / 最小验证命令 / 后续步骤</text>
+      <text x="410" y="350" text-anchor="middle" fill="var(--text2)" font-size="11">然后更新：ppa-status.md + ppa-feature-matrix.md + log.md + ppa-risk-register.md（如有需要）</text>
+      <text x="410" y="370" text-anchor="middle" fill="var(--text2)" font-size="11">原则：一次会话覆盖当前 Lab 所有 feature-matrix 行；上下文不足时优雅退出。</text>
+
+      <defs>
+        <marker id="arrowBlue2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--accent2)" stroke-width="1"/>
+        </marker>
+        <marker id="arrowGreen" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--green)" stroke-width="1"/>
+        </marker>
+        <marker id="arrowRed" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--red)" stroke-width="1"/>
+        </marker>
+        <marker id="arrowOrange2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--orange)" stroke-width="1"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+</section>
+
+<!-- =========== 5. 会话生命周期 =========== -->
+<section>
+  <h2><span class="num">5</span>会话生命周期</h2>
+  <p>每次 Agent 会话遵循标准化的七步生命周期，确保一致的入场、执行和交接。</p>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px;">
+    <div>
+      <h3>入场流程（进入时）</h3>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="step-title">1. 读取 ppa-status.md</div>
+          <div class="step-desc">当前进度、阻塞项、后续步骤（&le;30 秒）</div>
+        </div>
+        <div class="timeline-item">
+          <div class="step-title">2. 读取 handoff.md</div>
+          <div class="step-desc">了解上一个 Agent 留下的内容（&le;2 分钟）</div>
+        </div>
+        <div class="timeline-item">
+          <div class="step-title">3. 读取 ppa-feature-matrix.md</div>
+          <div class="step-desc">哪些功能已完成，哪些待完成（&le;2 分钟）</div>
+        </div>
+        <div class="timeline-item">
+          <div class="step-title">4. 确定范围</div>
+          <div class="step-desc">以当前 Lab 的所有 feature-matrix 行为目标</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>收尾流程（退出时）</h3>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="step-title">5. 自我验收</div>
+          <div class="step-desc">执行 acceptance.md 中的判据或 <code>make run</code></div>
+        </div>
+        <div class="timeline-item">
+          <div class="step-title">6. 写入 handoff</div>
+          <div class="step-desc">向 handoff.md 追加交接记录</div>
+        </div>
+        <div class="timeline-item">
+          <div class="step-title">7. 更新状态</div>
+          <div class="step-desc">刷新 ppa-status.md、ppa-feature-matrix.md、log.md</div>
+        </div>
+      </div>
+      <p style="margin-top:16px; font-size:.86rem;">若时间/上下文中途耗尽：先写入 handoff + status，再优雅退出。</p>
+    </div>
+  </div>
+</section>
+
+<!-- =========== 6. Lab 工作流阶段 =========== -->
+<section>
+  <h2><span class="num">6</span>Lab 工作流阶段</h2>
+  <p>每个 Lab 经历 5 个阶段。这些阶段构成一个循环，持续迭代直至所有验收判据通过。</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 820 130" width="820" height="130" xmlns="http://www.w3.org/2000/svg">
+      <!-- Phase boxes -->
+      <rect x="10" y="35" width="130" height="55" rx="8" fill="var(--surface2)" stroke="var(--green)" stroke-width="1.5"/>
+      <text x="75" y="58" text-anchor="middle" class="node-label" fill="var(--green)" font-size="12">设计</text>
+      <text x="75" y="76" text-anchor="middle" fill="var(--text2)" font-size="9">DUT Agent + RTL</text>
+
+      <line x1="140" y1="62" x2="175" y2="62" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#arrowBlue3)"/>
+
+      <rect x="175" y="35" width="130" height="55" rx="8" fill="var(--surface2)" stroke="var(--yellow)" stroke-width="1.5"/>
+      <text x="240" y="58" text-anchor="middle" class="node-label" fill="var(--yellow)" font-size="12">评审</text>
+      <text x="240" y="76" text-anchor="middle" fill="var(--text2)" font-size="9">RTL vs Spec 核查</text>
+
+      <line x1="305" y1="62" x2="340" y2="62" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#arrowBlue3)"/>
+
+      <rect x="340" y="35" width="130" height="55" rx="8" fill="var(--surface2)" stroke="var(--cyan)" stroke-width="1.5"/>
+      <text x="405" y="58" text-anchor="middle" class="node-label" fill="var(--cyan)" font-size="12">验证</text>
+      <text x="405" y="76" text-anchor="middle" fill="var(--text2)" font-size="9">Testplan + TB + Sim</text>
+
+      <line x1="470" y1="62" x2="505" y2="62" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#arrowBlue3)"/>
+
+      <rect x="505" y="35" width="130" height="55" rx="8" fill="var(--surface2)" stroke="var(--purple)" stroke-width="1.5"/>
+      <text x="570" y="58" text-anchor="middle" class="node-label" fill="var(--purple)" font-size="12">验收</text>
+      <text x="570" y="76" text-anchor="middle" fill="var(--text2)" font-size="9">PASS / FAIL 关卡</text>
+
+      <line x1="635" y1="62" x2="670" y2="62" stroke="var(--accent2)" stroke-width="1.5" marker-end="url(#arrowBlue3)"/>
+
+      <rect x="670" y="35" width="130" height="55" rx="8" fill="var(--surface2)" stroke="var(--orange)" stroke-width="1.5"/>
+      <text x="735" y="58" text-anchor="middle" class="node-label" fill="var(--orange)" font-size="12">迭代</text>
+      <text x="735" y="76" text-anchor="middle" fill="var(--text2)" font-size="9">修复 + 重验</text>
+
+      <!-- Loop arrow: Iteration -> Design -->
+      <path d="M735,90 L735,115 L75,115 L75,90" fill="none" stroke="var(--red)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrowRed2)"/>
+      <text x="405" y="112" text-anchor="middle" fill="var(--red)" font-size="10">持续迭代直至所有验收判据 PASS</text>
+
+      <defs>
+        <marker id="arrowBlue3" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--accent2)" stroke-width="1"/>
+        </marker>
+        <marker id="arrowRed2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--red)" stroke-width="1"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+</section>
+
+<!-- =========== 7. 文档生态系统 =========== -->
+<section>
+  <h2><span class="num">7</span>文档生态系统 &mdash; 文件如何驱动 AI Agent</h2>
+  <p>文档不是被动的记录 &mdash; 它们是 Agent 工作流的<b>操作系统</b>。每份文档在 Agent 的决策循环中扮演特定角色：入场时读什么，工作时查什么，退出时更新什么。下图展示各文件之间的信息流向。</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 860 560" width="860" height="560" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="aB" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--accent2)" stroke-width="1"/></marker>
+        <marker id="aG" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--green)" stroke-width="1"/></marker>
+        <marker id="aO" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--orange)" stroke-width="1"/></marker>
+        <marker id="aC" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--cyan)" stroke-width="1"/></marker>
+        <marker id="aP" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--purple)" stroke-width="1"/></marker>
+        <marker id="aR" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="none" stroke="var(--red)" stroke-width="1"/></marker>
+      </defs>
+
+      <!-- ===== Layer labels ===== -->
+      <rect x="10" y="10" width="840" height="110" rx="10" fill="var(--red-tr)" stroke="var(--red)" stroke-width="0.8" stroke-dasharray="4,3"/>
+      <text x="30" y="32" fill="var(--red)" font-size="10" font-weight="700" letter-spacing=".5" font-family="Segoe UI, system-ui, sans-serif">治理层（Agent 只读，由用户持有）</text>
+
+      <rect x="10" y="135" width="840" height="105" rx="10" fill="var(--green-tr2)" stroke="var(--green)" stroke-width="0.8" stroke-dasharray="4,3"/>
+      <text x="30" y="157" fill="var(--green)" font-size="10" font-weight="700" letter-spacing=".5" font-family="Segoe UI, system-ui, sans-serif">共享状态（Agent 入场时读取，退出时写入）</text>
+
+      <rect x="10" y="255" width="840" height="105" rx="10" fill="var(--cyan-tr)" stroke="var(--cyan)" stroke-width="0.8" stroke-dasharray="4,3"/>
+      <text x="30" y="277" fill="var(--cyan)" font-size="10" font-weight="700" letter-spacing=".5" font-family="Segoe UI, system-ui, sans-serif">各 Lab 工作文档（labX/doc/）</text>
+
+      <!-- ===== Governance row ===== -->
+      <!-- CLAUDE.md -->
+      <rect x="30" y="45" width="140" height="60" rx="8" fill="var(--surface2)" stroke="var(--red)" stroke-width="1.2"/>
+      <text x="100" y="70" text-anchor="middle" class="node-label" fill="var(--red)" font-size="11">CLAUDE.md</text>
+      <text x="100" y="86" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">入口文件</text>
+      <text x="100" y="98" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">入场 + 收尾</text>
+
+      <!-- spec -->
+      <rect x="210" y="45" width="150" height="60" rx="8" fill="var(--surface2)" stroke="var(--red)" stroke-width="1.2"/>
+      <text x="285" y="70" text-anchor="middle" class="node-label" fill="var(--red)" font-size="11">ppa-lite-spec.md</text>
+      <text x="285" y="86" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">唯一技术真相源</text>
+      <text x="285" y="98" text-anchor="middle" fill="var(--yellow)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">Priority #1</text>
+
+      <!-- character -->
+      <rect x="400" y="45" width="170" height="60" rx="8" fill="var(--surface2)" stroke="var(--red)" stroke-width="1.2"/>
+      <text x="485" y="70" text-anchor="middle" class="node-label" fill="var(--red)" font-size="11">ppa-agent-character.md</text>
+      <text x="485" y="86" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">角色定义</text>
+      <text x="485" y="98" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">契约 + Handoff 协议</text>
+
+      <!-- prompt -->
+      <rect x="610" y="45" width="160" height="60" rx="8" fill="var(--surface2)" stroke="var(--red)" stroke-width="1.2"/>
+      <text x="690" y="70" text-anchor="middle" class="node-label" fill="var(--red)" font-size="11">ppa-lab-prompt.md</text>
+      <text x="690" y="86" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">蓝图 + 命名规范</text>
+      <text x="690" y="98" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">目录结构</text>
+
+      <!-- CLAUDE.md defines reading order -->
+      <path d="M100,105 L100,120 L285,120 L285,135" fill="none" stroke="var(--red)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#aR)"/>
+      <path d="M100,105 L100,125 L500,125 L500,135" fill="none" stroke="var(--red)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#aR)"/>
+      <path d="M100,105 L100,125 L730,125 L730,135" fill="none" stroke="var(--red)" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#aR)"/>
+      <text x="420" y="118" text-anchor="middle" fill="var(--red)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">CLAUDE.md 定义了以下所有文件的读取顺序</text>
+
+      <!-- ===== Shared state row ===== -->
+      <!-- ppa-status.md -->
+      <rect x="30" y="170" width="170" height="55" rx="8" fill="var(--surface2)" stroke="var(--green)" stroke-width="1.2"/>
+      <text x="115" y="192" text-anchor="middle" class="node-label" fill="var(--green)" font-size="11">ppa-status.md</text>
+      <text x="115" y="208" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">进度看板</text>
+      <text x="115" y="220" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">阻塞项 + 后续步骤</text>
+
+      <!-- ppa-feature-matrix.md -->
+      <rect x="240" y="170" width="200" height="55" rx="8" fill="var(--surface2)" stroke="var(--green)" stroke-width="1.2"/>
+      <text x="340" y="192" text-anchor="middle" class="node-label" fill="var(--green)" font-size="11">ppa-feature-matrix.md</text>
+      <text x="340" y="208" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">任务看板（选取待处理行）</text>
+      <text x="340" y="220" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">Spec &harr; 实现 &harr; 测试可追溯性</text>
+
+      <!-- ppa-risk-register.md -->
+      <rect x="480" y="170" width="170" height="55" rx="8" fill="var(--surface2)" stroke="var(--green)" stroke-width="1.2"/>
+      <text x="565" y="192" text-anchor="middle" class="node-label" fill="var(--green)" font-size="11">ppa-risk-register.md</text>
+      <text x="565" y="208" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">上报路径</text>
+      <text x="565" y="220" text-anchor="middle" fill="var(--text2)" font-size="8.5" font-family="Segoe UI, system-ui, sans-serif">假设 + 歧义</text>
+
+      <!-- Feature-matrix references spec -->
+      <path d="M340,170 L340,130 L285,130 L285,105" fill="none" stroke="var(--yellow)" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#aO)"/>
+      <text x="280" y="140" text-anchor="end" fill="var(--yellow)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">Spec &sect; 引用</text>
+
+      <!-- ===== Per-lab row ===== -->
+      <!-- design-prompt -->
+      <rect x="30" y="290" width="130" height="55" rx="8" fill="var(--surface2)" stroke="var(--cyan)" stroke-width="1.2"/>
+      <text x="95" y="312" text-anchor="middle" class="node-label" fill="var(--cyan)" font-size="10">design-prompt.md</text>
+      <text x="95" y="328" text-anchor="middle" fill="var(--text2)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">Lab 设计指南</text>
+      <text x="95" y="340" text-anchor="middle" fill="var(--text2)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">（spec &rarr; 实现计划）</text>
+
+      <!-- testplan -->
+      <rect x="185" y="290" width="120" height="55" rx="8" fill="var(--surface2)" stroke="var(--cyan)" stroke-width="1.2"/>
+      <text x="245" y="312" text-anchor="middle" class="node-label" fill="var(--cyan)" font-size="10">testplan.md</text>
+      <text x="245" y="328" text-anchor="middle" fill="var(--text2)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">测试用例矩阵</text>
+      <text x="245" y="340" text-anchor="middle" fill="var(--text2)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">（覆盖率目标）</text>
+
+      <!-- handoff -->
+      <rect x="330" y="290" width="120" height="55" rx="8" fill="var(--surface2)" stroke="var(--cyan)" stroke-width="1.2"/>
+      <text x="390" y="312" text-anchor="middle" class="node-label" fill="var(--cyan)" font-size="10">handoff.md</text>
+      <text x="390" y="328" text-anchor="middle" fill="var(--text2)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">Agent &harr; Agent</text>
+      <text x="390" y="340" text-anchor="middle" fill="var(--text2)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">（会话记忆）</text>
+
+      <!-- acceptance -->
+      <rect x="475" y="290" width="130" height="55" rx="8" fill="var(--surface2)" stroke="var(--cyan)" stroke-width="1.2"/>
+      <text x="540" y="312" text-anchor="middle" class="node-label" fill="var(--cyan)" font-size="10">acceptance.md</text>
+      <text x="540" y="328" text-anchor="middle" fill="var(--text2)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">PASS/FAIL 关卡</text>
+      <text x="540" y="340" text-anchor="middle" fill="var(--text2)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">（可机器核查）</text>
+
+      <!-- log -->
+      <rect x="630" y="290" width="110" height="55" rx="8" fill="var(--surface2)" stroke="var(--cyan)" stroke-width="1.2"/>
+      <text x="685" y="312" text-anchor="middle" class="node-label" fill="var(--cyan)" font-size="10">log.md</text>
+      <text x="685" y="328" text-anchor="middle" fill="var(--text2)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">Lab 日志</text>
+      <text x="685" y="340" text-anchor="middle" fill="var(--text2)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">（面向人工阅读）</text>
+
+      <!-- Connections: feature-matrix <-> testplan -->
+      <path d="M300,225 L300,250 L245,250 L245,290" fill="none" stroke="var(--green)" stroke-width="1" marker-end="url(#aG)"/>
+      <text x="260" y="262" text-anchor="start" fill="var(--green)" font-size="7.5" font-family="Segoe UI, system-ui, sans-serif">测试用例名称</text>
+
+      <!-- Connections: feature-matrix <-> design-prompt -->
+      <path d="M280,225 L280,256 L95,256 L95,290" fill="none" stroke="var(--green)" stroke-width="1" marker-end="url(#aG)"/>
+      <text x="170" y="252" text-anchor="middle" fill="var(--green)" font-size="7.5" font-family="Segoe UI, system-ui, sans-serif">目标功能</text>
+
+      <!-- Connections: status <-> handoff -->
+      <path d="M150,225 L150,260 L390,260 L390,290" fill="none" stroke="var(--green)" stroke-width="1" marker-end="url(#aG)"/>
+      <text x="280" y="270" text-anchor="middle" fill="var(--green)" font-size="7.5" font-family="Segoe UI, system-ui, sans-serif">进度同步</text>
+
+      <!-- Connections: risk-register <-> acceptance -->
+      <path d="M565,225 L565,260 L540,260 L540,290" fill="none" stroke="var(--green)" stroke-width="1" marker-end="url(#aG)"/>
+      <text x="590" y="262" text-anchor="start" fill="var(--green)" font-size="7.5" font-family="Segoe UI, system-ui, sans-serif">FAIL &rarr; 风险</text>
+
+      <!-- ===== Agent node at bottom ===== -->
+      <rect x="200" y="400" width="440" height="50" rx="10" fill="var(--surface2)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="420" y="422" text-anchor="middle" class="node-label" fill="var(--accent)" font-size="13">AI Agent Session</text>
+      <text x="420" y="440" text-anchor="middle" fill="var(--text2)" font-size="10" font-family="Segoe UI, system-ui, sans-serif">DUT / VPlan / VDebug / Integration / Review</text>
+
+      <!-- Entry arrows: status, handoff, feature-matrix -> Agent -->
+      <path d="M115,225 L115,390 L280,390 L280,400" fill="none" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#aB)"/>
+      <path d="M340,225 L340,380 L370,380 L370,400" fill="none" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#aB)"/>
+      <path d="M390,345 L390,370 L420,370 L420,400" fill="none" stroke="var(--accent)" stroke-width="1.2" marker-end="url(#aB)"/>
+      <text x="90" y="388" text-anchor="end" fill="var(--accent)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">入场时读取</text>
+
+      <!-- Exit arrows: Agent -> status, feature-matrix, handoff, log, risk-register -->
+      <path d="M500,400 L500,375 L685,375 L685,345" fill="none" stroke="var(--orange)" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#aO)"/>
+      <text x="760" y="385" text-anchor="start" fill="var(--orange)" font-size="8" font-family="Segoe UI, system-ui, sans-serif">退出时写入</text>
+
+      <!-- Bottom legend -->
+      <rect x="30" y="475" width="800" height="70" rx="8" fill="var(--surface2)" stroke="var(--border)" stroke-width="1"/>
+      <text x="420" y="498" text-anchor="middle" fill="var(--accent)" font-size="11" font-weight="600" font-family="Segoe UI, system-ui, sans-serif">信息流摘要</text>
+      <text x="420" y="516" text-anchor="middle" fill="var(--text2)" font-size="10" font-family="Segoe UI, system-ui, sans-serif">入场：Agent 读取 status &rarr; handoff &rarr; feature-matrix（30秒+2分钟+2分钟）以了解上下文并选取任务</text>
+      <text x="420" y="534" text-anchor="middle" fill="var(--text2)" font-size="10" font-family="Segoe UI, system-ui, sans-serif">退出：Agent 写入 handoff + 更新 status + feature-matrix + log + risk-register，确保知识不丢失</text>
+    </svg>
+  </div>
+
+  <!-- ===== Detailed doc descriptions ===== -->
+  <div class="doc-group-label" style="color:var(--red);">治理层 &mdash; Agent 只读，定义「如何思考」</div>
+  <p>这些文件是 Agent 的「操作说明书」。由用户设定，Agent 不得修改（变更需通过 risk-register 发起 RFC）。它们共同回答：<b>我是谁？规则是什么？设计是什么样子？</b></p>
+
+  <div class="doc-detail-grid">
+    <div class="doc-detail">
+      <div class="doc-left">
+        <code>CLAUDE.md</code>
+        <span class="doc-badge badge-readonly">Read-only</span>
+      </div>
+      <div class="doc-right">
+        <div class="doc-purpose">Agent 入口文件 &mdash; 每次会话的「前门」</div>
+        <div class="doc-how">
+          <b>对 Agent 的作用：</b>这是每个 Agent 进入项目后首先读取的文件。它规定了精确的<b>入场顺序</b>（读什么、按什么顺序、时间预算是多少）以及<b>收尾清单</b>（退出前需更新什么）。没有它，Agent 将不知从何开始。<br>
+          <b>核心机制：</b>&sect;1 定义了优先读取列表（status &rarr; handoff &rarr; feature-matrix &rarr; character &rarr; prompt &rarr; spec）。&sect;2 定义强制退出动作。&sect;3&ndash;4 规定编码标准和冲突解决规则。<br>
+          <b>类比：</b>如同员工手册 &mdash; 第一天阅读，流程不确定时查阅。
+        </div>
+      </div>
+    </div>
+    <div class="doc-detail">
+      <div class="doc-left">
+        <code>ppa-lite-spec.md</code>
+        <span class="doc-badge badge-readonly">Read-only</span>
+        <span class="doc-badge" style="background:rgba(250,204,21,.12);color:var(--yellow);margin-top:4px;">Priority #1</span>
+      </div>
+      <div class="doc-right">
+        <div class="doc-purpose">技术规格书 &mdash; 唯一技术真相源</div>
+        <div class="doc-how">
+          <b>对 Agent 的作用：</b>当 Agent 需要知道<i>实现或验证什么</i>时，此文件是权威答案。它定义了 APB 协议时序、CSR 寄存器布局、FSM 行为、错误码等内容。当其他文档出现矛盾时，均以本文件为准。<br>
+          <b>Agent 的使用方式：</b>Agent 不会在开始时通读整个 spec。而是通过 <code>ppa-feature-matrix.md</code> 中的 <code>Spec &sect;</code> 引用，直接跳转到当前任务所需的章节。例如，实现 F1-03（CSR 地址映射）时，Agent 读取 spec 的 &sect;3.2。<br>
+          <b>约束：</b>任何 Agent 均不得修改此文件。若发现 spec 错误，Agent 应在 <code>ppa-risk-register.md</code> 中记录 RFC。
+        </div>
+      </div>
+    </div>
+    <div class="doc-detail">
+      <div class="doc-left">
+        <code>ppa-agent-character.md</code>
+        <span class="doc-badge badge-readonly">Read-only</span>
+      </div>
+      <div class="doc-right">
+        <div class="doc-purpose">协作协议 &mdash; 定义「谁做什么」和「如何交接」</div>
+        <div class="doc-how">
+          <b>对 Agent 的作用：</b>告知每个 Agent 的<b>角色边界</b>：输入契约（开始前必须就绪的内容）、触发条件（激活我的事件）、输出要求（我必须产出什么）、终止判据（我何时完成）。同时定义<b>Handoff 协议</b>模板 &mdash; 跨会话知识传递的结构化格式。<br>
+          <b>多 Agent 协调的关键：</b>防止角色重叠（例如 DUT Agent 不编写测试用例）。确保每个 Agent 知道读取和更新哪些文档。&sect;8 表格将 spec 章节映射到负责的 Agent，使 Agent 明确自己关注 spec 的哪个部分。
+        </div>
+      </div>
+    </div>
+    <div class="doc-detail">
+      <div class="doc-left">
+        <code>ppa-lab-prompt.md</code>
+        <span class="doc-badge badge-readonly">Read-only</span>
+      </div>
+      <div class="doc-right">
+        <div class="doc-purpose">项目蓝图 &mdash; 命名规范、目录结构、编码约束</div>
+        <div class="doc-how">
+          <b>对 Agent 的作用：</b>提供 Agent 必须遵守的结构性规则：文件命名（<code>ppa_*.sv</code>）、目录组织（<code>labX/rtl/</code>、<code>labX/svtb/</code>）、Makefile 目标和设计/验证约束。还包含 spec 硬约束的快速索引（&sect;0.4），使 Agent 无需搜索完整 spec 即可查阅常用规则。<br>
+          <b>Lab 路线图：</b>&sect;3 定义了每个 Lab 必须完成的内容，并指向对应的 <code>acceptance.md</code>。这是 Agent 理解项目整体推进路径的方式。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="doc-group-label" style="color:var(--green);">共享状态 &mdash; 入场读取，退出写入，驱动 Agent 决策</div>
+  <p>这些是每次会话都会变化的「活」文档。它们构成一个<b>反馈环路</b>：每个 Agent 读取前一次的状态，完成工作后将新状态写回，供下一个 Agent 使用。这就是上下文在无需 Agent 直接通信的情况下跨会话传承的机制。</p>
+
+  <div class="doc-detail-grid">
+    <div class="doc-detail">
+      <div class="doc-left">
+        <code>ppa-status.md</code>
+        <span class="doc-badge badge-rw">Read + Write</span>
+      </div>
+      <div class="doc-right">
+        <div class="doc-purpose">进度看板 &mdash; 「30秒态势感知」文件</div>
+        <div class="doc-how">
+          <b>入场时（首先读取，&le;30秒）：</b>告知 Agent 当前项目阶段、已完成内容、阻塞项和推荐的下一步。这是一个<b>决策加速器</b> &mdash; Agent 立即知道是开始 Lab 3、调试失败，还是等待依赖项。<br>
+          <b>退出时（强制更新）：</b>Agent 刷新里程碑表、进行中的条目和阻塞列表，以反映本次会话的工作成果。「后续步骤」部分尤为重要 &mdash; 它是给下一个 Agent 的直接指令。<br>
+          <b>重要性：</b>没有 ppa-status.md，每次新 Agent 会话都需要从 git 历史和代码检查中重新推导项目状态。此文件使入场即时完成。
+        </div>
+      </div>
+    </div>
+    <div class="doc-detail">
+      <div class="doc-left">
+        <code>ppa-feature-matrix.md</code>
+        <span class="doc-badge badge-rw">Read + Write</span>
+      </div>
+      <div class="doc-right">
+        <div class="doc-purpose">任务看板 + 可追溯性 &mdash; Agent 的「待办清单」与进度追踪器</div>
+        <div class="doc-how">
+          <b>核心机制：</b>每行是一个原子功能，具有唯一 ID（F1-01、F2-05 等）、<code>Spec &sect;</code> 链接、实现状态、TB 状态和关联测试用例名称。Agent 每次会话<b>以当前 Lab 的所有行为目标</b> &mdash; 由于 PPA-Lite 设计紧凑，每个 Lab 可在单次会话中完成。<br>
+          <b>入场时：</b>Agent 扫描 #TODO 和 #WIP 行以确定可用工作。<code>Spec &sect;</code> 列告知需要读取哪些 spec 章节。<code>Testcase</code> 列告知用于验证的测试名称。<br>
+          <b>退出时：</b>Agent 更新状态列（#TODO &rarr; #WIP &rarr; #DONE &rarr; #VERIFIED）以反映已完成的工作。<br>
+          <b>可追溯性：</b>此文件取代了独立的追溯矩阵。每个功能向上链接到 spec，向下链接到测试，确保无遗漏。
+        </div>
+      </div>
+    </div>
+    <div class="doc-detail">
+      <div class="doc-left">
+        <code>ppa-risk-register.md</code>
+        <span class="doc-badge badge-rw">Read + Write</span>
+      </div>
+      <div class="doc-right">
+        <div class="doc-purpose">上报路径 &mdash; 不确定性被记录而非忽视的地方</div>
+        <div class="doc-how">
+          <b>Agent 何时写入：</b>每当 Agent 遇到 spec 歧义、做出假设、发现 spec 中的潜在缺陷，或因阻塞无法完成任务时。Agent 不是猜测或停下，而是在此记录问题（含严重程度）并以已记录的假设继续工作。<br>
+          <b>Agent 何时读取：</b>入场时，检查是否存在影响当前任务的已知风险。实现功能前，查看是否有人已对相关 spec 章节标注了歧义。<br>
+          <b>上报机制：</b>修改治理文件（spec、character、prompt）需先在此处记录 RFC。这在允许提出问题的同时防止未经授权的变更。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="doc-group-label" style="color:var(--cyan);">各 Lab 工作文档 &mdash; 聚焦执行的 Lab 级上下文</div>
+  <p>每个 Lab 在 <code>labX/doc/</code> 中有自己的工作文档集。这些文档提供项目级文档未涵盖的<b>Lab 特定上下文</b>：详细的设计决策、测试矩阵和会话间通信。</p>
+
+  <div class="doc-detail-grid">
+    <div class="doc-detail">
+      <div class="doc-left">
+        <code>design-prompt.md</code>
+        <span class="doc-badge badge-write">DUT Agent writes</span>
+      </div>
+      <div class="doc-right">
+        <div class="doc-purpose">Lab 设计指南 &mdash; 将 spec 要求转化为实现计划</div>
+        <div class="doc-how">
+          <b>创建者：</b>DUT Agent，在编写任何 RTL 之前。它弥合了抽象 spec 与具体实现之间的差距：定义哪些信号、如何构建 FSM、需要处理哪些边界情况。<br>
+          <b>使用者：</b>VPlan Agent 读取它以理解设计意图并编写针对性测试。VDebug Agent 读取它以在诊断失败时理解预期行为。
+        </div>
+      </div>
+    </div>
+    <div class="doc-detail">
+      <div class="doc-left">
+        <code>testplan.md</code>
+        <span class="doc-badge badge-write">VPlan Agent writes</span>
+      </div>
+      <div class="doc-right">
+        <div class="doc-purpose">测试矩阵 &mdash; 将功能映射到测试用例并设定覆盖率目标</div>
+        <div class="doc-how">
+          <b>创建者：</b>VPlan Agent，在 RTL 编译完成后。每条目指定：输入激励摘要、预期输出、覆盖率目标和优先级（P0/P1/P2）。<br>
+          <b>约束：</b>不得在 testplan 之前编写任何 TB 代码。这防止了随意测试，确保了系统性覆盖。此处的测试用例名称必须与 <code>ppa-feature-matrix.md</code> 中的一致。
+        </div>
+      </div>
+    </div>
+    <div class="doc-detail">
+      <div class="doc-left">
+        <code>handoff.md</code>
+        <span class="doc-badge badge-rw">All Agents append</span>
+      </div>
+      <div class="doc-right">
+        <div class="doc-purpose">会话记忆 &mdash; 知识如何跨 Agent 会话传承</div>
+        <div class="doc-how">
+          <b>持续性最关键的 Lab 级文档。</b>每个 Agent 退出时追加一个结构化记录：已完成内容（&le;5 条）、剩余工作、遇到的注意事项、最小验证命令和推荐的后续动作。下一个 Agent 首先读取此文件，以避免重复工作或踩入相同陷阱。<br>
+          <b>格式：</b>严格模板化（From &rarr; To、日期、Lab）使条目可快速扫读。这是 Agent 版的交班记录。
+        </div>
+      </div>
+    </div>
+    <div class="doc-detail">
+      <div class="doc-left">
+        <code>acceptance.md</code>
+        <span class="doc-badge badge-rw">Review Agent judges</span>
+      </div>
+      <div class="doc-right">
+        <div class="doc-purpose">质量关卡 &mdash; 可机器核查的判据，全部 PASS 才能完成 Lab</div>
+        <div class="doc-how">
+          <b>目的：</b>消除主观的「差不多够了」判断。每条判据都是具体、可验证的检查（例如「make comp 退出码为 0」、「tc_apb_basic_rw 报告 PASS」）。Review Agent 执行每条判据并记录 PASS/FAIL。<br>
+          <b>失败时：</b>FAIL 条目记录到 <code>ppa-risk-register.md</code> 并触发新的迭代周期。所有必选判据全部通过前，Lab 不得签收。
+        </div>
+      </div>
+    </div>
+    <div class="doc-detail">
+      <div class="doc-left">
+        <code>log.md</code>
+        <span class="doc-badge badge-rw">All Agents write</span>
+      </div>
+      <div class="doc-right">
+        <div class="doc-purpose">Lab 日志 &mdash; 供人工查阅的详细记录</div>
+        <div class="doc-how">
+          <b>关键区别：</b>与 handoff.md（为下一个 Agent 撰写）不同，log.md 是为<b>人工读者</b>撰写的，供其了解设计决策、挑战和理由。Agent 会写入它，但通常只读取顶部的 Status 摘要（&le;20 行）。<br>
+          <b>结构：</b>按阶段组织（设计 &rarr; 评审 &rarr; 验证 &rarr; 验收 &rarr; 迭代），与 Lab 工作流阶段对应。每个阶段记录决策内容及理由。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>优先级顺序（冲突解决）</h3>
+  <p>当文档相互矛盾时，高优先级文档优先：</p>
+  <div style="display:flex; align-items:center; gap:8px; margin:12px 0; flex-wrap:wrap; font-size:.88rem;">
+    <span style="background:var(--surface);border:1px solid var(--border);padding:6px 14px;border-radius:6px;color:var(--yellow);font-weight:600;">ppa-lite-spec.md</span>
+    <span style="color:var(--text2);">&gt;</span>
+    <span style="background:var(--surface);border:1px solid var(--border);padding:6px 14px;border-radius:6px;color:var(--text);">ppa-agent-character.md</span>
+    <span style="color:var(--text2);">&gt;</span>
+    <span style="background:var(--surface);border:1px solid var(--border);padding:6px 14px;border-radius:6px;color:var(--text);">ppa-lab-prompt.md</span>
+    <span style="color:var(--text2);">&gt;</span>
+    <span style="background:var(--surface);border:1px solid var(--border);padding:6px 14px;border-radius:6px;color:var(--text);">CLAUDE.md</span>
+    <span style="color:var(--text2);">&gt;</span>
+    <span style="background:var(--surface);border:1px solid var(--border);padding:6px 14px;border-radius:6px;color:var(--text);">design-prompt.md</span>
+  </div>
+</section>
+
+<!-- =========== 8. 约束规则 =========== -->
+<section>
+  <h2><span class="num">8</span>约束规则</h2>
+  <p>所有 Agent 在严格约束下运行，以防意外损坏并确保可复现性。</p>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:16px;">
+    <div class="agent-card" style="border-color:var(--green);">
+      <h4 style="color:var(--green);">必须做</h4>
+      <ul>
+        <li>遵守入场和收尾清单</li>
+        <li>每次会话更新 feature-matrix、status、handoff</li>
+        <li>在 risk-register 中记录假设</li>
+        <li>每次会话完成当前 Lab 的所有 feature-matrix 行</li>
+        <li>上下文不足时优雅退出</li>
+      </ul>
+    </div>
+    <div class="agent-card" style="border-color:var(--red);">
+      <h4 style="color:var(--red);">禁止做</h4>
+      <ul>
+        <li>修改 <code>ppa-lite-spec.md</code>（须通过 risk-register 发起 RFC）</li>
+        <li>修改 <code>/lecture</code>、<code>/mcdt-lab</code> 目录</li>
+        <li>修改 <code>.gitignore</code>、<code>README.md</code></li>
+        <li>编辑当前任务范围之外的 .sv 文件</li>
+        <li>添加任务要求之外的功能</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="container">
+    PPA-Lite Agent Workflow &middot; 根据项目文档生成
+  </div>
+</footer>
+
+</body>
+</html>
