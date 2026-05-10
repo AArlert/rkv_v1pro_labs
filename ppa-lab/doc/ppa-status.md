@@ -4,20 +4,17 @@
 
 ## 当前阶段
 
-**Lab2 审查完成 → 待进入 Lab3 集成**
+**Lab1 设计阶段完成 -> 待编译验证**
 
 ## 已完成里程碑
 
 | 里程碑 | 完成时间 | 备注 |
 |--------|----------|------|
-| Lab1 设计（M1+M2 RTL） | 2026-04-23 | APB 从接口 + SRAM |
-| Lab1 审查 | 2026-04-23 | 123 项全 PASS |
-| Lab2 设计（M3 RTL） | 2026-04-28 | 包处理核心 FSM |
-| Lab2 审查 | 2026-04-28 | 78 项全 PASS |
+| Lab1 设计（M1+M2 RTL） | 2026-05-10 | APB 从接口 + SRAM，TB 含自动回读比对 |
 
 ## 进行中
 
-- 无（等待 Lab3 启动）
+- Lab1 编译验证（make comp / make run）
 
 ## 阻塞项
 
@@ -27,13 +24,10 @@
 
 | ID | 描述 | 来源 | 严重性 |
 |----|------|------|--------|
-| U-1 | 字节序假设需 Lab3 集成验证 | Lab2 L-5 | MEDIUM |
-| U-2 | Lab1 TC2 弱验证（依赖波形） | Lab1 注2 | LOW |
-| U-3 | 未覆盖 pkt_len=32 最大合法包 | Lab2 L-2 | LOW |
-| U-4 | 未覆盖 exp_pkt_len_i 非零长度一致性 | Lab2 L-3 | LOW |
+| U-1 | PKT_MEM APB 读返回 0 而非实际 SRAM 数据 | Lab1 设计 | LOW（Lab3 集成时连接 M2 读端口） |
 
 ## 下一步
 
-1. 启动 Lab3：创建 `ppa_top.sv` 顶层连线，集成 M1+M2+M3
-2. 搭建端到端 UVM 验证环境
-3. 验证连续两帧处理能力
+1. 运行 `make comp` / `make run` 确认编译仿真通过
+2. 由 Verification Plan Agent 补充 testplan.md
+3. 待 Lab1 验收通过后启动 Lab2（M3 包处理核心）

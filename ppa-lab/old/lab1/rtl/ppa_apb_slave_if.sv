@@ -54,33 +54,40 @@ module ppa_apb_slave_if (
 	// ========================================================================
 	// 内部信号
 	// ========================================================================
-	logic apb_write;
-	logic apb_read;
+	logic apb_write;  // ACCESS 阶段写有效
+	logic apb_read;   // ACCESS 阶段读有效
 
-	assign PREADY = 1'b1;
+	assign PREADY = 1'b1;  // 固定为 1，无等待状态
 	assign apb_write = PSEL & PENABLE & PWRITE;
 	assign apb_read  = PSEL & PENABLE & ~PWRITE;
 
 	// ========================================================================
 	// CSR 寄存器定义
 	// ========================================================================
-	logic        reg_enable;
-	logic        start_pulse;
+	// CTRL (0x000)
+	logic        reg_enable;     // [0] RW
+	logic        start_pulse;    // [1] W1P（不存储）
 
-	logic        reg_algo_mode;
-	logic [3:0]  reg_type_mask;
+	// CFG (0x004)
+	logic        reg_algo_mode;  // [0] RW, 复位=1
+	logic [3:0]  reg_type_mask;  // [7:4] RW, 复位=4'b1111
 
-	logic        reg_done_irq_en;
-	logic        reg_err_irq_en;
+	// IRQ_EN (0x00C)
+	logic        reg_done_irq_en; // [0] RW
+	logic        reg_err_irq_en;  // [1] RW
 
-	logic        reg_done_irq;
-	logic        reg_err_irq;
+	// IRQ_STA (0x010)
+	logic        reg_done_irq;    // [0] RW1C
+	logic        reg_err_irq;     // [1] RW1C
 
-	logic [5:0]  reg_exp_pkt_len;
+	// PKT_LEN_EXP (0x014)
+	logic [5:0]  reg_exp_pkt_len; // [5:0] RW
 
+	// done 上升沿检测（用于中断置位）
 	logic        done_i_d;
 	logic        done_rising;
 
+	// PSLVERR 生成
 	logic        slverr_comb;
 
 	// ========================================================================
@@ -108,14 +115,14 @@ module ppa_apb_slave_if (
 	logic is_valid_addr;
 
 	assign is_pkt_mem = (PADDR >= ADDR_PKT_MEM_BASE) && (PADDR <= ADDR_PKT_MEM_END)
-	                    && (PADDR[1:0] == 2'b00);
+	                    && (PADDR[1:0] == 2'b00);  // word-aligned
 	assign is_csr = (PADDR <= ADDR_ERR_FLAG) && (PADDR[1:0] == 2'b00);
 	assign is_valid_addr = is_csr || is_pkt_mem;
 
 	// ========================================================================
 	// 判断只读寄存器写操作
 	// ========================================================================
-	logic write_ro;
+	logic write_ro;  // 尝试写只读寄存器
 	assign write_ro = apb_write && (
 		PADDR == ADDR_STATUS          ||
 		PADDR == ADDR_RES_PKT_LEN     ||
@@ -128,6 +135,7 @@ module ppa_apb_slave_if (
 	// ========================================================================
 	// PSLVERR 生成
 	// ========================================================================
+	// 写只读寄存器 / 访问未定义地址 / busy 期间写 PKT_MEM
 	logic write_pktmem_busy;
 	assign write_pktmem_busy = apb_write && is_pkt_mem && busy_i;
 
@@ -158,8 +166,8 @@ module ppa_apb_slave_if (
 	always_ff @(posedge PCLK or negedge PRESETn) begin
 		if (!PRESETn) begin
 			reg_enable       <= 1'b0;
-			reg_algo_mode    <= 1'b1;
-			reg_type_mask    <= 4'b1111;
+			reg_algo_mode    <= 1'b1;   // 复位=1
+			reg_type_mask    <= 4'b1111; // 复位=4'b1111
 			reg_done_irq_en  <= 1'b0;
 			reg_err_irq_en   <= 1'b0;
 			reg_exp_pkt_len  <= 6'b0;
@@ -168,30 +176,38 @@ module ppa_apb_slave_if (
 			done_i_d         <= 1'b0;
 			start_pulse      <= 1'b0;
 		end else begin
+			// done 上升沿采样
 			done_i_d <= done_i;
 
+			// start 脉冲（W1P）：仅持续一拍
 			start_pulse <= start_accepted;
 
+			// CTRL.enable (RW)
 			if (apb_write && (PADDR == ADDR_CTRL))
 				reg_enable <= PWDATA[0];
 
+			// CFG (RW)
 			if (apb_write && (PADDR == ADDR_CFG)) begin
 				reg_algo_mode <= PWDATA[0];
 				reg_type_mask <= PWDATA[7:4];
 			end
 
+			// IRQ_EN (RW)
 			if (apb_write && (PADDR == ADDR_IRQ_EN)) begin
 				reg_done_irq_en <= PWDATA[0];
 				reg_err_irq_en  <= PWDATA[1];
 			end
 
+			// PKT_LEN_EXP (RW)
 			if (apb_write && (PADDR == ADDR_PKT_LEN_EXP))
 				reg_exp_pkt_len <= PWDATA[5:0];
 
+			// IRQ_STA (RW1C)：写 1 清零
 			if (apb_write && (PADDR == ADDR_IRQ_STA)) begin
 				if (PWDATA[0]) reg_done_irq <= 1'b0;
 				if (PWDATA[1]) reg_err_irq  <= 1'b0;
 			end else begin
+				// 中断置位：done 上升沿
 				if (done_rising && reg_done_irq_en)
 					reg_done_irq <= 1'b1;
 				if (done_rising && (length_error_i | type_error_i | chk_error_i) && reg_err_irq_en)
@@ -200,6 +216,7 @@ module ppa_apb_slave_if (
 		end
 	end
 
+	// done 上升沿检测
 	assign done_rising = done_i & ~done_i_d;
 
 	// ========================================================================
@@ -209,7 +226,7 @@ module ppa_apb_slave_if (
 		PRDATA = 32'h0;
 		if (apb_read) begin
 			case (PADDR)
-				ADDR_CTRL:            PRDATA = {30'b0, 1'b0, reg_enable};
+				ADDR_CTRL:            PRDATA = {30'b0, 1'b0, reg_enable};  // start 读回 0
 				ADDR_CFG:             PRDATA = {24'b0, reg_type_mask, 3'b0, reg_algo_mode};
 				ADDR_STATUS:          PRDATA = {28'b0, format_ok_i, (length_error_i | type_error_i | chk_error_i), done_i, busy_i};
 				ADDR_IRQ_EN:          PRDATA = {30'b0, reg_err_irq_en, reg_done_irq_en};
@@ -220,7 +237,12 @@ module ppa_apb_slave_if (
 				ADDR_RES_PAYLOAD_SUM: PRDATA = {24'b0, res_payload_sum_i};
 				ADDR_RES_PAYLOAD_XOR: PRDATA = {24'b0, res_payload_xor_i};
 				ADDR_ERR_FLAG:        PRDATA = {29'b0, chk_error_i, type_error_i, length_error_i};
-				default: PRDATA = 32'h0;
+				default: begin
+					if (is_pkt_mem)
+						PRDATA = 32'h0;  // PKT_MEM 读返回 0（实际需从 M2 读，Lab1 暂不连接读端口）
+					else
+						PRDATA = 32'h0;
+				end
 			endcase
 		end
 	end
@@ -229,7 +251,7 @@ module ppa_apb_slave_if (
 	// PKT_MEM 写端口输出
 	// ========================================================================
 	assign pkt_mem_we_o    = apb_write && is_pkt_mem && !busy_i;
-	assign pkt_mem_addr_o  = PADDR[4:2];
+	assign pkt_mem_addr_o  = (PADDR[4:2]);  // (addr - 0x040) >> 2，由于 0x040[4:2]=0，直接取 [4:2]
 	assign pkt_mem_wdata_o = PWDATA;
 
 	// ========================================================================
