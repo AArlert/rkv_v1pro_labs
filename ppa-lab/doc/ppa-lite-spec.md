@@ -158,7 +158,7 @@ flowchart TB
 | 输出  | start_o           | 1   | W1P 单拍脉冲（触发处理）              |
 | 输出  | algo_mode_o       | 1   | CFG.algo_mode               |
 | 输出  | type_mask_o       | 4   | CFG.type_mask               |
-| 输出  | exp_pkt_len       | 6   | PKT_LEN_EXP.exp_pkt_len     |
+| 输出  | exp_pkt_len_o     | 6   | PKT_LEN_EXP.exp_pkt_len     |
 | 输出  | done_irq_en_o     | 1   | IRQ_EN.done_irq_en          |
 | 输出  | err_irq_en_o      | 1   | IRQ_EN.err_irq_en           |
 | 输出  | pkt_mem_we_o      | 1   | SRAM 写使能（送 M2）              |
