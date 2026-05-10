@@ -16,21 +16,21 @@
 
 | ID    | 功能描述                      | Spec § | 实现状态 | TB 状态 | 关联 Testcase       | 备注           |
 | ----- | ------------------------- | ------ | ---- | ----- | ----------------- | ------------ |
-| F1-01 | APB 两段式传输时序               | §3.1   | #DONE | #DONE  | tc_apb_basic_rw   |              |
-| F1-02 | PREADY 固定为 1              | §3.1   | #DONE | #DONE  | tc_apb_basic_rw   |              |
-| F1-03 | CSR 地址映射（0x000~0x02B）     | §3.2   | #DONE | #DONE  | tc_csr_default_rw |              |
-| F1-04 | 保留地址返回 PSLVERR=1          | §3.2   | #DONE | #DONE  | tc_slverr_reserved   | 61/61 PASS   |
-| F1-05 | CSR 默认值正确                 | §3.3   | #DONE | #DONE  | tc_csr_default_rw |              |
-| F1-06 | RW 寄存器读写                  | §3.3   | #DONE | #DONE  | tc_csr_default_rw, tc_rw_readback |              |
-| F1-07 | RO 寄存器写保护（PSLVERR=1）      | §3.3   | #DONE | #DONE  | tc_ro_write_protect  | 61/61 PASS   |
-| F1-08 | W1P 行为（CTRL.start）        | §3.3   | #DONE | #DONE  | tc_w1p_start         | M1 级验证通过    |
-| F1-09 | RW1C 行为（IRQ_STA）          | §3.3   | #DONE | #DONE  | tc_rw1c_irq_sta      | 61/61 PASS   |
-| F1-10 | PKT_MEM 地址映射（0x040~0x05C） | §3.4   | #DONE | #DONE  | tc_pkt_mem_write  |              |
-| F1-11 | PKT_MEM 写端口生成             | §3.4   | #DONE | #DONE  | tc_pkt_mem_write  |              |
-| F1-12 | busy=1 时写 PKT_MEM 报错      | §3.4   | #DONE | #DONE  | tc_busy_write_protect | M1+M2 级验证通过 |
-| F1-13 | M2 双端口同步 SRAM             | §4.1   | #DONE | #DONE  | tc_pkt_mem_write  |              |
-| F1-14 | M2 复位清零                   | §4.1   | #DONE | #DONE  | —                 | 隐含在仿真初始化     |
-| F1-15 | 中断逻辑（irq_o）               | §3.5   | #DONE | #DONE  | tc_irq_logic         | 61/61 PASS   |
+| F1-01 | APB 两段式传输时序               | §3.1   | #DONE | #DONE  | tc_apb_basic_rw   | #VERIFIED    |
+| F1-02 | PREADY 固定为 1              | §3.1   | #DONE | #DONE  | tc_apb_basic_rw   | #VERIFIED    |
+| F1-03 | CSR 地址映射（0x000~0x02B）     | §3.2   | #DONE | #DONE  | tc_csr_default_rw | #VERIFIED    |
+| F1-04 | 保留地址返回 PSLVERR=1          | §3.2   | #DONE | #DONE  | tc_slverr_reserved   | #VERIFIED |
+| F1-05 | CSR 默认值正确                 | §3.3   | #DONE | #DONE  | tc_csr_default_rw | #VERIFIED    |
+| F1-06 | RW 寄存器读写                  | §3.3   | #DONE | #DONE  | tc_csr_default_rw, tc_rw_readback | #VERIFIED |
+| F1-07 | RO 寄存器写保护（PSLVERR=1）      | §3.3   | #DONE | #DONE  | tc_ro_write_protect  | #VERIFIED |
+| F1-08 | W1P 行为（CTRL.start）        | §3.3   | #DONE | #DONE  | tc_w1p_start         | #VERIFIED（M1 级） |
+| F1-09 | RW1C 行为（IRQ_STA）          | §3.3   | #DONE | #DONE  | tc_rw1c_irq_sta      | #VERIFIED |
+| F1-10 | PKT_MEM 地址映射（0x040~0x05C） | §3.4   | #DONE | #DONE  | tc_pkt_mem_write  | #VERIFIED    |
+| F1-11 | PKT_MEM 写端口生成             | §3.4   | #DONE | #DONE  | tc_pkt_mem_write  | #VERIFIED    |
+| F1-12 | busy=1 时写 PKT_MEM 报错      | §3.4   | #DONE | #DONE  | tc_busy_write_protect | #VERIFIED（M1+M2 级） |
+| F1-13 | M2 双端口同步 SRAM             | §4.1   | #DONE | #DONE  | tc_pkt_mem_write  | #VERIFIED    |
+| F1-14 | M2 复位清零                   | §4.1   | #DONE | #DONE  | —                 | #VERIFIED（隐含） |
+| F1-15 | 中断逻辑（irq_o）               | §3.5   | #DONE | #DONE  | tc_irq_logic         | #VERIFIED |
 
 ## Lab2：包处理核心
 

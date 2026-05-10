@@ -102,3 +102,37 @@ make run
 1. **[P0]** 按 `acceptance.md` 逐项判定 PASS/FAIL，验收结论记入 `log.md`
 2. **[P0]** 全部必做项 PASS 后关闭 Lab1
 3. **[P1]** 如有 FAIL → 归因后进入迭代阶段
+
+---
+
+## Handoff: Sign-off Agent → DUT Agent (2026-05-11, Lab1 → Lab2)
+
+### 我做了什么（≤5 条）
+1. 独立运行 `make comp`（0 error, 0 warning）和 `make run`（61/61 PASS）确认仿真结果
+2. 按 `acceptance.md` 逐项判定 4 项必做验收标准，全部 PASS
+3. 交叉验证 feature-matrix F1-01~F1-15 与 testplan.md 覆盖映射，确认 15 个功能点全覆盖
+4. 更新 acceptance.md（PASS 状态 + 验收结论）、log.md（§4 验收阶段 + §5 迭代阶段）
+5. 更新 feature-matrix（F1-01~F1-15 备注列 → #VERIFIED）、ppa-status.md（Lab1 关闭）
+
+### 我没做什么 / 留给下一步的（≤5 条）
+1. 未做波形级审查（所有 TC 已通过自动比对，需要时可 `make rung` 打开 GUI）
+2. 未解决 U-1（PKT_MEM APB 读返回 0），归 Lab3 集成
+3. 未做 F1-08/F1-12 端到端验证（需 M3 配合），归 Lab3
+4. Lab2 feature-matrix（F2-01~F2-13）均为 #TODO，由 DUT Agent 启动
+
+### 踩过的坑 / 要小心的（≤3 条）
+1. Lab1 的 acceptance.md 仅定义了 4 项基础标准，实际验证覆盖度远超此范围（10 TC / 61 checks）——后续 lab 建议在 acceptance.md 中补充进阶验收标准
+2. IRQ_STA 清除/置位互斥分支：同拍 done_rising 与 APB 写清除同时发生时，清除优先——Lab2/3 设计 M3 时需知晓此行为
+3. start_accepted 依赖 reg_enable（已生效值），先写 enable 再写 start 才能产生脉冲——Lab2 TB 需注意序列
+
+### 验证成果的最小命令
+```
+cd ppa-lab/lab1/svtb/sim
+make comp
+make run
+```
+
+### 推荐下一步动作（≤3 条，按优先级）
+1. **[P0]** 启动 Lab2：由 DUT Agent 实现 M3（ppa_packet_proc_core.sv），按 Spec §7~9 实现 FSM + 包解析 + 格式检查
+2. **[P0]** 编写 Lab2 design-prompt.md 和 acceptance.md
+3. **[P1]** 编写 Lab2 最小 TB 验证 FSM 基本状态转移

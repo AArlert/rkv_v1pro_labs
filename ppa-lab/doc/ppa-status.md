@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-**Lab1 验证阶段完成 -> 待验收**
+**Lab1 已关闭 → Lab2 待启动**
 
 ## 已完成里程碑
 
@@ -13,10 +13,11 @@
 | Lab1 设计（M1+M2 RTL） | 2026-05-10 | APB 从接口 + SRAM，TB 含自动回读比对 |
 | Lab1 审查通过 | 2026-05-11 | F1-01~F1-15 全部与 Spec 一致，无阻塞性问题 |
 | Lab1 验证完成 | 2026-05-11 | 10 TC / 61 checks 全 PASS，F1-01~F1-15 TB 全部 #DONE |
+| Lab1 验收通过 | 2026-05-11 | 4 项必做验收标准全 PASS，F1-01~F1-15 → #VERIFIED，Lab1 关闭 |
 
 ## 进行中
 
-- Lab1 验收阶段（待 Sign-off Agent 按 acceptance.md 逐项判定）
+- Lab2 待启动（M3 包处理核心）
 
 ## 阻塞项
 
@@ -30,6 +31,5 @@
 
 ## 下一步
 
-1. 由 Sign-off Agent 按 acceptance.md 逐项判定
-2. 全部必做项 PASS 后关闭 Lab1
-3. 进入 Lab2（M3 包处理核心）
+1. 启动 Lab2（M3 包处理核心），由 DUT Agent 实现 FSM + 包解析 + 格式检查
+2. Lab2 完成后进入 Lab3 顶层集成，届时解决 U-1
