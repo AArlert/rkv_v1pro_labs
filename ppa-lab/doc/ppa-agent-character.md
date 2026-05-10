@@ -30,7 +30,7 @@
 
 **输入**：spec 相关章节 + feature-matrix 中 #TODO/#WIP 行
 **触发**：新 lab 启动 | 审查回退 | 迭代归因为 RTL 缺陷
-**产出**：RTL + `make comp` 通过 + `design-prompt.md` + feature-matrix 实现状态 → #DONE
+**产出**：`design-prompt.md` + RTL + 最小可验证 TB（含 makefile 启动） + `make comp` 通过 + feature-matrix 实现状态 → #DONE
 **交接**：→ Review Agent
 **升级**：spec 歧义 → `ppa-risk-register.md` 登记假设
 
@@ -40,7 +40,7 @@
 
 **职责**：设计阶段后检查 RTL 与 spec 一致性（验收流程 §6.2）
 
-**输入**：DUT Agent 交付的 RTL + comp.log + run.log
+**输入**：DUT Agent 交付的 RTL + 最小可验证 TB（含 makefile 启动） + comp.log + run.log
 **触发**：DUT Agent handoff
 **产出**：一致性检查结果记入 `log.md`，不一致项分类为阻塞性/非阻塞性
 **交接**：无阻塞 → VPlan Agent | 有阻塞 → 回 DUT Agent
