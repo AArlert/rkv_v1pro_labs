@@ -6,16 +6,16 @@
 
 | # | 验收标准 | 可执行判据 | 状态 |
 |---|----------|-----------|------|
-| 1 | 合法包完整处理（FSM IDLE→PROCESS→DONE，res_pkt_len/type 正确） | `make run` 后 log 含 `TC1 ... PASS` 与 `TC2 ... PASS`；`res_pkt_len_o` 与 `res_pkt_type_o` 与写入一致 | **PENDING（Sign-off 阶段判定）** |
-| 2 | 长度越界检测（pkt_len=3 下溢 / pkt_len=33 上溢，length_error=1 且不卡死） | `make run` 后 log 含 `TC3 ... PASS` 与 `TC4 ... PASS`；两种情形均见 `done_o=1` 且 `length_error_o=1` | **PENDING** |
-| 3 | busy/done 时序（start 后 busy=1；DONE 态 done 保持；新 start 后 done 清零） | `make run` 后 log 含 `TC5 busy=1 after start PASS`、`TC5 done held PASS`、`TC6 done cleared after new start PASS` | **PENDING** |
+| 1 | 合法包完整处理（FSM IDLE→PROCESS→DONE，res_pkt_len/type 正确） | `make run` 后 log 含 `TC1 ... PASS` 与 `TC2 ... PASS`；`res_pkt_len_o` 与 `res_pkt_type_o` 与写入一致 | **PASS** |
+| 2 | 长度越界检测（pkt_len=3 下溢 / pkt_len=33 上溢，length_error=1 且不卡死） | `make run` 后 log 含 `TC3 ... PASS` 与 `TC4 ... PASS`；两种情形均见 `done_o=1` 且 `length_error_o=1` | **PASS** |
+| 3 | busy/done 时序（start 后 busy=1；DONE 态 done 保持；新 start 后 done 清零） | `make run` 后 log 含 `TC5 busy=1 after start PASS`、`TC5 done held PASS`、`TC6 done cleared after new start PASS` | **PASS** |
 
 ## 选做项
 
 | # | 验收标准 | 可执行判据 | 状态 |
 |---|----------|-----------|------|
-| 4 | pkt_type 合法性 + type_mask 过滤 | TB 扩展用例（pkt_type=0x03 / type_mask 屏蔽）下 `type_error_o=1`，由 VPlan Agent 补充 | **TODO（VPlan 阶段）** |
-| 5 | algo_mode 旁路 + payload sum/XOR 正确性 | TB 扩展用例（algo_mode=0 旁路 chk；最大包 sum/XOR 全字节）由 VPlan Agent 补充 | **TODO（VPlan 阶段）** |
+| 4 | pkt_type 合法性 + type_mask 过滤 | TB 扩展用例（pkt_type=0x03 / type_mask 屏蔽）下 `type_error_o=1`，由 VPlan Agent 补充 | **PASS**（TC7 非 one-hot / TC8 mask 过滤） |
+| 5 | algo_mode 旁路 + payload sum/XOR 正确性 | TB 扩展用例（algo_mode=0 旁路 chk；最大包 sum/XOR 全字节）由 VPlan Agent 补充 | **PASS**（TC10 旁路 / TC13-TC14 sum+XOR） |
 
 ## 设计阶段自检（DUT Agent 已完成）
 

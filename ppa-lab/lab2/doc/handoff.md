@@ -102,3 +102,35 @@ make run
 1. **[P0]** Sign-off Agent 执行 `acceptance.md` 逐项判定（必做 1~3 + 选做 4~5）
 2. **[P0]** 验收通过后将 F2-01~F2-14 → #VERIFIED，关闭 Lab2
 3. **[P1]** Lab3 顶层集成阶段启动
+
+---
+
+## Handoff: Sign-off Agent → DUT Agent (2026-05-12, Lab2 → Lab3)
+
+### 我做了什么（≤5 条）
+1. 执行 `make comp` (0 error 0 warning) + `make run` (14 TC / 66 checks / 0 FAIL)
+2. 逐项判定 acceptance.md：3 项必做 + 2 项选做全部 PASS
+3. feature-matrix F2-01~F2-14 备注列 → #VERIFIED
+4. 更新 ppa-status.md 确认 Lab2 关闭
+5. 验收结论记入 log.md §4
+
+### 我没做什么 / 留给下一步的（≤5 条）
+1. Lab3 顶层集成（ppa_top 连线）待 DUT Agent 启动
+2. U-1（PKT_MEM APB 读返回 0）待 Lab3 解决
+3. 组合 rd_en/addr 端到端时序余量待 Lab3 集成后评估
+
+### 踩过的坑 / 要小心的（≤3 条）
+1. 验收无迭代：不存在 FAIL 项，无需进入迭代阶段
+2. A-2 假设（PKT_LEN_EXP "非零即已配置"）仍在 risk-register OPEN 状态，Lab3 应关注
+
+### 验证成果的最小命令
+```
+cd ppa-lab/lab2/svtb/sim
+make comp
+make run
+```
+
+### 推荐下一步动作（≤3 条，按优先级）
+1. **[P0]** DUT Agent 启动 Lab3，实现 ppa_top 顶层连线（F3-01）
+2. **[P0]** 解决 U-1（PKT_MEM APB 读返回 0 → 连接 M2 读端口）
+3. **[P1]** Lab3 VPlan 设计端到端 TB 验证 F3-02~F3-06
