@@ -4,13 +4,14 @@
 
 ## Status 摘要（≤20 行）
 
-- 当前阶段：**设计阶段已完成**，待 Review Agent 审查
+- 当前阶段：**审查阶段已完成** → 待 VPlan Agent 补充定向 TC
 - 模块：`ppa_packet_proc_core.sv`（M3）已实现
+- 审查结论：F2-01~F2-14 与 spec §3/§7/§9 **全部一致，无阻塞性问题**
 - 最小 TB：6 个 TC / 33 checks 全 PASS
 - `make comp` 0 error 0 warning；`make run` 全 PASS
 - feature-matrix F2-01~F2-14 实现状态 → #DONE，TB 状态保持 #TODO（VPlan 阶段补强）
 - 关键设计决策：mem_rd_en_o / mem_rd_addr_o 采用组合输出，匹配 M2 同步 SRAM 的 1 拍读延迟
-- 未决问题：无；TB 仅覆盖 F2-01/03/04/05/12/13 基本场景，F2-06/07/08/09/10/11/14 待 VPlan 补 TC
+- 非阻塞观察：单 word 包有投机性 word1 读（无害）；A-2 假设合理
 
 ---
 
@@ -70,3 +71,57 @@ T3 | DONE     | 0           | -       | -             | done_o=1 保持
 | L2-O-1 | TB 未覆盖 type_mask 过滤 / algo_mode=0 旁路 / payload 全 32B / PKT_LEN_EXP 一致性 | VPlan Agent |
 | L2-O-2 | 组合 rd_en/addr 输出在集成时序下的余量待 Lab3 验证 | Lab3 集成 |
 | L2-O-3 | 越界判定路径与 `mem_rd_data_i` header 解码耦合，跨周期假设需 Review 检查 | Review Agent |
+
+---
+
+## 2 审查阶段（2026-05-11，Review Agent）
+
+### 2.1 审查范围
+逐项检查 F2-01~F2-14 与 spec §2.3（端口表）、§3（包格式）、§7（FSM/处理流程）、§9（错误码）的一致性。
+
+### 2.2 审查结论
+
+**无阻塞性问题。RTL 实现与 spec 完全一致，审查通过。**
+
+### 2.3 逐项一致性检查
+
+| ID | 功能 | Spec § | 审查结果 | 备注 |
+|----|------|--------|----------|------|
+| F2-01 | 三态 FSM | §7.1 | **PASS** | IDLE→PROCESS→DONE 拓扑正确；无 DONE→IDLE 回边 |
+| F2-02 | start_i 无条件启动 | §7.2 | **PASS** | IDLE/DONE 均只检查 start_i，无 enable/busy 门控（M1 职责） |
+| F2-03 | busy/done 时序 | §7.4 | **PASS** | IDLE:0/0, PROCESS:1/0, DONE:0/1 均符合；mem_rd_en 在 PROCESS 每拍为 1 |
+| F2-04 | 包头解析 | §3.1, §7.3 | **PASS** | hdr_b0=[7:0]=pkt_len, hdr_b1=[15:8]=type, hdr_b2=[23:16]=flags, hdr_b3=[31:24]=chk；小端序正确 |
+| F2-05 | 长度检查 [4,32] | §3.2, §9.1 | **PASS** | `hdr_b0<4 \|\| hdr_b0>32` + exp_pkt_len 一致性检查 |
+| F2-06 | 类型检查 | §9.1 | **PASS** | one-hot case 匹配 4 种合法值；type_mask[n]=1 允许 pkt_type=(1<<n)，与 spec §5.2 默认值 4'b1111 一致 |
+| F2-07 | 头校验 | §9.1 | **PASS** | `hdr_b3 != (hdr_b0^hdr_b1^hdr_b2)`，algo_mode 门控 |
+| F2-08 | algo_mode 旁路 | §5.2, §9.1 | **PASS** | algo_mode=0 时 `hdr_chk_err` 恒为 0 |
+| F2-09 | payload sum | §3.4, §7.3 | **PASS** | 逐字节累加 8-bit 截断；byte_offset<pkt_len 守卫避免越界字节参与 |
+| F2-10 | payload XOR | §3.4, §7.3 | **PASS** | 同循环中逐字节 XOR |
+| F2-11 | 错误并行 | §9.2 | **PASS** | 三类错误同拍独立锁存，互不抑制 |
+| F2-12 | DONE 结果保持 | §7.2, §7.4 | **PASS** | S_DONE 不改变结果寄存器；TB TC5 验证保持 |
+| F2-13 | 越界不卡死 | §7.2, §9.1 | **PASS** | words_total=1 快速终止；TB TC3/TC4 验证 |
+| F2-14 | PKT_LEN_EXP 一致性 | §9.1 | **PASS** | `exp!=0 && hdr[5:0]!=exp` 判定；A-2 假设合理 |
+
+### 2.4 非阻塞性观察
+
+| # | 观察 | 影响 | 建议 |
+|---|------|------|------|
+| OBS-1 | 单 word 包路径（hdr_words_total=1）在首拍 PROCESS 会发起一次投机性 word1 读请求 | 无功能影响，SRAM 读是无副作用操作；FSM 同拍进 DONE 后不消费 | 保持现状，无需修改 |
+| OBS-2 | Spec §7.2 IDLE 行描述"若曾完成过则保持 done_o=1" 在当前 FSM 拓扑下不可达（无 DONE→IDLE 转移） | RTL 正确：IDLE done_o=0 | Spec 措辞 quirk，非 DUT 问题 |
+| OBS-3 | A-2 假设（PKT_LEN_EXP "非零即已配置"）| 合理：spec §5.2 复位值=0，"已配置"最自然的判据即"非零" | 已记入 risk-register，保持 OPEN 直到正式确认 |
+
+### 2.5 L2-O-3 跨周期假设复核
+
+DUT Agent 留待审查的 L2-O-3："越界判定路径与 mem_rd_data_i header 解码耦合，跨周期假设"
+
+**复核结论：安全。**
+- 组合路径 `mem_rd_data_i → hdr_b0..b3 → hdr_len_err/type_err/chk_err` 仅在 PROCESS、consume_idx==0 时被采样入寄存器。
+- SRAM 在前一拍 posedge 已锁存了 word0（因为 start 同拍组合驱动了 rd_en=1, addr=0），所以 PROCESS 首拍 `mem_rd_data_i` 是稳定的寄存器输出。
+- 不存在跨周期透明锁存竞争。
+
+### 2.6 编译/仿真验证
+
+| 项 | 结果 |
+|----|------|
+| comp.log | 0 error / 0 warning（QuestaSim 2021.1） |
+| run.log | 33 PASS / 0 FAIL，TC1~TC6 全 PASS |

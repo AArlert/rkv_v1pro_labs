@@ -34,3 +34,37 @@ make run
 1. **[P0]** Review Agent 逐项审查 F2-01~F2-14 与 spec §3/§7/§9 的一致性，重点检查 D1（组合输出）与 D5（PKT_LEN_EXP 语义）
 2. **[P0]** 通过后进入 VPlan 阶段，补全 F2-06~F2-11 和 F2-14 定向 TC
 3. **[P1]** Lab3 集成阶段验证组合 rd_en/addr 的端到端时序
+
+---
+
+## Handoff: Review Agent → VPlan Agent (2026-05-11, Lab2)
+
+### 我做了什么（≤5 条）
+1. 逐项审查 F2-01~F2-14 与 spec §2.3/§3/§7/§9 的一致性，全部 PASS
+2. 复核 L2-O-3（组合 header 解码跨周期假设），确认安全
+3. 验证 A-2 假设（PKT_LEN_EXP "非零即已配置"）合理性
+4. 确认 type_mask 语义：bit[n]=1 允许 pkt_type=(1<<n)，与 spec §5.2 一致
+5. 审查结果记入 `lab2/doc/log.md` §2
+
+### 我没做什么 / 留给下一步的（≤5 条）
+1. F2-06~F2-11、F2-14 的定向 TC 仍为 #TODO，需 VPlan Agent 补充
+2. 选做项 4/5（type_mask 过滤 / algo_mode 旁路 + max payload）TB 待补
+3. 未修改任何 RTL 或 TB 代码（审查无阻塞项，无需回退）
+4. acceptance.md 验收判定留待 Sign-off Agent
+
+### 踩过的坑 / 要小心的（≤3 条）
+1. spec §7.2 IDLE 行"若曾完成过则 done_o=1"在当前 FSM 拓扑下不可达（无 DONE→IDLE 边）——编写 TC 时无需覆盖此路径
+2. 单 word 包路径有投机性 word1 读——TC 中不应把此读当作功能行为校验
+3. payload sum/xor 仅累加 byte_offset<pkt_len 范围内的字节——VPlan 可设计尾部非对齐包来验证边界
+
+### 验证成果的最小命令
+```
+cd ppa-lab/lab2/svtb/sim
+make comp
+make run
+```
+
+### 推荐下一步动作（≤3 条，按优先级）
+1. **[P0]** VPlan Agent 编写 testplan，补全 F2-06(type one-hot)、F2-07(hdr_chk)、F2-08(algo_mode=0)、F2-09/10(payload 边界)、F2-11(多错误并行)、F2-14(exp_pkt_len) 的定向 TC
+2. **[P0]** `make run` 全 PASS 后标记 feature-matrix TB 列 → #DONE
+3. **[P1]** 考虑边界用例：pkt_len=5(非对齐尾 word)、pkt_len=32(满包)、同时触发多类错误

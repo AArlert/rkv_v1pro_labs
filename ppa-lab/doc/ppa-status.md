@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-**Lab2 设计阶段完成 → 待 Review Agent 审查**
+**Lab2 审查完成 → 待 VPlan Agent 补充定向 TC**
 
 ## 已完成里程碑
 
@@ -15,10 +15,11 @@
 | Lab1 验证完成 | 2026-05-11 | 10 TC / 61 checks 全 PASS，F1-01~F1-15 TB 全部 #DONE |
 | Lab1 验收通过 | 2026-05-11 | 4 项必做验收标准全 PASS，F1-01~F1-15 → #VERIFIED，Lab1 关闭 |
 | Lab2 设计完成（M3 RTL） | 2026-05-11 | ppa_packet_proc_core.sv 实现；最小 TB 33/33 checks PASS；F2-01~F2-14 实现状态 → #DONE |
+| Lab2 审查通过 | 2026-05-11 | F2-01~F2-14 逐项与 spec §3/§7/§9 一致，无阻塞性问题 |
 
 ## 进行中
 
-- Lab2 审查（待 Review Agent 进入）
+- Lab2 VPlan 阶段（待 VPlan Agent 进入）
 
 ## 阻塞项
 
@@ -32,6 +33,6 @@
 
 ## 下一步
 
-1. Review Agent 审查 M3 RTL 与 spec §3/§7/§9 的一致性
-2. VPlan Agent 补充 F2-06~F2-11、F2-14 定向 TC
+1. VPlan Agent 补充 F2-06~F2-11、F2-14 定向 TC，`make run` 全 PASS
+2. Sign-off Agent 执行 acceptance.md 验收判定
 3. Lab3 顶层集成阶段解决 U-1，并验证组合 rd_en/addr 端到端时序
