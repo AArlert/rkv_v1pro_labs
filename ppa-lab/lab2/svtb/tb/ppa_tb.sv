@@ -116,13 +116,13 @@ module ppa_tb;
 			$display("[%0t] TIMEOUT: done_o not asserted within %0d cycles", $time, timeout);
 	endtask
 
-	task automatic check(input string name, input bit cond);
-		if (cond) begin
+	task automatic check(input string name, input logic [31:0] actual, input logic [31:0] expected);
+		if (actual === expected) begin
+			$display("[PASS] %s: got 0x%08h", name, actual);
 			pass_cnt++;
-			$display("[%0t] PASS: %s", $time, name);
 		end else begin
+			$display("[FAIL] %s: got 0x%08h, expected 0x%08h", name, actual, expected);
 			fail_cnt++;
-			$display("[%0t] FAIL: %s", $time, name);
 		end
 	endtask
 
@@ -134,26 +134,25 @@ module ppa_tb;
 	// Testcases
 	// ========================================================================
 	initial begin
-		$display("==================== Lab2 TB START ====================");
 		do_reset();
 
 		// --------------------------------------------------------------------
 		// TC1: 最小合法包 pkt_len=4, type=0x01, hdr_chk=0x05
 		// --------------------------------------------------------------------
-		$display("---- TC1: tc_min_legal_pkt ----");
+		$display("\n========== TC1: tc_min_legal_pkt ==========");
 		mem[0] = pack_hdr(8'd4, 8'h01, 8'h00, 8'h05);
 		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd0;
 		pulse_start();
 		wait_done();
-		check("TC1 done_o=1",          done_o === 1'b1);
-		check("TC1 busy_o=0",          busy_o === 1'b0);
-		check("TC1 res_pkt_len=4",     res_pkt_len_o === 6'd4);
-		check("TC1 res_pkt_type=0x01", res_pkt_type_o === 8'h01);
-		check("TC1 format_ok=1",       format_ok_o === 1'b1);
-		check("TC1 length_error=0",    length_error_o === 1'b0);
-		check("TC1 type_error=0",      type_error_o === 1'b0);
-		check("TC1 chk_error=0",       chk_error_o === 1'b0);
-		check("TC1 payload_sum=0",     res_payload_sum_o === 8'h00);
+		check("done_o",       {31'b0, done_o},          32'h1);
+		check("busy_o",       {31'b0, busy_o},          32'h0);
+		check("res_pkt_len",  {26'b0, res_pkt_len_o},   32'd4);
+		check("res_pkt_type", {24'b0, res_pkt_type_o},  32'h01);
+		check("format_ok",    {31'b0, format_ok_o},     32'h1);
+		check("length_error", {31'b0, length_error_o},  32'h0);
+		check("type_error",   {31'b0, type_error_o},    32'h0);
+		check("chk_error",    {31'b0, chk_error_o},     32'h0);
+		check("payload_sum",  {24'b0, res_payload_sum_o}, 32'h00);
 
 		// --------------------------------------------------------------------
 		// TC2: 8 字节合法包 pkt_len=8, type=0x02, payload=0x04030201
@@ -162,48 +161,48 @@ module ppa_tb;
 		//   sum = 0x01+0x02+0x03+0x04 = 0x0A
 		//   xor = 0x01^0x02^0x03^0x04 = 0x04
 		// --------------------------------------------------------------------
-		$display("---- TC2: tc_8byte_legal ----");
+		$display("\n========== TC2: tc_8byte_legal ==========");
 		mem[0] = pack_hdr(8'd8, 8'h02, 8'h00, 8'h0A);
 		mem[1] = 32'h04030201;
 		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd0;
 		pulse_start();
 		wait_done();
-		check("TC2 res_pkt_len=8",       res_pkt_len_o === 6'd8);
-		check("TC2 res_pkt_type=0x02",   res_pkt_type_o === 8'h02);
-		check("TC2 payload_sum=0x0A",    res_payload_sum_o === 8'h0A);
-		check("TC2 payload_xor=0x04",    res_payload_xor_o === 8'h04);
-		check("TC2 format_ok=1",         format_ok_o === 1'b1);
-		check("TC2 no errors",           {length_error_o,type_error_o,chk_error_o} === 3'b000);
+		check("res_pkt_len",   {26'b0, res_pkt_len_o},     32'd8);
+		check("res_pkt_type",  {24'b0, res_pkt_type_o},    32'h02);
+		check("payload_sum",   {24'b0, res_payload_sum_o}, 32'h0A);
+		check("payload_xor",   {24'b0, res_payload_xor_o}, 32'h04);
+		check("format_ok",     {31'b0, format_ok_o},       32'h1);
+		check("err flags",     {29'b0, length_error_o, type_error_o, chk_error_o}, 32'h0);
 
 		// --------------------------------------------------------------------
 		// TC3: 长度下溢 pkt_len=3
 		// --------------------------------------------------------------------
-		$display("---- TC3: tc_length_underflow ----");
+		$display("\n========== TC3: tc_length_underflow ==========");
 		mem[0] = pack_hdr(8'd3, 8'h01, 8'h00, 8'h02);
 		pulse_start();
 		wait_done();
-		check("TC3 done_o=1",            done_o === 1'b1);
-		check("TC3 length_error=1",      length_error_o === 1'b1);
-		check("TC3 format_ok=0",         format_ok_o === 1'b0);
-		check("TC3 busy released",       busy_o === 1'b0);
+		check("done_o",       {31'b0, done_o},         32'h1);
+		check("length_error", {31'b0, length_error_o}, 32'h1);
+		check("format_ok",    {31'b0, format_ok_o},    32'h0);
+		check("busy released", {31'b0, busy_o},        32'h0);
 
 		// --------------------------------------------------------------------
 		// TC4: 长度上溢 pkt_len=33
 		// --------------------------------------------------------------------
-		$display("---- TC4: tc_length_overflow ----");
+		$display("\n========== TC4: tc_length_overflow ==========");
 		mem[0] = pack_hdr(8'd33, 8'h01, 8'h00, 8'h20);
 		pulse_start();
 		wait_done();
-		check("TC4 done_o=1",            done_o === 1'b1);
-		check("TC4 length_error=1",      length_error_o === 1'b1);
-		check("TC4 format_ok=0",         format_ok_o === 1'b0);
-		check("TC4 busy released",       busy_o === 1'b0);
+		check("done_o",       {31'b0, done_o},         32'h1);
+		check("length_error", {31'b0, length_error_o}, 32'h1);
+		check("format_ok",    {31'b0, format_ok_o},    32'h0);
+		check("busy released", {31'b0, busy_o},        32'h0);
 
 		// --------------------------------------------------------------------
 		// TC5: busy/done 时序检查（合法 12B 包）
 		//   hdr_chk = 0x0C ^ 0x04 ^ 0x00 = 0x08
 		// --------------------------------------------------------------------
-		$display("---- TC5: tc_busy_done_timing ----");
+		$display("\n========== TC5: tc_busy_done_timing ==========");
 		mem[0] = pack_hdr(8'd12, 8'h04, 8'h00, 8'h08);
 		mem[1] = 32'h08070605;
 		mem[2] = 32'h0C0B0A09;
@@ -214,44 +213,45 @@ module ppa_tb;
 				@(posedge clk);
 				// 第 1 拍后 busy 应该为 1
 				@(posedge clk);
-				check("TC5 busy=1 after start", busy_o === 1'b1);
-				check("TC5 done=0 during proc", done_o === 1'b0);
+				check("busy after start", {31'b0, busy_o}, 32'h1);
+				check("done during proc", {31'b0, done_o}, 32'h0);
 				@(negedge clk);
 				start_i = 1'b0;
 			end
 		join
 		wait_done();
-		check("TC5 done held in DONE",   done_o === 1'b1);
-		check("TC5 busy=0 in DONE",      busy_o === 1'b0);
+		check("done held in DONE", {31'b0, done_o}, 32'h1);
+		check("busy in DONE",      {31'b0, busy_o}, 32'h0);
 		// 在 DONE 态保持几拍，结果应保持
 		repeat (5) @(posedge clk);
-		check("TC5 done still held",     done_o === 1'b1);
-		check("TC5 res_pkt_len held=12", res_pkt_len_o === 6'd12);
+		check("done still held",   {31'b0, done_o},         32'h1);
+		check("res_pkt_len held",  {26'b0, res_pkt_len_o},  32'd12);
 
 		// --------------------------------------------------------------------
 		// TC6: 连续两帧（DONE 态接受新 start）
 		// --------------------------------------------------------------------
-		$display("---- TC6: tc_two_frames ----");
+		$display("\n========== TC6: tc_two_frames ==========");
 		// 第二帧：pkt_len=4, type=0x08, hdr_chk=0x0C
 		mem[0] = pack_hdr(8'd4, 8'h08, 8'h00, 8'h0C);
 		pulse_start();
 		// start 接受后 done 应清零
 		@(posedge clk);
-		check("TC6 done cleared after new start", done_o === 1'b0);
+		check("done cleared after new start", {31'b0, done_o}, 32'h0);
 		wait_done();
-		check("TC6 frame2 res_pkt_len=4",   res_pkt_len_o === 6'd4);
-		check("TC6 frame2 res_pkt_type=0x08", res_pkt_type_o === 8'h08);
-		check("TC6 frame2 format_ok=1",     format_ok_o === 1'b1);
+		check("frame2 res_pkt_len",   {26'b0, res_pkt_len_o},  32'd4);
+		check("frame2 res_pkt_type",  {24'b0, res_pkt_type_o}, 32'h08);
+		check("frame2 format_ok",     {31'b0, format_ok_o},    32'h1);
 
 		// --------------------------------------------------------------------
 		// 总结
 		// --------------------------------------------------------------------
-		$display("==================== Lab2 TB SUMMARY ====================");
-		$display("PASS: %0d   FAIL: %0d", pass_cnt, fail_cnt);
+		$display("\n========== Test Summary ==========");
+		$display("PASS: %0d", pass_cnt);
+		$display("FAIL: %0d", fail_cnt);
 		if (fail_cnt == 0)
-			$display(">>> ALL TESTS PASSED <<<");
+			$display("ALL TESTS PASSED");
 		else
-			$display(">>> THERE ARE FAILURES <<<");
+			$display("SOME TESTS FAILED");
 		$finish;
 	end
 
