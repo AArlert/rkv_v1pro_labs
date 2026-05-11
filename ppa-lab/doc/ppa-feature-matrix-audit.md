@@ -36,7 +36,7 @@ Feature Matrix 中的 Spec § 引用与 `ppa-lite-spec.md` 的实际章节编号
 | ID    | 功能描述                              | 原 Spec § | 正确 Spec §    | 说明                          |
 | ----- | --------------------------------- | -------- | ------------ | --------------------------- |
 | F2-01 | 三态 FSM（IDLE→PROCESS→DONE）         | §5.1     | **§7.1**     | M3 三态 FSM 在 §7.1            |
-| F2-02 | start 仅在 enable=1 且 busy=0 接受     | §5.1     | **§5.2, §7.2** | enable 门控在 M1（§5.2），FSM 转移 §7.2 |
+| F2-02 | M3 收到 start_i 后无条件启动处理     | §5.1     | **§7.2** | 已修正：描述改为 M3 的 FSM 转移行为（§7.2），enable 门控归 M1（F1-08） |
 | F2-03 | busy/done 时序正确                    | §5.2     | **§7.4**     | 各状态输出约定在 §7.4               |
 | F2-04 | 包头解析（pkt_len/type/flags/hdr_chk）  | §5.3     | **§3.1, §7.3** | **§5.3 不存在**，包结构 §3.1，数据流 §7.3 |
 | F2-05 | 长度检查（pkt_len [4,32]）              | §5.4     | **§3.2, §9.1** | **§5.4 不存在**，包长约束 §3.2，错误定义 §9.1 |
@@ -79,7 +79,7 @@ Feature Matrix 中的 Spec § 引用与 `ppa-lite-spec.md` 的实际章节编号
 | ID | 问题 | 分析 |
 |----|------|------|
 | F1-14 | "M2 复位清零" — spec 未明确要求 SRAM 复位清零 | spec §2.2 仅描述 M2 为"双端口同步 SRAM"，未要求复位后内容全零。**不影响功能正确性**，作为实现选择可保留，建议备注中标注"实现约定，非 spec 强制" |
-| F2-02 | "start 仅在 enable=1 且 busy=0 接受" — 归属 Lab2 但实际由 M1 实现 | spec §5.2 CTRL.start 的 enable/busy 门控逻辑在 M1 内完成（M3 端口表无 enable_i）。此功能验证归属 Lab1（F1-08 已部分覆盖），放在 Lab2 会导致模块归属混乱。**建议**：保留在 Lab2 作为集成验证视角，备注说明"M1 门控，Lab2 验证 M3 端接受行为" |
+| F2-02 | ~~"start 仅在 enable=1 且 busy=0 接受"~~ — 已修正 | **已解决**：功能描述改为"M3 收到 start_i 后无条件启动处理"（§7.2），Spec § 改为 §7.2。enable/busy 门控归属 M1（F1-08），M3 端口表无 enable_i（spec §2.3）。不改 spec，仅修正 feature-matrix 描述使其与 spec 对齐 |
 
 ---
 
@@ -113,4 +113,4 @@ Feature Matrix 中的 Spec § 引用与 `ppa-lite-spec.md` 的实际章节编号
 | **中** | 补充 F2-14: PKT_LEN_EXP 一致性检查 | ppa-feature-matrix.md |
 | **低** | 补充选做验收标准 5/6 | lab1/doc/acceptance.md |
 | **低** | F1-14 备注标注"实现约定" | ppa-feature-matrix.md |
-| **低** | F2-02 备注说明 M1 门控归属 | ppa-feature-matrix.md |
+| ~~低~~ | ~~F2-02 备注说明 M1 门控归属~~ | ~~ppa-feature-matrix.md~~ | ✅ 已修正：描述改为 M3 FSM 行为 |

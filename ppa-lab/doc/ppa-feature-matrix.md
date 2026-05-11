@@ -37,7 +37,7 @@
 | ID | 功能描述 | Spec § | 实现状态 | TB 状态 | 关联 Testcase | 备注 |
 |----|----------|--------|----------|---------|---------------|------|
 | F2-01 | 三态 FSM（IDLE->PROCESS->DONE） | §7.1 | #TODO | #TODO | — | |
-| F2-02 | start 仅在 enable=1 且 busy=0 接受 | §5.2, §7.2 | #TODO | #TODO | — | M1 门控，Lab2 验证 M3 端接受行为 |
+| F2-02 | M3 收到 start_i 后无条件启动处理 | §7.2 | #TODO | #TODO | — | enable/busy 门控由 M1 完成（F1-08）；M3 端口表无 enable_i，见 spec §2.3 |
 | F2-03 | busy/done 时序正确 | §7.4 | #TODO | #TODO | — | |
 | F2-04 | 包头解析（pkt_len/type/flags/hdr_chk） | §3.1, §7.3 | #TODO | #TODO | — | |
 | F2-05 | 长度检查（pkt_len [4,32]） | §3.2, §9.1 | #TODO | #TODO | — | |
