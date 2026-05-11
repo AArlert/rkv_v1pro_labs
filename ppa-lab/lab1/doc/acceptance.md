@@ -33,3 +33,12 @@
 |----|------|------|
 | U-1 | PKT_MEM APB 读返回 0（M1 未连接 M2 读端口） | Lab3 集成解决 |
 | — | F1-08/F1-12 端到端验证（需 M3 配合） | Lab3 集成解决 |
+
+### 选做验收项（补充）
+
+> 以下选做验收项对应 spec §11.2 选做 4/5，已通过扩展验证覆盖（见上文），补充列出以保持与 spec 结构对齐。
+
+| # | 验收标准 | 可执行判据 | 状态 |
+|---|----------|-----------|------|
+| 5 | PSLVERR 统一错误响应 | `make run` PASS 且 log 中 `tc_slverr_reserved PASS` + `tc_ro_write_protect PASS`；写 RO 寄存器返回 PSLVERR=1 且值不变，访问未定义地址返回 PSLVERR=1 | **PASS** |
+| 6 | IRQ 寄存器完整实现（IRQ_EN/IRQ_STA/irq_o） | `make run` PASS 且 log 中 `tc_irq_logic PASS` + `tc_rw1c_irq_sta PASS`；IRQ_EN 读写正确，IRQ_STA RW1C 行为正确，irq_o = done_irq \| err_irq | **PASS** |
