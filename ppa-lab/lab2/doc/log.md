@@ -1,0 +1,72 @@
+# Lab2 实验日志
+
+> 设计/审查/验证/验收/迭代各阶段记录。新 Agent 进入时只读顶部 Status 摘要。
+
+## Status 摘要（≤20 行）
+
+- 当前阶段：**设计阶段已完成**，待 Review Agent 审查
+- 模块：`ppa_packet_proc_core.sv`（M3）已实现
+- 最小 TB：6 个 TC / 33 checks 全 PASS
+- `make comp` 0 error 0 warning；`make run` 全 PASS
+- feature-matrix F2-01~F2-14 实现状态 → #DONE，TB 状态保持 #TODO（VPlan 阶段补强）
+- 关键设计决策：mem_rd_en_o / mem_rd_addr_o 采用组合输出，匹配 M2 同步 SRAM 的 1 拍读延迟
+- 未决问题：无；TB 仅覆盖 F2-01/03/04/05/12/13 基本场景，F2-06/07/08/09/10/11/14 待 VPlan 补 TC
+
+---
+
+## 1 设计阶段（2026-05-11，DUT Agent）
+
+### 1.1 阶段目标
+按 spec §7~9 实现 M3 三态 FSM，完成包头解析、长度/类型/头校验、payload sum/XOR 计算。
+
+### 1.2 关键设计决策
+
+#### D1：SRAM 读端口采用组合输出
+- **背景**：M2 为同步 SRAM（`rd_en/addr` 在 posedge 采样，`rd_data` 在下一拍可见）。
+- **若 M3 输出为寄存器**：DUT 在 posedge T 设置 `mem_rd_en_o=1`，SRAM 在 posedge T+1 锁存数据，DUT 在 posedge T+2 才能采样到数据 → 每 word 间隔 2 拍，最小包至少 3 拍。
+- **采用组合输出后**：DUT 在 posedge T（IDLE→PROCESS 同拍）由组合逻辑直接驱动 `rd_en=1, addr=0`，SRAM 同拍即锁存；T+1 拍 DUT 即可消费数据。最小包仅 2 拍。
+- **风险**：路径上多一级组合逻辑（状态/start_i → rd_en），在 PPA 集成场景下时序裕度仍充足；后续若有时序问题可在 Lab3 集成阶段评估。
+
+#### D2：流水化连续读
+- DUT 每拍发起一个读请求（`issue_idx`）并消费上一拍的返回数据（`consume_idx`）。两者相差 1 拍。
+- 当 `issue_idx == words_total` 时停止发起。
+- 单 word 包（含 pkt_len 越界场景）：header 处理完成同拍即进入 DONE，多余的投机性读请求无副作用。
+
+#### D3：长度越界快速终止（F2-13 防卡死）
+- `pkt_len<4` 或 `pkt_len>32` 时强制 `words_total=1`，只消费 word0（即 header）后即进 DONE。
+- 这样无论 `pkt_len` 是何"非法值"，FSM 都在 2 拍内回到 DONE，不依赖 SRAM 越界读保护。
+
+#### D4：错误三类并行（spec §9.2）
+- 长度/类型/校验错误在 header 处理同拍并行判定并锁存，互不抑制。
+- `format_ok` 在进入 DONE 同拍由三类错误的或非组合而成。
+
+#### D5：PKT_LEN_EXP 语义
+- spec §9.1 描述为"若 PKT_LEN_EXP 已配置"。复位值为 0（spec §5.2），按"非零即已配置"判定一致性检查。
+- 风险：spec 措辞略含混；已记入 ppa-risk-register.md 待 Review Agent 复核。
+
+### 1.3 SRAM 读时序示意（pkt_len=8, 2-word 包）
+
+```
+拍 |  state   | rd_en(comb) | rd_addr | rd_data       | 动作
+---|----------|-------------|---------|---------------|---------------------------
+T0 | IDLE     | 1           | 0       | 0             | start_i=1；SRAM 锁存 mem[0]
+T1 | PROCESS  | 1           | 1       | mem[0]        | 处理 header；SRAM 锁存 mem[1]
+T2 | PROCESS  | 0           | -       | mem[1]        | 处理 word1 payload；进 DONE
+T3 | DONE     | 0           | -       | -             | done_o=1 保持
+```
+
+### 1.4 验证成果
+
+| 项 | 结果 |
+|----|------|
+| `make comp` | 0 error / 0 warning |
+| `make run` | 33 PASS / 0 FAIL（6 个 TC：合法 4B / 8B / 下溢 / 上溢 / busy-done 时序 / 连续两帧） |
+| QuestaSim FSM 识别 | 1 FSM in `ppa_packet_proc_core` |
+
+### 1.5 已知遗留（交由 Review/VPlan 处理）
+
+| ID | 描述 | 归属 |
+|----|------|------|
+| L2-O-1 | TB 未覆盖 type_mask 过滤 / algo_mode=0 旁路 / payload 全 32B / PKT_LEN_EXP 一致性 | VPlan Agent |
+| L2-O-2 | 组合 rd_en/addr 输出在集成时序下的余量待 Lab3 验证 | Lab3 集成 |
+| L2-O-3 | 越界判定路径与 `mem_rd_data_i` header 解码耦合，跨周期假设需 Review 检查 | Review Agent |
