@@ -4,12 +4,12 @@
 
 ## Status 摘要（≤20 行）
 
-- 当前阶段：**Lab2 验收通过，已关闭**
-- 模块：`ppa_packet_proc_core.sv`（M3）已实现、审查、验证、验收
-- 验收结论：3 项必做 + 2 项选做全部 PASS，无迭代
-- TB：14 个 TC / 66 checks 全 PASS
+- 当前阶段：**Lab2 迭代完成，已关闭**
+- 模块：`ppa_packet_proc_core.sv`（M3）已实现、审查、验证、验收、迭代
+- 验收结论：3 项必做 + 2 项选做全部 PASS；迭代补充 N-3（最大合法包 32B）
+- TB：15 个 TC / 76 checks 全 PASS
 - `make comp` 0 error 0 warning；`make run` 全 PASS
-- feature-matrix F2-01~F2-14 → #VERIFIED
+- feature-matrix F2-01~F2-15 → #VERIFIED
 - 关键设计决策：mem_rd_en_o / mem_rd_addr_o 采用组合输出，匹配 M2 同步 SRAM 的 1 拍读延迟
 - 下一步：Lab3 顶层集成
 
@@ -189,3 +189,45 @@ F2-01~F2-14 TB 列全部 #TODO → #DONE。
 **Lab2 验收通过。** 3 项必做 + 2 项选做全部 PASS。无迭代需求。
 
 F2-01~F2-14 → #VERIFIED，Lab2 关闭。
+
+---
+
+## 5 迭代阶段（2026-05-12，VPlan Agent）
+
+### 5.1 迭代触发
+
+Sign-off Agent 第二轮审计发现 §10 验收场景 N-3（最大合法包 32B）在 Lab2 TB 中无对应用例。
+- 当前 TB 最大测试包为 TC5 的 pkt_len=12（3 word），未覆盖 pkt_len=32（8 word 满载）。
+- feature-matrix 中 F2-05（长度检查 [4,32]）隐含了边界值 32，但缺少独立的功能行。
+- §10 N-3 要求：pkt_len=32, pkt_type=0x04, 28B payload → done=1, format_ok=1, res_pkt_len=32，验证字计数器到达最大值及 28 字节 payload 累加完整性。
+
+### 5.2 修复措施
+
+#### TC15: tc_max_legal_pkt（N-3 验收场景）
+- pkt_len=32, pkt_type=0x04, flags=0x00, hdr_chk=0x24
+- 28B payload（7 个满 word）：bytes 0x01~0x1C
+- 预期 sum = (1+2+…+28) mod 256 = 406 mod 256 = 0x96
+- 预期 xor = 1^2^…^28 = 0x1C
+- 检查项：done=1, busy=0, res_pkt_len=32, res_pkt_type=0x04, format_ok=1, 三路 error=0, sum=0x96, xor=0x1C（共 10 checks）
+
+#### F2-15: 最大合法包满载处理
+- 新增 feature-matrix 行 F2-15，Spec §3.2/§10.1，关联 TC15，状态 #VERIFIED。
+
+### 5.3 验证结果
+
+| 项 | 结果 |
+|----|------|
+| `make comp` | 0 error / 0 warning |
+| `make run` | 76 PASS / 0 FAIL（15 TC 全 PASS） |
+| 回归 | TC1~TC14 无劣化 |
+
+### 5.4 更新文件清单
+
+| 文件 | 变更 |
+|------|------|
+| `lab2/svtb/tb/ppa_tb.sv` | 新增 TC15 |
+| `doc/ppa-feature-matrix.md` | 新增 F2-15 行 |
+| `doc/ppa-status.md` | 追加迭代里程碑 |
+| `doc/ppa-risk-register.md` | R-3 已关闭 |
+| `lab2/doc/handoff.md` | 修订 Sign-off→DUT 交接段 |
+| `lab2/doc/log.md` | 本段（§5） |

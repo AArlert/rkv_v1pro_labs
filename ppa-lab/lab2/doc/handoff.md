@@ -111,16 +111,17 @@ make run
 1. 执行 `make comp` (0 error 0 warning) + `make run` (14 TC / 66 checks / 0 FAIL)
 2. 逐项判定 acceptance.md：3 项必做 + 2 项选做全部 PASS
 3. feature-matrix F2-01~F2-14 备注列 → #VERIFIED
-4. 更新 ppa-status.md 确认 Lab2 关闭
-5. 验收结论记入 log.md §4
+4. **第二轮审计**：对照 §10 验收测试场景矩阵，发现 N-3（最大合法包 32B）在 Lab2 TB 中无对应用例，F2-05 隐含但缺独立功能行
+5. 将 N-3 缺口分析报告交付 VPlan Agent 进入迭代阶段修复
 
 ### 我没做什么 / 留给下一步的（≤5 条）
-1. Lab3 顶层集成（ppa_top 连线）待 DUT Agent 启动
-2. U-1（PKT_MEM APB 读返回 0）待 Lab3 解决
-3. 组合 rd_en/addr 端到端时序余量待 Lab3 集成后评估
+1. N-3 缺口修复由 VPlan Agent 在迭代阶段完成（TC15 + F2-15）
+2. Lab3 顶层集成（ppa_top 连线）待 DUT Agent 启动
+3. U-1（PKT_MEM APB 读返回 0）待 Lab3 解决
+4. 组合 rd_en/addr 端到端时序余量待 Lab3 集成后评估
 
 ### 踩过的坑 / 要小心的（≤3 条）
-1. 验收无迭代：不存在 FAIL 项，无需进入迭代阶段
+1. §10 场景矩阵与 feature-matrix 之间的覆盖关系需交叉审计，F2-05 范围型功能行容易隐含边界值而漏测
 2. A-2 假设（PKT_LEN_EXP "非零即已配置"）仍在 risk-register OPEN 状态，Lab3 应关注
 
 ### 验证成果的最小命令
@@ -134,3 +135,32 @@ make run
 1. **[P0]** DUT Agent 启动 Lab3，实现 ppa_top 顶层连线（F3-01）
 2. **[P0]** 解决 U-1（PKT_MEM APB 读返回 0 → 连接 M2 读端口）
 3. **[P1]** Lab3 VPlan 设计端到端 TB 验证 F3-02~F3-06
+
+---
+
+## Handoff: VPlan Agent → DUT Agent (2026-05-12, Lab2 迭代 → Lab3)
+
+### 我做了什么（≤5 条）
+1. 响应 Sign-off Agent 第二轮审计的 N-3 缺口，在迭代阶段补充 TC15（pkt_len=32, 28B payload 满载）
+2. 新增 feature-matrix F2-15（最大合法包满载处理），状态 → #VERIFIED
+3. `make comp` 0 error 0 warning；`make run` 15 TC / 76 checks / 0 FAIL（TC1~TC14 无回归）
+4. 更新 ppa-status.md / ppa-feature-matrix.md / ppa-risk-register.md（R-3 已关闭）/ log.md §5
+
+### 我没做什么 / 留给下一步的（≤5 条）
+1. Lab3 顶层集成由 DUT Agent 负责
+2. §10 验收场景 N-3 已覆盖，Lab2 全部 §10 场景均已闭合
+
+### 踩过的坑 / 要小心的（≤3 条）
+1. 32B 包占满全部 8 word SRAM 空间（word0 header + word1~7 payload），字计数器 issue_idx 最大值为 7——恰好覆盖 3-bit addr 上限
+2. payload sum 为 8-bit 截断累加，28 字节数据 sum=406 溢出为 0x96，设计预期值时需注意 mod 256
+
+### 验证成果的最小命令
+```
+cd ppa-lab/lab2/svtb/sim
+make comp
+make run
+```
+
+### 推荐下一步动作（≤3 条，按优先级）
+1. **[P0]** DUT Agent 启动 Lab3 顶层集成（F3-01），解决 U-1
+2. **[P1]** Lab3 端到端 TB 可复用 Lab2 TC15 的数据构造作为 32B 满载端到端用例

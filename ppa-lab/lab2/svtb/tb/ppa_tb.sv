@@ -15,6 +15,7 @@
 //   TC12: exp_pkt_len 不匹配（length_error）
 //   TC13: exp_pkt_len 匹配（正向确认）
 //   TC14: payload 非对齐尾 word（sum/XOR 边界）
+//   TC15: 最大合法包（pkt_len=32, 28B payload 满载，N-3 验收场景）
 // ============================================================================
 
 `timescale 1ns/1ps
@@ -374,6 +375,37 @@ module ppa_tb;
 		check("payload_sum",  {24'b0, res_payload_sum_o}, 32'h42);
 		check("payload_xor",  {24'b0, res_payload_xor_o}, 32'h42);
 		check("res_pkt_len",  {26'b0, res_pkt_len_o},     32'd5);
+
+		// --------------------------------------------------------------------
+		// TC15: 最大合法包 pkt_len=32（N-3 验收场景）
+		//   28B payload（7 word 满载），字计数器到达最大值
+		//   type=0x04, flags=0x00, hdr_chk = 0x20 ^ 0x04 ^ 0x00 = 0x24
+		//   payload bytes = 0x01..0x1C (28 bytes)
+		//   sum = (1+2+...+28) mod 256 = 406 mod 256 = 0x96
+		//   xor = 1^2^...^28 = 0x1C
+		// --------------------------------------------------------------------
+		$display("\n========== TC15: tc_max_legal_pkt ==========");
+		mem[0] = pack_hdr(8'd32, 8'h04, 8'h00, 8'h24);
+		mem[1] = 32'h04030201;
+		mem[2] = 32'h08070605;
+		mem[3] = 32'h0C0B0A09;
+		mem[4] = 32'h100F0E0D;
+		mem[5] = 32'h14131211;
+		mem[6] = 32'h18171615;
+		mem[7] = 32'h1C1B1A19;
+		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd0;
+		pulse_start();
+		wait_done();
+		check("done_o",        {31'b0, done_o},            32'h1);
+		check("busy_o",        {31'b0, busy_o},            32'h0);
+		check("res_pkt_len",   {26'b0, res_pkt_len_o},     32'd32);
+		check("res_pkt_type",  {24'b0, res_pkt_type_o},    32'h04);
+		check("format_ok",     {31'b0, format_ok_o},       32'h1);
+		check("length_error",  {31'b0, length_error_o},    32'h0);
+		check("type_error",    {31'b0, type_error_o},      32'h0);
+		check("chk_error",     {31'b0, chk_error_o},       32'h0);
+		check("payload_sum",   {24'b0, res_payload_sum_o}, 32'h96);
+		check("payload_xor",   {24'b0, res_payload_xor_o}, 32'h1C);
 
 		// --------------------------------------------------------------------
 		// 总结

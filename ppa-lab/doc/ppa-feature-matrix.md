@@ -52,6 +52,7 @@
 | F2-12 | DONE 态结果保持至下次 start | §7.2, §7.4 | #DONE | #DONE | TC5/TC6 | #VERIFIED |
 | F2-13 | 长度越界时 M3 不卡死 | §7.2, §9.1 | #DONE | #DONE | TC3/TC4 | #VERIFIED |
 | F2-14 | PKT_LEN_EXP 与 pkt_len 不符时 length_error | §9.1 | #DONE | #DONE | TC12/TC13 | #VERIFIED |
+| F2-15 | 最大合法包满载处理（pkt_len=32, 28B payload） | §3.2, §10.1 | #DONE | #DONE | TC15 | #VERIFIED |
 
 ## Lab3：顶层集成
 
