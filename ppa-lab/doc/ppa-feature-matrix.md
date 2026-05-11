@@ -36,20 +36,20 @@
 
 | ID | 功能描述 | Spec § | 实现状态 | TB 状态 | 关联 Testcase | 备注 |
 |----|----------|--------|----------|---------|---------------|------|
-| F2-01 | 三态 FSM（IDLE->PROCESS->DONE） | §7.1 | #DONE | #TODO | TC1/TC2/TC5 | DUT 设计完成，待 VPlan 补 TC |
-| F2-02 | M3 收到 start_i 后无条件启动处理 | §7.2 | #DONE | #TODO | TC5 | enable/busy 门控由 M1 完成（F1-08）；M3 端口表无 enable_i，见 spec §2.3 |
-| F2-03 | busy/done 时序正确 | §7.4 | #DONE | #TODO | TC5 | |
-| F2-04 | 包头解析（pkt_len/type/flags/hdr_chk） | §3.1, §7.3 | #DONE | #TODO | TC1/TC2 | |
-| F2-05 | 长度检查（pkt_len [4,32]） | §3.2, §9.1 | #DONE | #TODO | TC3/TC4 | |
-| F2-06 | 类型检查（one-hot + type_mask） | §9.1 | #DONE | #TODO | — | RTL 完成，TC 待 VPlan 补充 |
-| F2-07 | 头校验（hdr_chk == B0^B1^B2） | §9.1 | #DONE | #TODO | — | RTL 完成，TC 待 VPlan 补充 |
-| F2-08 | algo_mode 旁路 | §5.2, §9.1 | #DONE | #TODO | — | RTL 完成，TC 待 VPlan 补充 |
-| F2-09 | payload sum 计算 | §3.4, §7.3 | #DONE | #TODO | TC2 | |
-| F2-10 | payload XOR 计算 | §3.4, §7.3 | #DONE | #TODO | TC2 | |
-| F2-11 | 错误可并行成立 | §9.2 | #DONE | #TODO | — | RTL 三路错误锁存，TC 待 VPlan 补充 |
-| F2-12 | DONE 态结果保持至下次 start | §7.2, §7.4 | #DONE | #TODO | TC5/TC6 | |
-| F2-13 | 长度越界时 M3 不卡死 | §7.2, §9.1 | #DONE | #TODO | TC3/TC4 | |
-| F2-14 | PKT_LEN_EXP 与 pkt_len 不符时 length_error | §9.1 | #DONE | #TODO | — | spec §9.1 明确定义；§10.3 B-4 场景；按"非零即已配置"实现 |
+| F2-01 | 三态 FSM（IDLE->PROCESS->DONE） | §7.1 | #DONE | #DONE | TC1/TC2/TC5 | |
+| F2-02 | M3 收到 start_i 后无条件启动处理 | §7.2 | #DONE | #DONE | TC5 | enable/busy 门控由 M1 完成（F1-08）；M3 端口表无 enable_i，见 spec §2.3 |
+| F2-03 | busy/done 时序正确 | §7.4 | #DONE | #DONE | TC5 | |
+| F2-04 | 包头解析（pkt_len/type/flags/hdr_chk） | §3.1, §7.3 | #DONE | #DONE | TC1/TC2 | |
+| F2-05 | 长度检查（pkt_len [4,32]） | §3.2, §9.1 | #DONE | #DONE | TC3/TC4 | |
+| F2-06 | 类型检查（one-hot + type_mask） | §9.1 | #DONE | #DONE | TC7/TC8 | TC7 验证非 one-hot，TC8 验证 mask 过滤 |
+| F2-07 | 头校验（hdr_chk == B0^B1^B2） | §9.1 | #DONE | #DONE | TC9 | algo_mode=1 时校验失败触发 chk_error |
+| F2-08 | algo_mode 旁路 | §5.2, §9.1 | #DONE | #DONE | TC10 | algo_mode=0 时 hdr_chk 错误不报 chk_error |
+| F2-09 | payload sum 计算 | §3.4, §7.3 | #DONE | #DONE | TC2/TC13/TC14 | TC14 验证非对齐尾 word 边界 |
+| F2-10 | payload XOR 计算 | §3.4, §7.3 | #DONE | #DONE | TC2/TC13/TC14 | TC14 验证非对齐尾 word 边界 |
+| F2-11 | 错误可并行成立 | §9.2 | #DONE | #DONE | TC11 | 三类错误同时触发验证 |
+| F2-12 | DONE 态结果保持至下次 start | §7.2, §7.4 | #DONE | #DONE | TC5/TC6 | |
+| F2-13 | 长度越界时 M3 不卡死 | §7.2, §9.1 | #DONE | #DONE | TC3/TC4 | |
+| F2-14 | PKT_LEN_EXP 与 pkt_len 不符时 length_error | §9.1 | #DONE | #DONE | TC12/TC13 | TC12 不匹配报错，TC13 匹配不报错 |
 
 ## Lab3：顶层集成
 

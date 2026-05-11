@@ -68,3 +68,37 @@ make run
 1. **[P0]** VPlan Agent 编写 testplan，补全 F2-06(type one-hot)、F2-07(hdr_chk)、F2-08(algo_mode=0)、F2-09/10(payload 边界)、F2-11(多错误并行)、F2-14(exp_pkt_len) 的定向 TC
 2. **[P0]** `make run` 全 PASS 后标记 feature-matrix TB 列 → #DONE
 3. **[P1]** 考虑边界用例：pkt_len=5(非对齐尾 word)、pkt_len=32(满包)、同时触发多类错误
+
+---
+
+## Handoff: VPlan Agent → Sign-off Agent (2026-05-12, Lab2)
+
+### 我做了什么（≤5 条）
+1. 编写 testplan（TC7~TC14），覆盖 F2-06/F2-07/F2-08/F2-11/F2-14 及 F2-09/F2-10 边界
+2. 在 `ppa_tb.sv` 实现 8 个定向 TC，`make comp` 0 error 0 warning
+3. `make run` 全量 14 TC / 66 checks PASS，0 FAIL
+4. feature-matrix F2-01~F2-14 TB 列全部 → #DONE
+5. 更新 `testplan.md` / `ppa-status.md` / `ppa-feature-matrix.md`
+
+### 我没做什么 / 留给下一步的（≤5 条）
+1. acceptance.md 验收判定留待 Sign-off Agent
+2. pkt_len=32（满包 8 word）的大包用例未单独覆盖（TC2 已覆盖多 word 路径）
+3. 未做波形级时序审查
+4. 选做项 4/5 已通过 TC7~TC10、TC13~TC14 覆盖，acceptance.md 中可标记
+
+### 踩过的坑 / 要小心的（≤3 条）
+1. TC11 三错误并行：pkt_len<4 时 words_total=1，header 单拍 DONE——此路径的 hdr_chk_err 使用组合逻辑而非锁存值
+2. TC14 非对齐边界：pkt_len=5 只有 word1[7:0] 参与 sum/XOR，其余 3 字节的 byte_offset≥pkt_len 被跳过
+3. exp_pkt_len_i 比较使用 hdr_b0[5:0]（6-bit 截断），RTL 与 spec 一致
+
+### 验证成果的最小命令
+```
+cd ppa-lab/lab2/svtb/sim
+make comp
+make run
+```
+
+### 推荐下一步动作（≤3 条，按优先级）
+1. **[P0]** Sign-off Agent 执行 `acceptance.md` 逐项判定（必做 1~3 + 选做 4~5）
+2. **[P0]** 验收通过后将 F2-01~F2-14 → #VERIFIED，关闭 Lab2
+3. **[P1]** Lab3 顶层集成阶段启动

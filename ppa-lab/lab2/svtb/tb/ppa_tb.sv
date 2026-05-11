@@ -7,6 +7,14 @@
 //   TC4: 长度上溢（pkt_len=33，length_error=1，不卡死）
 //   TC5: busy/done 时序检查
 //   TC6: 连续两帧处理
+//   TC7: pkt_type 非 one-hot（type_error）
+//   TC8: type_mask 屏蔽合法类型（type_error）
+//   TC9: hdr_chk 校验失败（chk_error）
+//   TC10: algo_mode=0 旁路 hdr_chk
+//   TC11: 三类错误并行成立
+//   TC12: exp_pkt_len 不匹配（length_error）
+//   TC13: exp_pkt_len 匹配（正向确认）
+//   TC14: payload 非对齐尾 word（sum/XOR 边界）
 // ============================================================================
 
 `timescale 1ns/1ps
@@ -241,6 +249,131 @@ module ppa_tb;
 		check("frame2 res_pkt_len",   {26'b0, res_pkt_len_o},  32'd4);
 		check("frame2 res_pkt_type",  {24'b0, res_pkt_type_o}, 32'h08);
 		check("frame2 format_ok",     {31'b0, format_ok_o},    32'h1);
+
+		// --------------------------------------------------------------------
+		// TC7: pkt_type 非 one-hot（F2-06）
+		//   pkt_type=0x03 不在 {0x01,0x02,0x04,0x08} → type_error=1
+		//   hdr_chk = 0x04 ^ 0x03 ^ 0x00 = 0x07
+		// --------------------------------------------------------------------
+		$display("\n========== TC7: tc_type_not_one_hot ==========");
+		mem[0] = pack_hdr(8'd4, 8'h03, 8'h00, 8'h07);
+		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd0;
+		pulse_start();
+		wait_done();
+		check("type_error",   {31'b0, type_error_o},   32'h1);
+		check("length_error", {31'b0, length_error_o}, 32'h0);
+		check("chk_error",    {31'b0, chk_error_o},    32'h0);
+		check("format_ok",    {31'b0, format_ok_o},    32'h0);
+
+		// --------------------------------------------------------------------
+		// TC8: type_mask 屏蔽合法 one-hot 类型（F2-06）
+		//   pkt_type=0x01 (idx=0) 但 type_mask=4'b1110（bit0 禁止）→ type_error=1
+		//   hdr_chk = 0x04 ^ 0x01 ^ 0x00 = 0x05
+		// --------------------------------------------------------------------
+		$display("\n========== TC8: tc_type_mask_filter ==========");
+		mem[0] = pack_hdr(8'd4, 8'h01, 8'h00, 8'h05);
+		algo_mode_i = 1'b1; type_mask_i = 4'b1110; exp_pkt_len_i = 6'd0;
+		pulse_start();
+		wait_done();
+		check("type_error",   {31'b0, type_error_o},   32'h1);
+		check("length_error", {31'b0, length_error_o}, 32'h0);
+		check("chk_error",    {31'b0, chk_error_o},    32'h0);
+		check("format_ok",    {31'b0, format_ok_o},    32'h0);
+
+		// --------------------------------------------------------------------
+		// TC9: hdr_chk 校验失败（F2-07）
+		//   pkt_len=4, type=0x01, flags=0x00, 正确 chk=0x05, 实际填 0xFF
+		//   algo_mode=1 → chk_error=1
+		// --------------------------------------------------------------------
+		$display("\n========== TC9: tc_hdr_chk_error ==========");
+		mem[0] = pack_hdr(8'd4, 8'h01, 8'h00, 8'hFF);
+		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd0;
+		pulse_start();
+		wait_done();
+		check("chk_error",    {31'b0, chk_error_o},    32'h1);
+		check("length_error", {31'b0, length_error_o}, 32'h0);
+		check("type_error",   {31'b0, type_error_o},   32'h0);
+		check("format_ok",    {31'b0, format_ok_o},    32'h0);
+
+		// --------------------------------------------------------------------
+		// TC10: algo_mode=0 旁路 hdr_chk（F2-08）
+		//   与 TC9 相同包但 algo_mode=0 → chk_error=0，format_ok=1
+		// --------------------------------------------------------------------
+		$display("\n========== TC10: tc_algo_mode_bypass ==========");
+		mem[0] = pack_hdr(8'd4, 8'h01, 8'h00, 8'hFF);
+		algo_mode_i = 1'b0; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd0;
+		pulse_start();
+		wait_done();
+		check("chk_error",    {31'b0, chk_error_o},    32'h0);
+		check("length_error", {31'b0, length_error_o}, 32'h0);
+		check("type_error",   {31'b0, type_error_o},   32'h0);
+		check("format_ok",    {31'b0, format_ok_o},    32'h1);
+
+		// --------------------------------------------------------------------
+		// TC11: 三类错误并行成立（F2-11）
+		//   pkt_len=3（length_error）, type=0x03（type_error）
+		//   正确 chk=0x03^0x03^0x00=0x00, 填 0xFF（chk_error）
+		//   algo_mode=1
+		// --------------------------------------------------------------------
+		$display("\n========== TC11: tc_multi_error ==========");
+		mem[0] = pack_hdr(8'd3, 8'h03, 8'h00, 8'hFF);
+		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd0;
+		pulse_start();
+		wait_done();
+		check("length_error", {31'b0, length_error_o}, 32'h1);
+		check("type_error",   {31'b0, type_error_o},   32'h1);
+		check("chk_error",    {31'b0, chk_error_o},    32'h1);
+		check("format_ok",    {31'b0, format_ok_o},    32'h0);
+		check("done_o",       {31'b0, done_o},         32'h1);
+
+		// --------------------------------------------------------------------
+		// TC12: exp_pkt_len 不匹配（F2-14）
+		//   pkt_len=8（合法范围），exp_pkt_len_i=6'd10（非零且≠8）→ length_error=1
+		//   hdr_chk = 0x08 ^ 0x02 ^ 0x00 = 0x0A
+		// --------------------------------------------------------------------
+		$display("\n========== TC12: tc_exp_pkt_len_mismatch ==========");
+		mem[0] = pack_hdr(8'd8, 8'h02, 8'h00, 8'h0A);
+		mem[1] = 32'h04030201;
+		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd10;
+		pulse_start();
+		wait_done();
+		check("length_error", {31'b0, length_error_o}, 32'h1);
+		check("type_error",   {31'b0, type_error_o},   32'h0);
+		check("chk_error",    {31'b0, chk_error_o},    32'h0);
+		check("format_ok",    {31'b0, format_ok_o},    32'h0);
+
+		// --------------------------------------------------------------------
+		// TC13: exp_pkt_len 匹配（F2-14 正向确认）
+		//   pkt_len=8, exp_pkt_len_i=6'd8（匹配）→ length_error=0
+		//   hdr_chk = 0x08 ^ 0x02 ^ 0x00 = 0x0A
+		// --------------------------------------------------------------------
+		$display("\n========== TC13: tc_exp_pkt_len_match ==========");
+		mem[0] = pack_hdr(8'd8, 8'h02, 8'h00, 8'h0A);
+		mem[1] = 32'h04030201;
+		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd8;
+		pulse_start();
+		wait_done();
+		check("length_error", {31'b0, length_error_o}, 32'h0);
+		check("format_ok",    {31'b0, format_ok_o},    32'h1);
+		check("payload_sum",  {24'b0, res_payload_sum_o}, 32'h0A);
+		check("payload_xor",  {24'b0, res_payload_xor_o}, 32'h04);
+
+		// --------------------------------------------------------------------
+		// TC14: payload 非对齐尾 word（F2-09/F2-10 边界）
+		//   pkt_len=5 → words_total=ceil(5/4)=2, word1 仅 byte[4] 有效
+		//   word1=32'hDEADBF42 → 只有 0x42 参与 sum/XOR
+		//   hdr_chk = 0x05 ^ 0x01 ^ 0x00 = 0x04
+		// --------------------------------------------------------------------
+		$display("\n========== TC14: tc_payload_unaligned ==========");
+		mem[0] = pack_hdr(8'd5, 8'h01, 8'h00, 8'h04);
+		mem[1] = 32'hDEADBF42;
+		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd0;
+		pulse_start();
+		wait_done();
+		check("format_ok",    {31'b0, format_ok_o},       32'h1);
+		check("payload_sum",  {24'b0, res_payload_sum_o}, 32'h42);
+		check("payload_xor",  {24'b0, res_payload_xor_o}, 32'h42);
+		check("res_pkt_len",  {26'b0, res_pkt_len_o},     32'd5);
 
 		// --------------------------------------------------------------------
 		// 总结
