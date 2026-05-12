@@ -30,9 +30,10 @@
 
 **输入**：spec 相关章节 + feature-matrix 中 #TODO/#WIP 行
 **触发**：新 lab 启动 | 审查回退 | 迭代归因为 RTL 缺陷
-**产出**：`design-prompt.md` + RTL + 最小可验证 TB（含 makefile 启动） + `make comp` 通过 + feature-matrix 实现状态 → #DONE
+**迭代**：执行 `make comp`、`make run` 不通过，则循环 debug 直至通过
+**产出**：`design-prompt.md` + RTL + 最小可验证 TB（含 makefile 启动） + 执行 `make comp`、`make run`通过 + feature-matrix 实现状态 → #DONE
 **交接**：→ Review Agent
-**升级**：spec 歧义 → `ppa-risk-register.md` 登记假设
+**升级**：spec 歧义 → `ppa-risk-register.md` 登记假设，由下一个 DUT Agent 和用户共同处理
 
 ---
 
@@ -42,7 +43,7 @@
 
 **输入**：DUT Agent 交付的 RTL + 最小可验证 TB（含 makefile 启动） + comp.log + run.log
 **触发**：DUT Agent handoff
-**产出**：一致性检查结果记入 `log.md`，不一致项分类为阻塞性/非阻塞性
+**产出**：一致性检查结果记入 `log.md`，不一致项分类为阻塞性/非阻塞性，更新 handoff
 **交接**：无阻塞 → VPlan Agent | 有阻塞 → 回 DUT Agent
 
 ---
@@ -57,7 +58,7 @@
 - Lab1/2：基于 DUT Agent 最小 TB 补充 feature-matrix 中 TB 为 #TODO 的用例，`make run` 全 PASS 即可
 - Lab3：编写集成级端到端 TB，引入 UVM 基础结构
 - Lab4：将既有 TB 升级为系统化 UVM 验证，建立 `make smoke/regress/cov`
-**产出**：testplan + TB 补充/升级 + feature-matrix TB 列 → #DONE + `make comp/run` 可用
+**产出**：testplan + TB 补充/升级 + feature-matrix TB 列 → #DONE + `make comp/run` 可用 + 执行 `make comp`、`make run` 得到 log 并记录现状
 **交接**：→ Sign-off Agent
 **前置强制**：无 testplan 不允许编写 TB 代码
 
@@ -69,6 +70,7 @@
 
 **输入**：失败的仿真 log 或 mismatch 报告，`make run` 可复现
 **触发**：TB 运行 FAIL/ERROR/mismatch | 验收 FAIL 需归因
+**迭代**：先执行 `make comp`、`make run` 复现 bug，然后 debug，再次执行 `make comp`、`make run` 不通过，则循环 debug 直至通过；若 3 次无法通过按**升级**处理
 **产出**：失败记录（命令/seed/测试名/报错点）+ bug 定位（文件:行号）+ 归因（RTL → DUT / TB → VPlan）
 **交接**：→ DUT Agent（RTL 缺陷）| → VPlan Agent（TB 缺陷）
 **升级**：无法定位 → `ppa-risk-register.md` 登记 #BLOCKED
