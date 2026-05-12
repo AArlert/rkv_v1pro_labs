@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-**Lab3 验收通过 → Lab3 关闭；准备进入 Lab4**
+**Lab4 Phase 1 完成 → 准备 Phase 2（UVM 升级）**
 
 ## 已完成里程碑
 
@@ -24,10 +24,11 @@
 | Lab3 验证完成           | 2026-05-12 | 11 TC（TC1~TC11）；F3-01~F3-06 TB 全部 #DONE；含选做 4/5 + 错误通路 + PKT_MEM 读回        |
 | Lab3 验收通过           | 2026-05-12 | 3 必做 + 2 选做全 PASS；F3-01~F3-06 → #VERIFIED ，Lab3 关闭                        |
 | Lab4 Phase 0 完成       | 2026-05-13 | 36 TC / 177 checks 结构化回归列表；Spec §10 全 14 场景覆盖；testplan.md 产出         |
+| Lab4 Phase 1 完成       | 2026-05-13 | Makefile 统一入口 (smoke/regress/cov)；36 TC 全 PASS；Coverage 基线 82.93%        |
 
 ## 进行中
 
-- Lab4 Phase 0 完成（全量 testcase 整理）→ 准备 Phase 1（Makefile 统一入口）
+- Lab4 Phase 2: UVM 升级（将纯 SV TB 重构为 UVM 环境）
 
 ## 阻塞项
 
@@ -41,6 +42,6 @@
 
 ## 下一步
 
-1. Lab4 Phase 1: 建立 `make smoke / regress / cov` 统一入口 (lab4/svtb/sim/Makefile)
-2. Lab4 Phase 2: 运行全量回归，确认 36 TC / 177 checks 全 PASS
-3. Lab4 Phase 3: 统计 Questa 五类覆盖率基线 (line/branch/condition/FSM/toggle)
+1. Lab4 Phase 2: UVM 升级 — 参考 mcdt-lab, 建立 vif/agent/driver/monitor/scoreboard/test 环境
+2. Lab4 Phase 3: 功能覆盖率 (covergroup) 定义与收集
+3. Lab4 Phase 4: Coverage closure — FSM transition 60%→目标 90%+; Condition 75%→目标 85%+

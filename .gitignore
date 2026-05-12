@@ -29,6 +29,14 @@ _tempmsg/
 _data/
 exempt*
 
+# Coverage artifacts (Questa vcover)
+covdata/
+covhtmlreport/
+VRMDATA/
+vrmhtmlreport/
+work_lab*/
+*.ucdb
+
 # Keep repo clean from local backup/temp files
 *~
 *.tmp
