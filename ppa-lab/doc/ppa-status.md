@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-**Lab3 设计完成 → 待审查**
+**Lab3 审查通过 → 待验证**
 
 ## 已完成里程碑
 
@@ -20,10 +20,11 @@
 | Lab2 验收通过          | 2026-05-12 | 3 项必做 + 2 项选做全 PASS；F2-01~F2-14 → #VERIFIED ，Lab2 关闭                        |
 | Lab2 迭代补充 N-3       | 2026-05-12 | 补充 TC15（pkt_len=32 满载包）；新增 F2-15；15 TC / 76 checks 全 PASS                  |
 | Lab3 设计完成           | 2026-05-12 | ppa_top.sv 连线 + U-1 解决；3 TC / 12 checks 全 PASS；F3-01~F3-04 → #DONE         |
+| Lab3 审查通过           | 2026-05-12 | 15 项连线 vs spec §2.1/§2.3 全部一致；无阻塞性问题                                        |
 
 ## 进行中
 
-- Lab3 审查待启动（Review Agent）
+- Lab3 验证待启动（VPlan Agent）
 
 ## 阻塞项
 
@@ -37,6 +38,6 @@
 
 ## 下一步
 
-1. Review Agent 审查 ppa_top 连线与 spec §2.1 一致性
+1. 用户执行 `make comp && make run` 确认 Lab3 TC1~TC3 全 PASS
 2. VPlan Agent 补充端到端 TC（异常包、选做 4/5）
 3. Sign-off Agent 执行 acceptance.md 验收
