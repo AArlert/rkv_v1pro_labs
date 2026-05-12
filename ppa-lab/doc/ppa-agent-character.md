@@ -31,7 +31,7 @@
 **输入**：spec 相关章节 + feature-matrix 中 #TODO/#WIP 行
 **触发**：新 lab 启动 | 审查回退 | 迭代归因为 RTL 缺陷
 **迭代**：执行 `make comp`、`make run` 不通过，则循环 debug 直至通过
-**产出**：`design-prompt.md` + RTL + 最小可验证 TB（含 makefile 启动） + 执行 `make comp`、`make run`通过 + feature-matrix 实现状态 → #DONE
+**产出**：`design-prompt.md`、`handoff.md`、`log.md`、`acceptance.md` + RTL + 最小可验证 TB（含 makefile 启动） + 执行 `make comp`、`make run`通过 + feature-matrix 实现状态 → #DONE
 **交接**：→ Review Agent
 **升级**：spec 歧义 → `ppa-risk-register.md` 登记假设，由下一个 DUT Agent 和用户共同处理
 

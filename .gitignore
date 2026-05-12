@@ -6,7 +6,7 @@ Thumbs.db
 *.swo
 
 # Common logs / transcripts
-# *.log
+*.log
 transcript
 
 # Verilog/SystemVerilog simulation outputs (ModelSim/Questa)

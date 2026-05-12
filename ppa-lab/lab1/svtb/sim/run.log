@@ -1,6 +1,6 @@
 # vsim -voptargs="+acc" -work ./work ppa_tb -l run.log -sv_seed 1 -c -do "run -all; quit -f" 
-# Start time: 01:17:38 on May 12,2026
-# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Start time: 22:07:25 on May 12,2026
+# ** Note: (vsim-8009) Loading existing optimized design _opt
 # //  Questa Sim-64
 # //  Version 2021.1 win64 Jan 19 2021
 # //
@@ -108,5 +108,5 @@
 # ALL TESTS PASSED
 # ** Note: $finish    : ./../tb/ppa_tb.sv(532)
 #    Time: 2595 ns  Iteration: 1  Instance: /ppa_tb
-# End time: 01:17:42 on May 12,2026, Elapsed time: 0:00:04
+# End time: 22:07:29 on May 12,2026, Elapsed time: 0:00:04
 # Errors: 0, Warnings: 0
