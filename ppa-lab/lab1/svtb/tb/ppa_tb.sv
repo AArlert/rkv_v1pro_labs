@@ -83,6 +83,8 @@ module ppa_tb;
 		.pkt_mem_we_o      (pkt_mem_we_o),
 		.pkt_mem_addr_o    (pkt_mem_addr_o),
 		.pkt_mem_wdata_o   (pkt_mem_wdata_o),
+		.pkt_mem_rdata_i   (sram_rd_data),
+		.pkt_mem_re_o      (),
 		.busy_i            (busy_stub),
 		.done_i            (done_stub),
 		.format_ok_i       (format_ok_stub),

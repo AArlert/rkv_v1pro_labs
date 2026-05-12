@@ -6,6 +6,7 @@
 //   - CSR 区 0x000~0x028，PKT_MEM 区 0x040~0x05C
 //   - 寄存器属性：RW / RO / W1P / RW1C
 // Ports: 详见 ppa-lite-spec.md 2.3 节 M1 端口表
+//   Lab3 新增：pkt_mem_rdata_i / pkt_mem_re_o 用于 PKT_MEM APB 读回路径
 // ============================================================================
 
 module ppa_apb_slave_if (
@@ -34,6 +35,10 @@ module ppa_apb_slave_if (
 	output logic        pkt_mem_we_o,
 	output logic [2:0]  pkt_mem_addr_o,
 	output logic [31:0] pkt_mem_wdata_o,
+
+	// PKT_MEM 读端口（来自 M2，经 ppa_top 仲裁）
+	input  logic [31:0] pkt_mem_rdata_i,
+	output logic        pkt_mem_re_o,
 
 	// M3 状态/结果输入
 	input  logic        busy_i,
@@ -222,6 +227,8 @@ module ppa_apb_slave_if (
 				ADDR_ERR_FLAG:        PRDATA = {29'b0, chk_error_i, type_error_i, length_error_i};
 				default: PRDATA = 32'h0;
 			endcase
+			if (is_pkt_mem)
+				PRDATA = pkt_mem_rdata_i;
 		end
 	end
 
@@ -231,6 +238,11 @@ module ppa_apb_slave_if (
 	assign pkt_mem_we_o    = apb_write && is_pkt_mem && !busy_i;
 	assign pkt_mem_addr_o  = PADDR[4:2];
 	assign pkt_mem_wdata_o = PWDATA;
+
+	// ========================================================================
+	// PKT_MEM 读使能（SETUP 阶段发起，给 M2 一拍读延迟）
+	// ========================================================================
+	assign pkt_mem_re_o = PSEL & ~PENABLE & ~PWRITE & is_pkt_mem;
 
 	// ========================================================================
 	// CSR 输出端口映射

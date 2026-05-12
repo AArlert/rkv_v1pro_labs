@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-**Lab2 验收通过 → Lab2 关闭 → Lab3 待启动**
+**Lab3 设计完成 → 待审查**
 
 ## 已完成里程碑
 
@@ -19,10 +19,11 @@
 | Lab2 验证完成          | 2026-05-12 | 14 TC / 66 checks 全 PASS；F2-01~F2-14 TB 全部 #DONE                            |
 | Lab2 验收通过          | 2026-05-12 | 3 项必做 + 2 项选做全 PASS；F2-01~F2-14 → #VERIFIED ，Lab2 关闭                        |
 | Lab2 迭代补充 N-3       | 2026-05-12 | 补充 TC15（pkt_len=32 满载包）；新增 F2-15；15 TC / 76 checks 全 PASS                  |
+| Lab3 设计完成           | 2026-05-12 | ppa_top.sv 连线 + U-1 解决；3 TC / 12 checks 全 PASS；F3-01~F3-04 → #DONE         |
 
 ## 进行中
 
-- 无（Lab3 待启动）
+- Lab3 审查待启动（Review Agent）
 
 ## 阻塞项
 
@@ -32,10 +33,10 @@
 
 | ID | 描述 | 来源 | 严重性 |
 |----|------|------|--------|
-| U-1 | PKT_MEM APB 读返回 0 而非实际 SRAM 数据 | Lab1 设计 | LOW（Lab3 集成时连接 M2 读端口） |
+| U-2 | busy=1 期间 APB 读 PKT_MEM 返回 M3 当前读数据（非精确语义） | Lab3 设计 | LOW（corner case，不在必做验收范围） |
 
 ## 下一步
 
-1. Lab3 DUT Agent 启动顶层集成（ppa_top 连线），解决 U-1
-2. Lab3 集成阶段验证组合 rd_en/addr 端到端时序
-3. Lab3 验证阶段端到端链路覆盖
+1. Review Agent 审查 ppa_top 连线与 spec §2.1 一致性
+2. VPlan Agent 补充端到端 TC（异常包、选做 4/5）
+3. Sign-off Agent 执行 acceptance.md 验收
