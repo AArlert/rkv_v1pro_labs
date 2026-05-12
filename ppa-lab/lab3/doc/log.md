@@ -126,6 +126,15 @@
 | TC10 | FAIL | `irq_o asserted: got 0x00000000, expected 0x00000001` |
 | TC11 | PASS | 8 checks 全部通过 |
 
+### 修复后运行结果（make run：40 PASS / 0 FAIL）
+
+| 项目 | 值 |
+|------|-----|
+| make comp | 0 error, 0 warning |
+| make run | **ALL TESTS PASSED** — 11 TC / 40 checks |
+| 仿真时间 | 3235 ns |
+| 墙钟时间 | 3 秒 |
+
 ---
 
 ## §4 验证调试阶段
