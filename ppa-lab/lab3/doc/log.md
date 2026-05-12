@@ -2,7 +2,7 @@
 
 ## Status 摘要
 
-- **阶段**: 验证完成 → 待验收
+- **阶段**: ✅ 验收通过，Lab3 关闭
 - **DUT Agent**: 完成 ppa_top 顶层连线 + 最小端到端 TB（TC1~TC3）
 - **Review Agent**: 15 项连线一致性检查全通过，无阻塞性问题
 - **VPlan Agent**: 补充 TC4~TC11（8 TC），覆盖 F3-01~F3-06 全部功能点
@@ -173,3 +173,35 @@
 **文件**: `lab3/svtb/tb/ppa_tb.sv`，TC10 `poll_done()` 后新增 `@(posedge PCLK)`。
 
 等待 1 拍使 `reg_done_irq` 的 NBA 生效后再采样 `irq_o`，与 spec §8.2 "同拍立即置位"语义一致（done_rising 同拍 NBA 设置 reg_done_irq，下一拍 irq_o 即为 1）。
+
+---
+
+## §5 验收阶段
+
+### 验收执行
+
+- 日期：2026-05-12
+- 执行者：Sign-off Agent
+- 编译：`make comp` — 0 error, 0 warning
+- 仿真：`make run` — 11 TC / 40 checks 全 PASS，仿真时间 3235 ns
+
+### 逐项判定
+
+| # | 验收内容 | 判据 TC | 关键证据 | 判定 |
+|---|----------|---------|----------|------|
+| 1 | 端到端链路完整 | TC1 | RES_PKT_LEN=0x08, RES_PKT_TYPE=0x02, STATUS=0x0A, ERR_FLAG=0x00 | **PASS** |
+| 2 | 连续两帧顺序处理 | TC2 | Frame2 RES_PKT_LEN=0x04 (≠Frame1=0x08), STATUS=0x0A | **PASS** |
+| 3 | STATUS 总线通路 | TC3 | busy→STATUS[1:0]=0x01; done→STATUS[1:0]=0x02 | **PASS** |
+| 4 | busy 写保护（选做） | TC9 | PSLVERR=1, PKT_MEM Word1=0xAAAAAAAA 不变 | **PASS** |
+| 5 | 中断路径闭环（选做） | TC10 | irq_o=1→IRQ_STA[0]=1→清除后 irq_o=0, IRQ_STA=0 | **PASS** |
+
+### 验收结论
+
+**Lab3 验收通过** — 3 项必做 + 2 项选做全部 PASS。
+
+功能覆盖总结：
+- F3-01~F3-04（必做）：TC1~TC3 + TC4~TC8 + TC11 全面覆盖
+- F3-05（选做 busy 写保护）：TC9 覆盖
+- F3-06（选做中断路径）：TC10 覆盖
+
+Lab3 状态：**关闭**。F3-01~F3-06 → #VERIFIED。

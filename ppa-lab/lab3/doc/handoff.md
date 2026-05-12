@@ -102,3 +102,36 @@ make run
 1. **[P0]** 用户执行 `make comp && make run` 确认 TC1~TC11 全 PASS（40/40 checks）
 2. **[P0]** Sign-off Agent 按 acceptance.md 逐项判定（必做 1~3 + 选做 4/5）
 3. **[P1]** 确认 lab1 `make comp && make run` 回归通过
+
+---
+
+## Handoff: Sign-off Agent → Lab3 关闭 (2026-05-12, Lab3)
+
+### 我做了什么（≤5 条）
+1. 执行 `make comp`：0 error, 0 warning
+2. 执行 `make run`：11 TC / 40 checks 全 PASS（3235 ns）
+3. 逐项判定 acceptance.md：3 必做 + 2 选做全 PASS
+4. 更新 feature-matrix F3-01~F3-06 → #VERIFIED
+5. 更新 ppa-status.md：Lab3 关闭
+
+### 我没做什么 / 留给下一步的（≤5 条）
+1. Lab1 回归测试未重跑（M1 新增 pkt_mem_rdata_i/re_o 端口后的兼容性）
+2. Lab4 UVM 架构设计未启动
+3. U-2（busy 期间 APB 读 PKT_MEM 返回 M3 数据）仍为 LOW 未决项
+
+### 踩过的坑 / 要小心的（≤3 条）
+1. **Lab1 回归重要**：M1 新增了 2 个端口，lab1 TB 已做兼容连接但未重跑确认
+2. **TC10 时序敏感**：4B 最小包仅 2 拍处理，poll_done 后必须等 1 拍才能采样 NBA 输出
+3. **U-2 corner case**：busy 期间不要在 TB 中做 PKT_MEM 读测试
+
+### 验证成果的最小命令
+```
+cd ppa-lab/lab3/svtb/sim
+make comp && make run
+# 预期: 0 error, 11 TC / 40 checks ALL TESTS PASSED
+```
+
+### 推荐下一步动作（≤3 条，按优先级）
+1. **[P0]** Lab1 回归测试：`cd ppa-lab/lab1/svtb/sim && make comp && make run`
+2. **[P1]** Lab4 启动：DUT Agent 设计 UVM 回归架构（make smoke/regress/cov）
+3. **[P2]** 考虑是否需要处理 U-2（LOW，可推迟到 Lab4 覆盖率阶段）

@@ -58,12 +58,12 @@
 
 | ID    | 功能描述                       | Spec § | 实现状态 | TB 状态 | 关联 Testcase | 备注  |
 | ----- | -------------------------- | ------ | ---- | ----- | ----------- | --- |
-| F3-01 | ppa_top 顶层连线               | §2.1   | #DONE | #DONE  | TC1, TC11   | M2 读端口 MUX 仲裁；TC11 验证 PKT_MEM 读回路径 |
-| F3-02 | 端到端链路（APB->CSR->SRAM->FSM->结果） | §2.1   | #DONE | #DONE  | TC1, TC4~TC8 | TC4 最大包；TC5~TC8 错误通路端到端 |
-| F3-03 | 连续两帧顺序处理                   | §7.2, §10.1 | #DONE | #DONE  | TC2         |     |
-| F3-04 | STATUS 总线通路                | §5.2   | #DONE | #DONE  | TC3         |     |
-| F3-05 | busy 期间写保护（选做）             | §6.3   | #DONE | #DONE  | TC9         |     |
-| F3-06 | 中断路径闭环（选做）                 | §8.2   | #DONE | #DONE  | TC10        |     |
+| F3-01 | ppa_top 顶层连线               | §2.1   | #DONE | #DONE  | TC1, TC11   | #VERIFIED M2 读端口 MUX 仲裁；TC11 验证 PKT_MEM 读回路径 |
+| F3-02 | 端到端链路（APB->CSR->SRAM->FSM->结果） | §2.1   | #DONE | #DONE  | TC1, TC4~TC8 | #VERIFIED TC4 最大包；TC5~TC8 错误通路端到端 |
+| F3-03 | 连续两帧顺序处理                   | §7.2, §10.1 | #DONE | #DONE  | TC2         | #VERIFIED |
+| F3-04 | STATUS 总线通路                | §5.2   | #DONE | #DONE  | TC3         | #VERIFIED |
+| F3-05 | busy 期间写保护（选做）             | §6.3   | #DONE | #DONE  | TC9         | #VERIFIED |
+| F3-06 | 中断路径闭环（选做）                 | §8.2   | #DONE | #DONE  | TC10        | #VERIFIED |
 
 ## Lab4：回归测试与覆盖率
 

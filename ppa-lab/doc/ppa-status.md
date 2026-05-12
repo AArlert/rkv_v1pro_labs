@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-**Lab3 验证调试完成 → 待验收**
+**Lab3 验收通过 → Lab3 关闭；准备进入 Lab4**
 
 ## 已完成里程碑
 
@@ -22,11 +22,11 @@
 | Lab3 设计完成           | 2026-05-12 | ppa_top.sv 连线 + U-1 解决；3 TC / 12 checks 全 PASS；F3-01~F3-04 → #DONE         |
 | Lab3 审查通过           | 2026-05-12 | 15 项连线 vs spec §2.1/§2.3 全部一致；无阻塞性问题                                        |
 | Lab3 验证完成           | 2026-05-12 | 11 TC（TC1~TC11）；F3-01~F3-06 TB 全部 #DONE；含选做 4/5 + 错误通路 + PKT_MEM 读回        |
-| Lab3 验证调试完成         | 2026-05-12 | TC10 TB 时序 bug 定位+修复（irq_o NBA 竞争）；归因 TB 缺陷，RTL 无问题                       |
+| Lab3 验收通过           | 2026-05-12 | 3 必做 + 2 选做全 PASS；F3-01~F3-06 → #VERIFIED ，Lab3 关闭                        |
 
 ## 进行中
 
-- Lab3 验收待启动（Sign-off Agent）
+- 无
 
 ## 阻塞项
 
@@ -40,6 +40,5 @@
 
 ## 下一步
 
-1. 用户执行 `cd ppa-lab/lab3/svtb/sim && make comp && make run` 确认 11 TC / 40 checks 全 PASS
-2. Sign-off Agent 执行 acceptance.md 验收（必做 1~3 + 选做 4/5）
-3. Lab1 回归测试（M1 新增端口兼容性确认）
+1. Lab4 DUT Agent 启动（UVM 回归测试架构：make smoke/regress/cov）
+2. Lab1 回归测试确认（M1 新增端口兼容性）
