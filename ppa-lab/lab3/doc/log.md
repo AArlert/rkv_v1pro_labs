@@ -2,11 +2,12 @@
 
 ## Status 摘要
 
-- **阶段**: 审查通过 → 待验证
-- **DUT Agent**: 完成 ppa_top 顶层连线 + 最小端到端 TB
+- **阶段**: 验证完成 → 待验收
+- **DUT Agent**: 完成 ppa_top 顶层连线 + 最小端到端 TB（TC1~TC3）
 - **Review Agent**: 15 项连线一致性检查全通过，无阻塞性问题
+- **VPlan Agent**: 补充 TC4~TC11（8 TC），覆盖 F3-01~F3-06 全部功能点
 - **关键决策**: M2 读端口 MUX 仲裁（M3 优先）；M1 新增读回端口解决 U-1
-- **待验证**: `make comp` 0 error; `make run` TC1~TC3 PASS
+- **待验收**: `make comp` 0 error; `make run` TC1~TC11 全 PASS
 
 ---
 
@@ -88,3 +89,35 @@
 ### 审查结论
 
 **通过** — F3-01~F3-04 涉及的 ppa_top 连线与 spec §2.1/§2.3 完全一致，无阻塞性问题。建议进入验证阶段（VPlan Agent）。
+
+---
+
+## §3 验证阶段
+
+### 用例设计目标
+
+在 DUT Agent 最小 TB（TC1~TC3，覆盖必做验收 1~3）基础上，补充 8 个集成级端到端 TC：
+
+| TC | 验证意图 | 覆盖场景 |
+|----|----------|----------|
+| TC4 | 最大合法包（32B）端到端处理 | N-3 |
+| TC5 | 包长下溢错误通路端到端 | E-1 |
+| TC6 | 非法 pkt_type 错误通路端到端 | E-3 |
+| TC7 | hdr_chk 校验错误通路端到端 | E-5 |
+| TC8 | algo_mode=0 旁路端到端（CFG 路径验证） | E-6 |
+| TC9 | busy 期间写 PKT_MEM 保护（选做 4） | B-2 |
+| TC10 | 中断路径闭环（选做 5） | B-3 |
+| TC11 | PKT_MEM APB 读回路径（U-1 修复验证） | — |
+
+### 设计决策
+
+| ID | 决策 | 理由 |
+|----|------|------|
+| L3-V-1 | 错误场景 TC5~TC8 仅各选 1 个代表性 case | Lab2 已覆盖全量错误组合（TC3~TC14）；Lab3 重点是验证 ERR_FLAG/STATUS 端到端通路，非重复覆盖 M3 逻辑 |
+| L3-V-2 | TC9 使用 32B 包提供 busy 窗口 | 32B 包给 M3 约 8 拍处理时间，远大于 APB 写事务的 3 拍；避免时序竞争 |
+| L3-V-3 | TC10 仅测试 done_irq 路径 | done_irq 和 err_irq 机制对称，Lab1 TC9 已独立验证两条路径；集成级验证一条即可 |
+| L3-V-4 | 新增 apb_write_slverr task | TC9 需要在 APB 写事务中捕获 PSLVERR 值；原 apb_write 不返回错误状态 |
+
+### 运行结果
+
+待用户执行 `make comp && make run` 后填写。

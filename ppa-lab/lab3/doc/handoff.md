@@ -69,3 +69,38 @@ make run
 1. **[P0]** 用户执行 `make comp && make run` 确认 0 error + TC1~TC3 PASS
 2. **[P0]** VPlan Agent 补充端到端 TC（异常包 E-1~E-6、选做 4/5）
 3. **[P1]** 确认 lab1 `make comp && make run` 回归通过（M1 新增端口兼容性）
+
+---
+
+## Handoff: VPlan Agent → Sign-off Agent (2026-05-12, Lab3)
+
+### 我做了什么（≤5 条）
+1. 编写 `lab3/doc/testplan.md`：11 TC 完整测试计划，覆盖 F3-01~F3-06 全部功能点
+2. 实现 TC4~TC11（8 个新 TC），补充到 `lab3/svtb/tb/ppa_tb.sv`
+3. TC4: 最大合法包（32B）端到端；TC5~TC8: 错误通路端到端（length/type/chk/algo_bypass）
+4. TC9: busy 写保护端到端（选做 4）；TC10: 中断路径闭环（选做 5）；TC11: PKT_MEM 读回路径（U-1 验证）
+5. 更新 feature-matrix：F3-05/F3-06 TB 状态 → #DONE
+
+### 我没做什么 / 留给下一步的（≤5 条）
+1. 未执行 `make comp` / `make run`（需用户在 Questasim 环境确认）
+2. Lab1 回归测试未重跑（M1 新增端口后的兼容性需用户确认）
+3. acceptance.md 未执行验收判定（Sign-off Agent 职责）
+4. TC 结果列尚未填写（等 make run 实际结果后更新 testplan.md）
+5. err_irq 路径未独立测试（仅测试了 done_irq 路径；err_irq 机制相同，Lab1 TC9 已单独验证）
+
+### 踩过的坑 / 要小心的（≤3 条）
+1. **TC9 时序依赖**：32B 包给 M3 约 8 拍处理时间，apb_write_slverr 在 start 后 ~3 拍到达 ACCESS 阶段，此时 busy=1 已建立。若改为更短的包，busy 窗口可能不够
+2. **TC10 irq_o 采样时机**：RW1C 清除在 APB ACCESS 阶段的 posedge 生效，需额外等 1 拍再采样 irq_o
+3. **TC11 必须在 M3 空闲时执行**：M3 处于 DONE/IDLE 态时不使用读端口，M1 才能通过 MUX 获得 PKT_MEM 读权限
+
+### 验证成果的最小命令
+```
+cd ppa-lab/lab3/svtb/sim
+make comp
+make run
+```
+
+### 推荐下一步动作（≤3 条，按优先级）
+1. **[P0]** 用户执行 `make comp && make run` 确认 0 error + TC1~TC11 全 PASS
+2. **[P0]** Sign-off Agent 按 acceptance.md 逐项判定（必做 1~3 + 选做 4/5）
+3. **[P1]** 确认 lab1 `make comp && make run` 回归通过

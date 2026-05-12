@@ -1,9 +1,17 @@
 // ============================================================================
 // Module: ppa_tb
 // Description: Lab3 集成级 Testbench（端到端验证 ppa_top）
-//   TC1: 端到端基本包处理（8B 合法包，验收必做 1）
-//   TC2: 连续两帧顺序处理（验收必做 2）
-//   TC3: STATUS 总线通路检查（busy/done 状态位，验收必做 3）
+//   TC1:  端到端基本包处理（8B 合法包，验收必做 1）
+//   TC2:  连续两帧顺序处理（验收必做 2）
+//   TC3:  STATUS 总线通路检查（busy/done 状态位，验收必做 3）
+//   TC4:  最大合法包（32B）端到端处理
+//   TC5:  包长下溢 E2E 错误通路（pkt_len=3）
+//   TC6:  非法 pkt_type E2E 错误通路（type=0x03）
+//   TC7:  hdr_chk 错误 E2E 错误通路
+//   TC8:  algo_mode=0 旁路 E2E 验证
+//   TC9:  busy 期间写 PKT_MEM 保护（选做 4）
+//   TC10: 中断路径闭环（选做 5）
+//   TC11: PKT_MEM APB 读回路径（U-1 修复验证）
 // ============================================================================
 
 `timescale 1ns/1ps
@@ -84,6 +92,25 @@ module ppa_tb;
 		data = PRDATA;
 		PSEL    <= 1'b0;
 		PENABLE <= 1'b0;
+	endtask
+
+	// ========================================================================
+	// APB Write Task (with PSLVERR capture)
+	// ========================================================================
+	task automatic apb_write_slverr(input logic [11:0] addr, input logic [31:0] data, output logic slverr);
+		@(posedge PCLK);
+		PSEL    <= 1'b1;
+		PENABLE <= 1'b0;
+		PWRITE  <= 1'b1;
+		PADDR   <= addr;
+		PWDATA  <= data;
+		@(posedge PCLK);
+		PENABLE <= 1'b1;
+		@(posedge PCLK);
+		slverr = PSLVERR;
+		PSEL    <= 1'b0;
+		PENABLE <= 1'b0;
+		PWRITE  <= 1'b0;
 	endtask
 
 	// ========================================================================
@@ -202,6 +229,210 @@ module ppa_tb;
 
 		apb_read(12'h008, rd_data);
 		check("TC3 STATUS[1:0] during done", {30'b0, rd_data[1:0]}, 32'h0000_0002);
+
+		// ==============================================================
+		// TC4: tc_e2e_max_packet - 最大合法包（32B, 8 word）端到端
+		//   pkt_len=32, type=0x04, flags=0x00, hdr_chk=0x20^0x04^0x00=0x24
+		//   payload: bytes 0x01..0x1C (28 bytes)
+		//   sum = sum(1..28) = 406 → 8-bit = 0x96
+		//   xor = XOR(1..28) = 0x1C
+		// ==============================================================
+		$display("\n========== TC4: tc_e2e_max_packet ==========");
+
+		apb_write(12'h040, {8'h24, 8'h00, 8'h04, 8'h20});  // Word0
+		apb_write(12'h044, 32'h04030201);                    // Word1
+		apb_write(12'h048, 32'h08070605);                    // Word2
+		apb_write(12'h04C, 32'h0C0B0A09);                    // Word3
+		apb_write(12'h050, 32'h100F0E0D);                    // Word4
+		apb_write(12'h054, 32'h14131211);                    // Word5
+		apb_write(12'h058, 32'h18171615);                    // Word6
+		apb_write(12'h05C, 32'h1C1B1A19);                    // Word7
+
+		apb_write(12'h000, 32'h0000_0003);  // start
+
+		poll_done();
+
+		apb_read(12'h018, rd_data);
+		check("TC4 RES_PKT_LEN",     rd_data, 32'h0000_0020);
+		apb_read(12'h01C, rd_data);
+		check("TC4 RES_PKT_TYPE",    rd_data, 32'h0000_0004);
+		apb_read(12'h020, rd_data);
+		check("TC4 RES_PAYLOAD_SUM", rd_data, 32'h0000_0096);
+		apb_read(12'h024, rd_data);
+		check("TC4 RES_PAYLOAD_XOR", rd_data, 32'h0000_001C);
+		apb_read(12'h008, rd_data);
+		check("TC4 STATUS",          rd_data, 32'h0000_000A);
+		apb_read(12'h028, rd_data);
+		check("TC4 ERR_FLAG",        rd_data, 32'h0000_0000);
+
+		// ==============================================================
+		// TC5: tc_e2e_error_length - 包长下溢（pkt_len=3）
+		//   pkt_len=3, type=0x01, hdr_chk=0x03^0x01^0x00=0x02
+		//   length_error=1, STATUS=0x06 (done+error)
+		// ==============================================================
+		$display("\n========== TC5: tc_e2e_error_length ==========");
+
+		apb_write(12'h040, {8'h02, 8'h00, 8'h01, 8'h03});  // Word0
+
+		apb_write(12'h000, 32'h0000_0003);  // start
+
+		poll_done();
+
+		apb_read(12'h028, rd_data);
+		check("TC5 ERR_FLAG[0] length_error", rd_data, 32'h0000_0001);
+		apb_read(12'h008, rd_data);
+		check("TC5 STATUS (done+error)", rd_data, 32'h0000_0006);
+
+		// ==============================================================
+		// TC6: tc_e2e_error_type - 非法 pkt_type（0x03, 非 one-hot）
+		//   pkt_len=4, type=0x03, hdr_chk=0x04^0x03^0x00=0x07
+		//   type_error=1, STATUS=0x06
+		// ==============================================================
+		$display("\n========== TC6: tc_e2e_error_type ==========");
+
+		apb_write(12'h040, {8'h07, 8'h00, 8'h03, 8'h04});  // Word0
+
+		apb_write(12'h000, 32'h0000_0003);  // start
+
+		poll_done();
+
+		apb_read(12'h028, rd_data);
+		check("TC6 ERR_FLAG[1] type_error", rd_data, 32'h0000_0002);
+		apb_read(12'h008, rd_data);
+		check("TC6 STATUS (done+error)", rd_data, 32'h0000_0006);
+
+		// ==============================================================
+		// TC7: tc_e2e_chk_error - hdr_chk 错误（algo_mode=1）
+		//   pkt_len=4, type=0x01, hdr_chk=0xFF (should be 0x05)
+		//   chk_error=1, STATUS=0x06
+		// ==============================================================
+		$display("\n========== TC7: tc_e2e_chk_error ==========");
+
+		apb_write(12'h040, {8'hFF, 8'h00, 8'h01, 8'h04});  // Word0
+
+		apb_write(12'h000, 32'h0000_0003);  // start
+
+		poll_done();
+
+		apb_read(12'h028, rd_data);
+		check("TC7 ERR_FLAG[2] chk_error", rd_data, 32'h0000_0004);
+		apb_read(12'h008, rd_data);
+		check("TC7 STATUS (done+error)", rd_data, 32'h0000_0006);
+
+		// ==============================================================
+		// TC8: tc_e2e_algo_bypass - algo_mode=0 旁路
+		//   同 TC7 的包，但 CFG.algo_mode=0 → chk_error=0
+		//   ERR_FLAG=0x00, STATUS=0x0A (format_ok=1)
+		// ==============================================================
+		$display("\n========== TC8: tc_e2e_algo_bypass ==========");
+
+		apb_write(12'h004, 32'h0000_00F0);  // CFG: algo_mode=0, type_mask=0xF
+		apb_write(12'h040, {8'hFF, 8'h00, 8'h01, 8'h04});  // Word0 (same as TC7)
+
+		apb_write(12'h000, 32'h0000_0003);  // start
+
+		poll_done();
+
+		apb_read(12'h028, rd_data);
+		check("TC8 ERR_FLAG (no chk_error)", rd_data, 32'h0000_0000);
+		apb_read(12'h008, rd_data);
+		check("TC8 STATUS (format_ok=1)",    rd_data, 32'h0000_000A);
+
+		apb_write(12'h004, 32'h0000_00F1);  // restore CFG default
+
+		// ==============================================================
+		// TC9: tc_busy_write_protect - busy 期间写 PKT_MEM 保护
+		//   32B 包提供充足处理时间；busy 期间写 Word1 应返回 PSLVERR=1
+		//   done 后读回 Word1 应保持原值
+		// ==============================================================
+		$display("\n========== TC9: tc_busy_write_protect ==========");
+
+		begin
+			logic slverr;
+
+			apb_write(12'h040, {8'h24, 8'h00, 8'h04, 8'h20});  // Word0: 32B pkt
+			apb_write(12'h044, 32'hAAAA_AAAA);                   // Word1: known data
+			apb_write(12'h048, 32'h0000_0000);                    // Word2-7: fill
+			apb_write(12'h04C, 32'h0000_0000);
+			apb_write(12'h050, 32'h0000_0000);
+			apb_write(12'h054, 32'h0000_0000);
+			apb_write(12'h058, 32'h0000_0000);
+			apb_write(12'h05C, 32'h0000_0000);
+
+			apb_write(12'h000, 32'h0000_0003);  // start
+
+			// busy 期间尝试写 PKT_MEM Word1
+			apb_write_slverr(12'h044, 32'hDEAD_BEEF, slverr);
+			check("TC9 PSLVERR during busy", {31'b0, slverr}, 32'h0000_0001);
+
+			poll_done();
+
+			// done 后读回 Word1，验证 SRAM 未被篡改
+			apb_read(12'h044, rd_data);
+			check("TC9 PKT_MEM Word1 unchanged", rd_data, 32'hAAAA_AAAA);
+		end
+
+		// ==============================================================
+		// TC10: tc_irq_path_e2e - 中断路径闭环
+		//   done_irq_en=1 → done 触发 irq_o=1 → 清 IRQ_STA → irq_o=0
+		// ==============================================================
+		$display("\n========== TC10: tc_irq_path_e2e ==========");
+
+		apb_write(12'h00C, 32'h0000_0001);  // IRQ_EN: done_irq_en=1
+
+		apb_write(12'h040, {8'h05, 8'h00, 8'h01, 8'h04});  // Word0: 4B valid pkt
+
+		apb_write(12'h000, 32'h0000_0003);  // start
+
+		poll_done();
+
+		// done → done_irq 置位 → irq_o=1
+		check("TC10 irq_o asserted", {31'b0, irq_o}, 32'h0000_0001);
+		apb_read(12'h010, rd_data);
+		check("TC10 IRQ_STA[0] done_irq", rd_data, 32'h0000_0001);
+
+		// 清除 done_irq
+		apb_write(12'h010, 32'h0000_0001);  // RW1C: write 1 to clear
+		@(posedge PCLK);                     // wait 1 cycle for clear
+
+		check("TC10 irq_o deasserted", {31'b0, irq_o}, 32'h0000_0000);
+		apb_read(12'h010, rd_data);
+		check("TC10 IRQ_STA cleared", rd_data, 32'h0000_0000);
+
+		apb_write(12'h00C, 32'h0000_0000);  // restore IRQ_EN=0
+
+		// ==============================================================
+		// TC11: tc_pkt_mem_readback - PKT_MEM APB 读回路径
+		//   验证 U-1 修复：M1 pkt_mem_re_o → M2 → pkt_mem_rdata_i
+		//   M3 空闲时，APB 读 PKT_MEM 返回 SRAM 真实数据
+		// ==============================================================
+		$display("\n========== TC11: tc_pkt_mem_readback ==========");
+
+		apb_write(12'h040, 32'h1111_1111);
+		apb_write(12'h044, 32'h2222_2222);
+		apb_write(12'h048, 32'h3333_3333);
+		apb_write(12'h04C, 32'h4444_4444);
+		apb_write(12'h050, 32'h5555_5555);
+		apb_write(12'h054, 32'h6666_6666);
+		apb_write(12'h058, 32'h7777_7777);
+		apb_write(12'h05C, 32'h8888_8888);
+
+		apb_read(12'h040, rd_data);
+		check("TC11 PKT_MEM Word0 readback", rd_data, 32'h1111_1111);
+		apb_read(12'h044, rd_data);
+		check("TC11 PKT_MEM Word1 readback", rd_data, 32'h2222_2222);
+		apb_read(12'h048, rd_data);
+		check("TC11 PKT_MEM Word2 readback", rd_data, 32'h3333_3333);
+		apb_read(12'h04C, rd_data);
+		check("TC11 PKT_MEM Word3 readback", rd_data, 32'h4444_4444);
+		apb_read(12'h050, rd_data);
+		check("TC11 PKT_MEM Word4 readback", rd_data, 32'h5555_5555);
+		apb_read(12'h054, rd_data);
+		check("TC11 PKT_MEM Word5 readback", rd_data, 32'h6666_6666);
+		apb_read(12'h058, rd_data);
+		check("TC11 PKT_MEM Word6 readback", rd_data, 32'h7777_7777);
+		apb_read(12'h05C, rd_data);
+		check("TC11 PKT_MEM Word7 readback", rd_data, 32'h8888_8888);
 
 		// ==============================================================
 		// 测试总结
