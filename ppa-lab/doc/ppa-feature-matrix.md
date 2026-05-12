@@ -72,6 +72,6 @@
 | F4-01 | make smoke 一键冒烟 | — | #TODO | #TODO | — | |
 | F4-02 | make regress 全量回归 | — | #TODO | #TODO | — | |
 | F4-03 | make cov 覆盖率收集 | — | #TODO | #TODO | — | |
-| F4-04 | testplan 文档完整 | — | #TODO | #TODO | — | |
+| F4-04 | testplan 文档完整 | — | #DONE | #TODO | — | Phase 0 产出: lab4/doc/testplan.md (36 TC / 177 checks) |
 | F4-05 | 五类覆盖率达标 | — | #TODO | #TODO | — | |
 | F4-06 | result_summary 汇总 | — | #TODO | #TODO | — | |

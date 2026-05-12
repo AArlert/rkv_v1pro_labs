@@ -23,10 +23,11 @@
 | Lab3 审查通过           | 2026-05-12 | 15 项连线 vs spec §2.1/§2.3 全部一致；无阻塞性问题                                        |
 | Lab3 验证完成           | 2026-05-12 | 11 TC（TC1~TC11）；F3-01~F3-06 TB 全部 #DONE；含选做 4/5 + 错误通路 + PKT_MEM 读回        |
 | Lab3 验收通过           | 2026-05-12 | 3 必做 + 2 选做全 PASS；F3-01~F3-06 → #VERIFIED ，Lab3 关闭                        |
+| Lab4 Phase 0 完成       | 2026-05-13 | 36 TC / 177 checks 结构化回归列表；Spec §10 全 14 场景覆盖；testplan.md 产出         |
 
 ## 进行中
 
-- 无
+- Lab4 Phase 0 完成（全量 testcase 整理）→ 准备 Phase 1（Makefile 统一入口）
 
 ## 阻塞项
 
@@ -40,5 +41,6 @@
 
 ## 下一步
 
-1. Lab4 DUT Agent 启动（UVM 回归测试架构：make smoke/regress/cov）
-2. Lab1 回归测试确认（M1 新增端口兼容性）
+1. Lab4 Phase 1: 建立 `make smoke / regress / cov` 统一入口 (lab4/svtb/sim/Makefile)
+2. Lab4 Phase 2: 运行全量回归，确认 36 TC / 177 checks 全 PASS
+3. Lab4 Phase 3: 统计 Questa 五类覆盖率基线 (line/branch/condition/FSM/toggle)
