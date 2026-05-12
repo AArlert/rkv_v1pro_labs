@@ -1,0 +1,12 @@
+QuestaSim-64 vlog 2021.1 Compiler 2021.01 Jan 19 2021
+Start time: 16:57:56 on Apr 19,2026
+vlog -work ./work -sv -timescale=1ns/1ps -l comp.log "+incdir+./../mcdt" ./../mcdt/arbiter.v ./../mcdt/slave_fifo.v ./../mcdt/mcdt.v ./tb1.v 
+-- Compiling module arbiter
+-- Compiling module slave_fifo
+-- Compiling module mcdt
+-- Compiling module tb1
+
+Top level modules:
+	tb1
+End time: 16:57:56 on Apr 19,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0

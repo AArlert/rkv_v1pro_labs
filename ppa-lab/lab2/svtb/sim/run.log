@@ -1,0 +1,136 @@
+# vsim -voptargs="+acc" -work ./work ppa_tb -l run.log -sv_seed 1 -c -do "run -all; quit -f" 
+# Start time: 01:17:55 on May 12,2026
+# ** Note: (vsim-8009) Loading existing optimized design _opt
+# //  Questa Sim-64
+# //  Version 2021.1 win64 Jan 19 2021
+# //
+# //  Copyright 1991-2021 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  QuestaSim and its associated documentation contain trade
+# //  secrets and commercial or financial information that are the property of
+# //  Mentor Graphics Corporation and are privileged, confidential,
+# //  and exempt from disclosure under the Freedom of Information Act,
+# //  5 U.S.C. Section 552. Furthermore, this information
+# //  is prohibited from disclosure under the Trade Secrets Act,
+# //  18 U.S.C. Section 1905.
+# //
+# Loading sv_std.std
+# Loading work.ppa_tb(fast)
+# Loading work.ppa_packet_proc_core(fast)
+# run -all
+# 
+# ========== TC1: tc_min_legal_pkt ==========
+# [PASS] done_o: got 0x00000001
+# [PASS] busy_o: got 0x00000000
+# [PASS] res_pkt_len: got 0x00000004
+# [PASS] res_pkt_type: got 0x00000001
+# [PASS] format_ok: got 0x00000001
+# [PASS] length_error: got 0x00000000
+# [PASS] type_error: got 0x00000000
+# [PASS] chk_error: got 0x00000000
+# [PASS] payload_sum: got 0x00000000
+# 
+# ========== TC2: tc_8byte_legal ==========
+# [PASS] res_pkt_len: got 0x00000008
+# [PASS] res_pkt_type: got 0x00000002
+# [PASS] payload_sum: got 0x0000000a
+# [PASS] payload_xor: got 0x00000004
+# [PASS] format_ok: got 0x00000001
+# [PASS] err flags: got 0x00000000
+# 
+# ========== TC3: tc_length_underflow ==========
+# [PASS] done_o: got 0x00000001
+# [PASS] length_error: got 0x00000001
+# [PASS] format_ok: got 0x00000000
+# [PASS] busy released: got 0x00000000
+# 
+# ========== TC4: tc_length_overflow ==========
+# [PASS] done_o: got 0x00000001
+# [PASS] length_error: got 0x00000001
+# [PASS] format_ok: got 0x00000000
+# [PASS] busy released: got 0x00000000
+# 
+# ========== TC5: tc_busy_done_timing ==========
+# [PASS] busy after start: got 0x00000001
+# [PASS] done during proc: got 0x00000000
+# [PASS] done held in DONE: got 0x00000001
+# [PASS] busy in DONE: got 0x00000000
+# [PASS] done still held: got 0x00000001
+# [PASS] res_pkt_len held: got 0x0000000c
+# 
+# ========== TC6: tc_two_frames ==========
+# [PASS] done cleared after new start: got 0x00000000
+# [PASS] frame2 res_pkt_len: got 0x00000004
+# [PASS] frame2 res_pkt_type: got 0x00000008
+# [PASS] frame2 format_ok: got 0x00000001
+# 
+# ========== TC7: tc_type_not_one_hot ==========
+# [PASS] type_error: got 0x00000001
+# [PASS] length_error: got 0x00000000
+# [PASS] chk_error: got 0x00000000
+# [PASS] format_ok: got 0x00000000
+# 
+# ========== TC8: tc_type_mask_filter ==========
+# [PASS] type_error: got 0x00000001
+# [PASS] length_error: got 0x00000000
+# [PASS] chk_error: got 0x00000000
+# [PASS] format_ok: got 0x00000000
+# 
+# ========== TC9: tc_hdr_chk_error ==========
+# [PASS] chk_error: got 0x00000001
+# [PASS] length_error: got 0x00000000
+# [PASS] type_error: got 0x00000000
+# [PASS] format_ok: got 0x00000000
+# 
+# ========== TC10: tc_algo_mode_bypass ==========
+# [PASS] chk_error: got 0x00000000
+# [PASS] length_error: got 0x00000000
+# [PASS] type_error: got 0x00000000
+# [PASS] format_ok: got 0x00000001
+# 
+# ========== TC11: tc_multi_error ==========
+# [PASS] length_error: got 0x00000001
+# [PASS] type_error: got 0x00000001
+# [PASS] chk_error: got 0x00000001
+# [PASS] format_ok: got 0x00000000
+# [PASS] done_o: got 0x00000001
+# 
+# ========== TC12: tc_exp_pkt_len_mismatch ==========
+# [PASS] length_error: got 0x00000001
+# [PASS] type_error: got 0x00000000
+# [PASS] chk_error: got 0x00000000
+# [PASS] format_ok: got 0x00000000
+# 
+# ========== TC13: tc_exp_pkt_len_match ==========
+# [PASS] length_error: got 0x00000000
+# [PASS] format_ok: got 0x00000001
+# [PASS] payload_sum: got 0x0000000a
+# [PASS] payload_xor: got 0x00000004
+# 
+# ========== TC14: tc_payload_unaligned ==========
+# [PASS] format_ok: got 0x00000001
+# [PASS] payload_sum: got 0x00000042
+# [PASS] payload_xor: got 0x00000042
+# [PASS] res_pkt_len: got 0x00000005
+# 
+# ========== TC15: tc_max_legal_pkt ==========
+# [PASS] done_o: got 0x00000001
+# [PASS] busy_o: got 0x00000000
+# [PASS] res_pkt_len: got 0x00000020
+# [PASS] res_pkt_type: got 0x00000004
+# [PASS] format_ok: got 0x00000001
+# [PASS] length_error: got 0x00000000
+# [PASS] type_error: got 0x00000000
+# [PASS] chk_error: got 0x00000000
+# [PASS] payload_sum: got 0x00000096
+# [PASS] payload_xor: got 0x0000001c
+# 
+# ========== Test Summary ==========
+# PASS: 76
+# FAIL: 0
+# ALL TESTS PASSED
+# ** Note: $finish    : ./../tb/ppa_tb.sv(420)
+#    Time: 665 ns  Iteration: 1  Instance: /ppa_tb
+# End time: 01:17:58 on May 12,2026, Elapsed time: 0:00:03
+# Errors: 0, Warnings: 0

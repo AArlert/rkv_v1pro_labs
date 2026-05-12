@@ -1,0 +1,60 @@
+# //  Questa Sim-64
+# //  Version 2021.1 win64 Jan 19 2021
+# //
+# //  Copyright 1991-2021 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  QuestaSim and its associated documentation contain trade
+# //  secrets and commercial or financial information that are the property of
+# //  Mentor Graphics Corporation and are privileged, confidential,
+# //  and exempt from disclosure under the Freedom of Information Act,
+# //  5 U.S.C. Section 552. Furthermore, this information
+# //  is prohibited from disclosure under the Trade Secrets Act,
+# //  18 U.S.C. Section 1905.
+# //
+# vsim -voptargs="+acc" -work ./work tb1 -l run.log -i 
+# Start time: 16:59:48 on Apr 19,2026
+# ** Note: (vsim-8009) Loading existing optimized design _opt
+# Loading sv_std.std
+# Loading work.tb1(fast)
+# Loading work.mcdt(fast)
+# Loading work.slave_fifo(fast)
+# Loading work.arbiter(fast)
+run -all
+# ** Note: $finish    : ./tb1.v(94)
+#    Time: 1755 ns  Iteration: 0  Instance: /tb1
+# 1
+# Break in Module tb1 at ./tb1.v line 94
+restart
+# ** Note: (vsim-8009) Loading existing optimized design _opt
+# Loading work.tb1(fast)
+# Loading work.mcdt(fast)
+# Loading work.slave_fifo(fast)
+# Loading work.arbiter(fast)
+add wave -position insertpoint  \
+sim:/tb1/clk \
+sim:/tb1/rstn \
+sim:/tb1/ch0_data \
+sim:/tb1/ch0_valid \
+sim:/tb1/ch0_ready \
+sim:/tb1/ch0_margin \
+sim:/tb1/ch1_data \
+sim:/tb1/ch1_valid \
+sim:/tb1/ch1_ready \
+sim:/tb1/ch1_margin \
+sim:/tb1/ch2_data \
+sim:/tb1/ch2_valid \
+sim:/tb1/ch2_ready \
+sim:/tb1/ch2_margin \
+sim:/tb1/mcdt_data \
+sim:/tb1/mcdt_val \
+sim:/tb1/mcdt_id
+run -all
+# ** Note: $finish    : ./tb1.v(94)
+#    Time: 1755 ns  Iteration: 0  Instance: /tb1
+# 1
+# Break in Module tb1 at ./tb1.v line 94
+# Causality operation skipped due to absence of debug database file
+quit
+# End time: 17:08:27 on Apr 19,2026, Elapsed time: 0:08:39
+# Errors: 0, Warnings: 0

@@ -385,6 +385,7 @@ module ppa_tb;
 		apb_write(12'h000, 32'h0000_0003);  // start
 
 		poll_done();
+		@(posedge PCLK);  // reg_done_irq 经 NBA 置位，需额外 1 拍传播到 irq_o
 
 		// done → done_irq 置位 → irq_o=1
 		check("TC10 irq_o asserted", {31'b0, irq_o}, 32'h0000_0001);

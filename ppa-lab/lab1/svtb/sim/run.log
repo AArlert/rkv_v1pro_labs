@@ -1,0 +1,112 @@
+# vsim -voptargs="+acc" -work ./work ppa_tb -l run.log -sv_seed 1 -c -do "run -all; quit -f" 
+# Start time: 01:17:38 on May 12,2026
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# //  Questa Sim-64
+# //  Version 2021.1 win64 Jan 19 2021
+# //
+# //  Copyright 1991-2021 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  QuestaSim and its associated documentation contain trade
+# //  secrets and commercial or financial information that are the property of
+# //  Mentor Graphics Corporation and are privileged, confidential,
+# //  and exempt from disclosure under the Freedom of Information Act,
+# //  5 U.S.C. Section 552. Furthermore, this information
+# //  is prohibited from disclosure under the Trade Secrets Act,
+# //  18 U.S.C. Section 1905.
+# //
+# Loading sv_std.std
+# Loading work.ppa_tb(fast)
+# Loading work.ppa_apb_slave_if(fast)
+# Loading work.ppa_packet_sram(fast)
+# run -all
+# 
+# ========== TC1: tc_csr_default_rw ==========
+# [PASS] CTRL default: got 0x00000000
+# [PASS] CFG default: got 0x000000f1
+# [PASS] STATUS default: got 0x00000000
+# [PASS] IRQ_EN default: got 0x00000000
+# [PASS] IRQ_STA default: got 0x00000000
+# [PASS] PKT_LEN_EXP default: got 0x00000000
+# [PASS] RES_PKT_LEN default: got 0x00000000
+# [PASS] RES_PKT_TYPE default: got 0x00000000
+# [PASS] RES_PAYLOAD_SUM default: got 0x00000000
+# [PASS] RES_PAYLOAD_XOR default: got 0x00000000
+# [PASS] ERR_FLAG default: got 0x00000000
+# 
+# ========== TC2: tc_pkt_mem_write ==========
+# [PASS] SRAM Word[0]: got 0x08010009
+# [PASS] SRAM Word[1]: got 0xaabbccdd
+# [PASS] SRAM Word[2]: got 0x11112222
+# [PASS] SRAM Word[3]: got 0x33334444
+# [PASS] SRAM Word[4]: got 0x55556666
+# [PASS] SRAM Word[5]: got 0x77778888
+# [PASS] SRAM Word[6]: got 0x9999aaaa
+# [PASS] SRAM Word[7]: got 0xbbbbcccc
+# 
+# ========== TC3: tc_apb_basic_rw ==========
+# [PASS] RES_PKT_LEN: got 0x00000008
+# [PASS] RES_PKT_TYPE: got 0x00000002
+# [PASS] RES_PAYLOAD_SUM: got 0x000000ab
+# [PASS] RES_PAYLOAD_XOR: got 0x000000cd
+# [PASS] STATUS (done+format_ok): got 0x0000000a
+# [PASS] ERR_FLAG (no error): got 0x00000000
+# 
+# ========== TC4: tc_slverr_reserved ==========
+# [PASS] SLVERR wr 0x02C reserved: got 0x00000001
+# [PASS] SLVERR rd 0x02C reserved: got 0x00000001
+# [PASS] SLVERR wr 0x030 reserved: got 0x00000001
+# [PASS] SLVERR wr 0x060 OOB: got 0x00000001
+# [PASS] SLVERR rd 0x100 OOB: got 0x00000001
+# [PASS] SLVERR wr 0x003 unaligned: got 0x00000001
+# 
+# ========== TC5: tc_ro_write_protect ==========
+# [PASS] SLVERR wr STATUS: got 0x00000001
+# [PASS] STATUS unchanged: got 0x0000000a
+# [PASS] SLVERR wr RES_PKT_LEN: got 0x00000001
+# [PASS] RES_PKT_LEN unchanged: got 0x00000008
+# [PASS] SLVERR wr RES_PKT_TYPE: got 0x00000001
+# [PASS] RES_PKT_TYPE unchanged: got 0x00000002
+# [PASS] SLVERR wr RES_PAYLOAD_SUM: got 0x00000001
+# [PASS] RES_PAYLOAD_SUM unchanged: got 0x000000ab
+# [PASS] SLVERR wr RES_PAYLOAD_XOR: got 0x00000001
+# [PASS] RES_PAYLOAD_XOR unchanged: got 0x000000cd
+# [PASS] SLVERR wr ERR_FLAG: got 0x00000001
+# [PASS] ERR_FLAG unchanged: got 0x00000000
+# 
+# ========== TC6: tc_w1p_start ==========
+# [PASS] start_o pulse: got 0x00000001
+# [PASS] start_o deasserted: got 0x00000000
+# [PASS] CTRL start reads 0: got 0x00000001
+# [PASS] start_o no pulse (enable=0): got 0x00000000
+# [PASS] start_o no pulse (busy=1): got 0x00000000
+# 
+# ========== TC7: tc_rw1c_irq_sta ==========
+# [PASS] IRQ_STA done_irq set: got 0x00000001
+# [PASS] IRQ_STA done_irq cleared: got 0x00000000
+# 
+# ========== TC8: tc_busy_write_protect ==========
+# [PASS] SLVERR wr PKT_MEM busy=0: got 0x00000000
+# [PASS] SLVERR wr PKT_MEM busy=1: got 0x00000001
+# [PASS] SRAM Word[0]: got 0x12345678
+# 
+# ========== TC9: tc_irq_logic ==========
+# [PASS] irq_o=1 (done_irq): got 0x00000001
+# [PASS] irq_o=0 (done_irq cleared): got 0x00000000
+# [PASS] irq_o=1 (err_irq): got 0x00000001
+# [PASS] irq_o=0 (err_irq cleared): got 0x00000000
+# 
+# ========== TC10: tc_rw_readback ==========
+# [PASS] CTRL readback: got 0x00000001
+# [PASS] CFG readback: got 0x000000a0
+# [PASS] IRQ_EN readback: got 0x00000003
+# [PASS] PKT_LEN_EXP readback: got 0x00000020
+# 
+# ========== Test Summary ==========
+# PASS: 61
+# FAIL: 0
+# ALL TESTS PASSED
+# ** Note: $finish    : ./../tb/ppa_tb.sv(532)
+#    Time: 2595 ns  Iteration: 1  Instance: /ppa_tb
+# End time: 01:17:42 on May 12,2026, Elapsed time: 0:00:04
+# Errors: 0, Warnings: 0

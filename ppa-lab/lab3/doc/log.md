@@ -118,6 +118,49 @@
 | L3-V-3 | TC10 仅测试 done_irq 路径 | done_irq 和 err_irq 机制对称，Lab1 TC9 已独立验证两条路径；集成级验证一条即可 |
 | L3-V-4 | 新增 apb_write_slverr task | TC9 需要在 APB 写事务中捕获 PSLVERR 值；原 apb_write 不返回错误状态 |
 
-### 运行结果
+### 运行结果（首次 make run：39 PASS / 1 FAIL）
 
-待用户执行 `make comp && make run` 后填写。
+| TC | 结果 | 备注 |
+|----|------|------|
+| TC1~TC9 | PASS | 39 checks 全部通过 |
+| TC10 | FAIL | `irq_o asserted: got 0x00000000, expected 0x00000001` |
+| TC11 | PASS | 8 checks 全部通过 |
+
+---
+
+## §4 验证调试阶段
+
+### 失败记录
+
+| 项目 | 内容 |
+|------|------|
+| 失败 TC | TC10: tc_irq_path_e2e |
+| 报错行 | `ppa_tb.sv:390` — `check("TC10 irq_o asserted", ...)` |
+| 失败信息 | `[FAIL] TC10 irq_o asserted: got 0x00000000, expected 0x00000001` |
+| 同 TC 其余 check | 3/4 PASS（IRQ_STA[0]=1、irq_o deasserted=0、IRQ_STA cleared=0） |
+| 复现命令 | `cd ppa-lab/lab3/svtb/sim && make comp && make run` |
+
+### Root Cause 分析
+
+**归因：TB 缺陷**（非 RTL 缺陷）
+
+4B 最小包（pkt_len=4，仅 header 无 payload）在 M3 中只需 2 拍即完成处理，导致 `done_o` 上升沿与 `poll_done()` 的 PRDATA 捕获落在**同一 posedge PCLK**。
+
+时序链路（以 `apb_write(CTRL, 0x03)` 的 ACCESS phase 为 W3）：
+
+| 时钟边沿 | M3 (done_o) | M1 (done_i / done_i_d / done_rising) | M1 (reg_done_irq, NBA) | irq_o |
+|----------|-------------|---------------------------------------|------------------------|-------|
+| W3 | S_DONE | 1 / 1 / 0 | — | 0 |
+| W4 (→PROCESS) | **0** | 1→0 / 1 / 0 | — | 0 |
+| W5 (→DONE) | **1** | 0 / 0 / 0→**1** (after NBA) | — | 0 |
+| **W6** | 1 | 1 / **0** / **1** | **reg_done_irq ← 1 (NBA)** | **0→1 (after NBA)** |
+
+`poll_done()` 的最后一次 `apb_read(STATUS)` 在 W6 posedge 的 active region 捕获 `PRDATA`（done_i=1，组合输出），随即退出循环。`check(irq_o)` 也在 W6 的 active region 执行，此时 `reg_done_irq` 尚处于 NBA 排队阶段（值仍为 0），因此 `irq_o = 0`。
+
+3 拍后（W9），`apb_read(IRQ_STA)` 读取时 `reg_done_irq` 已经更新为 1，因此 IRQ_STA[0]=1 通过。
+
+### 修复
+
+**文件**: `lab3/svtb/tb/ppa_tb.sv`，TC10 `poll_done()` 后新增 `@(posedge PCLK)`。
+
+等待 1 拍使 `reg_done_irq` 的 NBA 生效后再采样 `irq_o`，与 spec §8.2 "同拍立即置位"语义一致（done_rising 同拍 NBA 设置 reg_done_irq，下一拍 irq_o 即为 1）。

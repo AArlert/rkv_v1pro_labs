@@ -1,0 +1,17 @@
+QuestaSim-64 vlog 2021.1 Compiler 2021.01 Jan 19 2021
+Start time: 16:40:15 on Apr 19,2026
+vlog -work ./work -sv -timescale=1ns/1ps -l comp.log ./data_type.sv ./interface_type.sv ./string_type.sv ./sv_for_design.sv 
+-- Compiling module data_type
+-- Compiling package interface_type_sv_unit
+-- Compiling interface intf1
+-- Compiling module interface_type
+-- Compiling module string_type
+-- Compiling module sv_for_design
+
+Top level modules:
+	data_type
+	interface_type
+	string_type
+	sv_for_design
+End time: 16:40:16 on Apr 19,2026, Elapsed time: 0:00:01
+Errors: 0, Warnings: 0
