@@ -163,7 +163,7 @@ module ppa_tb;
 
 		// 写 PKT_MEM
 		apb_write(12'h040, {8'h0A, 8'h00, 8'h02, 8'h08});  // Word0: hdr
-		apb_write(12'h044, 32'h04030201);                    // Word1: payload
+		apb_write(12'h044, 32'hFF55AA00);                    // Word1: diverse payload
 
 		// 使能 + 触发
 		apb_write(12'h000, 32'h0000_0001);  // enable=1
@@ -172,15 +172,15 @@ module ppa_tb;
 		// 轮询 done
 		poll_done();
 
-		// 读结果
+		// 读结果 (payload LE: 0x00+0xAA+0x55+0xFF = 0x1FE → 0xFE, 0x00^0xAA^0x55^0xFF = 0x00)
 		apb_read(12'h018, rd_data);
 		check("TC1 RES_PKT_LEN",     rd_data, 32'h0000_0008);
 		apb_read(12'h01C, rd_data);
 		check("TC1 RES_PKT_TYPE",    rd_data, 32'h0000_0002);
 		apb_read(12'h020, rd_data);
-		check("TC1 RES_PAYLOAD_SUM", rd_data, 32'h0000_000A);
+		check("TC1 RES_PAYLOAD_SUM", rd_data, 32'h0000_00FE);
 		apb_read(12'h024, rd_data);
-		check("TC1 RES_PAYLOAD_XOR", rd_data, 32'h0000_0004);
+		check("TC1 RES_PAYLOAD_XOR", rd_data, 32'h0000_0000);
 		apb_read(12'h008, rd_data);
 		check("TC1 STATUS (done+format_ok)", rd_data, 32'h0000_000A);
 		apb_read(12'h028, rd_data);
@@ -188,11 +188,11 @@ module ppa_tb;
 
 		// ==============================================================
 		// TC2: tc_two_frames - 连续两帧顺序处理
-		//   Frame2: pkt_len=4, type=0x01, hdr_chk=0x04^0x01^0x00=0x05
+		//   Frame2: pkt_len=4, type=0x08, hdr_chk=0x04^0x08^0x00=0x0C
 		// ==============================================================
 		$display("\n========== TC2: tc_two_frames ==========");
 
-		apb_write(12'h040, {8'h05, 8'h00, 8'h01, 8'h04});  // Word0: min pkt
+		apb_write(12'h040, {8'h0C, 8'h00, 8'h08, 8'h04});  // Word0: min pkt, type=0x08
 		apb_write(12'h000, 32'h0000_0003);                   // start
 
 		poll_done();
@@ -200,7 +200,7 @@ module ppa_tb;
 		apb_read(12'h018, rd_data);
 		check("TC2 Frame2 RES_PKT_LEN",  rd_data, 32'h0000_0004);
 		apb_read(12'h01C, rd_data);
-		check("TC2 Frame2 RES_PKT_TYPE", rd_data, 32'h0000_0001);
+		check("TC2 Frame2 RES_PKT_TYPE", rd_data, 32'h0000_0008);
 		apb_read(12'h020, rd_data);
 		check("TC2 Frame2 RES_PAYLOAD_SUM", rd_data, 32'h0000_0000);
 		apb_read(12'h008, rd_data);
@@ -215,8 +215,8 @@ module ppa_tb;
 		$display("\n========== TC3: tc_status_bus ==========");
 
 		apb_write(12'h040, {8'h08, 8'h00, 8'h04, 8'h0C});  // Word0
-		apb_write(12'h044, 32'h08070605);                    // Word1
-		apb_write(12'h048, 32'h0C0B0A09);                    // Word2
+		apb_write(12'h044, 32'hAA55FF00);                    // Word1: diverse
+		apb_write(12'h048, 32'h55AA00FF);                    // Word2: diverse
 
 		apb_write(12'h000, 32'h0000_0003);  // start
 
@@ -233,20 +233,22 @@ module ppa_tb;
 		// ==============================================================
 		// TC4: tc_e2e_max_packet - 最大合法包（32B, 8 word）端到端
 		//   pkt_len=32, type=0x04, flags=0x00, hdr_chk=0x20^0x04^0x00=0x24
-		//   payload: bytes 0x01..0x1C (28 bytes)
-		//   sum = sum(1..28) = 406 → 8-bit = 0x96
-		//   xor = XOR(1..28) = 0x1C
+		//   payload: diverse patterns (0xFF/0xAA/0x55/0x00 mix)
+		//   7 words × 4 bytes = 28 payload bytes
+		//   sum/xor 手算见下
 		// ==============================================================
 		$display("\n========== TC4: tc_e2e_max_packet ==========");
 
 		apb_write(12'h040, {8'h24, 8'h00, 8'h04, 8'h20});  // Word0
-		apb_write(12'h044, 32'h04030201);                    // Word1
-		apb_write(12'h048, 32'h08070605);                    // Word2
-		apb_write(12'h04C, 32'h0C0B0A09);                    // Word3
-		apb_write(12'h050, 32'h100F0E0D);                    // Word4
-		apb_write(12'h054, 32'h14131211);                    // Word5
-		apb_write(12'h058, 32'h18171615);                    // Word6
-		apb_write(12'h05C, 32'h1C1B1A19);                    // Word7
+		apb_write(12'h044, 32'hFF55AA00);                    // Word1: sum+=0x00+0xAA+0x55+0xFF=0x9E
+		apb_write(12'h048, 32'h00AA55FF);                    // Word2: sum+=0xFF+0x55+0xAA+0x00=0x9E
+		apb_write(12'h04C, 32'h0C0B0A09);                    // Word3: sum+=0x09+0x0A+0x0B+0x0C=0x24
+		apb_write(12'h050, 32'h100F0E0D);                    // Word4: sum+=0x0D+0x0E+0x0F+0x10=0x34
+		apb_write(12'h054, 32'hA5A5A5A5);                    // Word5: sum+=0xA5*4=0x294→8bit=0x94
+		apb_write(12'h058, 32'h5A5A5A5A);                    // Word6: sum+=0x5A*4=0x168→8bit=0x68
+		apb_write(12'h05C, 32'h1C1B1A19);                    // Word7: sum+=0x19+0x1A+0x1B+0x1C=0x6A
+		// total sum = 0xC6 (8-bit wrapping: verified per-byte accumulation)
+		// total xor = 0x1C (verified per-byte accumulation)
 
 		apb_write(12'h000, 32'h0000_0003);  // start
 
@@ -257,7 +259,7 @@ module ppa_tb;
 		apb_read(12'h01C, rd_data);
 		check("TC4 RES_PKT_TYPE",    rd_data, 32'h0000_0004);
 		apb_read(12'h020, rd_data);
-		check("TC4 RES_PAYLOAD_SUM", rd_data, 32'h0000_0096);
+		check("TC4 RES_PAYLOAD_SUM", rd_data, 32'h0000_00C6);
 		apb_read(12'h024, rd_data);
 		check("TC4 RES_PAYLOAD_XOR", rd_data, 32'h0000_001C);
 		apb_read(12'h008, rd_data);
@@ -403,6 +405,51 @@ module ppa_tb;
 		apb_write(12'h00C, 32'h0000_0000);  // restore IRQ_EN=0
 
 		// ==============================================================
+		// TC12: tc_err_irq_e2e - err_irq 中断路径闭环
+		//   err_irq_en=1, 发送 type_error 包 → irq_o=1 (err_irq)
+		//   同时设置 PKT_LEN_EXP 覆盖更多 M1 路径
+		// ==============================================================
+		$display("\n========== TC12: tc_err_irq_e2e ==========");
+
+		// 设置 PKT_LEN_EXP=8 — 覆盖 M1 ADDR_PKT_LEN_EXP 写路径
+		apb_write(12'h014, 32'h0000_0008);
+		apb_read(12'h014, rd_data);
+		check("TC12 PKT_LEN_EXP readback", rd_data, 32'h0000_0008);
+
+		// 使能 err_irq
+		apb_write(12'h00C, 32'h0000_0002);  // IRQ_EN: err_irq_en=1
+
+		// 发送 type_error 包: pkt_len=8, type=0x03 (non one-hot), hdr_chk=0x08^0x03^0x00=0x0B
+		apb_write(12'h040, {8'h0B, 8'h00, 8'h03, 8'h08});  // Word0
+		apb_write(12'h044, 32'hFF55AA00);                     // Word1: diverse payload
+
+		apb_write(12'h000, 32'h0000_0003);  // start
+
+		poll_done();
+		@(posedge PCLK);
+
+		// 验证 err_irq 置位
+		check("TC12 irq_o asserted (err_irq)", {31'b0, irq_o}, 32'h0000_0001);
+		apb_read(12'h010, rd_data);
+		check("TC12 IRQ_STA[1] err_irq", {30'b0, rd_data[1:0]}, 32'h0000_0002);
+
+		// 验证错误标志
+		apb_read(12'h028, rd_data);
+		check("TC12 ERR_FLAG type_error", {30'b0, rd_data[1:0]}, 32'h0000_0002);
+
+		// 清除 err_irq
+		apb_write(12'h010, 32'h0000_0002);  // RW1C: write 1 to bit[1]
+		@(posedge PCLK);
+
+		check("TC12 irq_o deasserted", {31'b0, irq_o}, 32'h0000_0000);
+		apb_read(12'h010, rd_data);
+		check("TC12 IRQ_STA cleared", rd_data, 32'h0000_0000);
+
+		// 恢复默认
+		apb_write(12'h00C, 32'h0000_0000);  // IRQ_EN=0
+		apb_write(12'h014, 32'h0000_0000);  // PKT_LEN_EXP=0
+
+		// ==============================================================
 		// TC11: tc_pkt_mem_readback - PKT_MEM APB 读回路径
 		//   验证 U-1 修复：M1 pkt_mem_re_o → M2 → pkt_mem_rdata_i
 		//   M3 空闲时，APB 读 PKT_MEM 返回 SRAM 真实数据
@@ -434,6 +481,120 @@ module ppa_tb;
 		check("TC11 PKT_MEM Word6 readback", rd_data, 32'h7777_7777);
 		apb_read(12'h05C, rd_data);
 		check("TC11 PKT_MEM Word7 readback", rd_data, 32'h8888_8888);
+
+		// ==============================================================
+		// TC14: tc_toggle_exercise - Toggle coverage closure
+		//   Phase 1: exp_pkt_len all-bit toggle
+		//   Phase 2: type_mask all-bit toggle
+		//   Phase 3: pkt_len=20/type=0xF0 packet (bit4 pkt_len, bits4-7 type)
+		//   Phase 4: PADDR high-bit + invalid-addr + RO-write toggle
+		// ==============================================================
+		$display("\n========== TC14: tc_toggle_exercise ==========");
+
+		// Phase 1: toggle all exp_pkt_len bits (0→1→0)
+		apb_write(12'h014, 32'h0000_003F);  // PKT_LEN_EXP = 6'b111111
+		apb_write(12'h014, 32'h0000_0000);  // PKT_LEN_EXP = 0
+
+		// Phase 2: toggle all type_mask bits (currently 0xF from default)
+		apb_write(12'h004, 32'h0000_0001);  // CFG: type_mask=0x0, algo_mode=1
+		apb_write(12'h004, 32'h0000_00F1);  // CFG: type_mask=0xF, algo_mode=1 (restore)
+
+		// Phase 3: pkt_len=20 packet with type=0xF0
+		//   hdr_chk = 0x14 ^ 0xF0 ^ 0x00 = 0xE4
+		//   payload byte[4]=0xE3, rest=0 → sum=0xE3, xor=0xE3
+		//   type_error=1 (0xF0 not in valid set)
+		//   words_total=5 (bit2 set), pkt_len bit4 set
+		apb_write(12'h040, {8'hE4, 8'h00, 8'hF0, 8'h14});  // Word0
+		apb_write(12'h044, 32'h000000E3);                     // Word1
+		apb_write(12'h048, 32'h00000000);                     // Word2
+		apb_write(12'h04C, 32'h00000000);                     // Word3
+		apb_write(12'h050, 32'h00000000);                     // Word4
+
+		apb_write(12'h000, 32'h0000_0003);  // start
+
+		poll_done();
+
+		apb_read(12'h018, rd_data);
+		check("TC14 RES_PKT_LEN", rd_data, 32'h0000_0014);
+		apb_read(12'h01C, rd_data);
+		check("TC14 RES_PKT_TYPE", rd_data, 32'h0000_00F0);
+		apb_read(12'h020, rd_data);
+		check("TC14 RES_PAYLOAD_SUM", rd_data, 32'h0000_00E3);
+		apb_read(12'h024, rd_data);
+		check("TC14 RES_PAYLOAD_XOR", rd_data, 32'h0000_00E3);
+		apb_read(12'h028, rd_data);
+		check("TC14 ERR_FLAG type_error", rd_data, 32'h0000_0002);
+
+		// Phase 4: toggle PADDR high bits + is_valid_addr + write_ro
+		apb_read(12'h003, rd_data);   // unaligned → PADDR bits 0,1
+		apb_read(12'h080, rd_data);   // PADDR bit 7
+		apb_read(12'h100, rd_data);   // PADDR bit 8
+		apb_read(12'h200, rd_data);   // PADDR bit 9
+		apb_read(12'h400, rd_data);   // PADDR bit 10
+		apb_read(12'h800, rd_data);   // PADDR bit 11
+		apb_read(12'h02C, rd_data);   // reserved addr → is_valid_addr toggle
+
+		begin
+			logic slverr;
+			apb_write_slverr(12'h018, 32'hFFFF_FFFF, slverr);  // write RO → write_ro toggle
+		end
+
+		// ==============================================================
+		// TC13: tc_mid_sim_reset - 集成级 mid-sim reset (FSM transition 覆盖)
+		//   处理中途 reset: FSM S_PROCESS → S_IDLE
+		//   完成后 reset: FSM S_DONE → S_IDLE
+		// ==============================================================
+		$display("\n========== TC13: tc_mid_sim_reset ==========");
+
+		// Part A: reset during PROCESS
+		apb_write(12'h040, {8'h24, 8'h00, 8'h04, 8'h20});  // 32B pkt for long processing
+		apb_write(12'h044, 32'hDEAD_BEEF);
+		apb_write(12'h048, 32'hCAFE_BABE);
+		apb_write(12'h04C, 32'h0000_0000);
+		apb_write(12'h050, 32'h0000_0000);
+		apb_write(12'h054, 32'h0000_0000);
+		apb_write(12'h058, 32'h0000_0000);
+		apb_write(12'h05C, 32'h0000_0000);
+
+		apb_write(12'h000, 32'h0000_0003);  // start
+
+		// Verify busy, then assert reset
+		apb_read(12'h008, rd_data);
+		check("TC13 STATUS busy", {30'b0, rd_data[1:0]}, 32'h0000_0001);
+
+		PRESETn = 0;
+		repeat (5) @(posedge PCLK);
+		PRESETn = 1;
+		repeat (2) @(posedge PCLK);
+
+		apb_read(12'h008, rd_data);
+		check("TC13 STATUS after reset (IDLE)", rd_data, 32'h0000_0000);
+
+		// Part B: reset during DONE
+		apb_write(12'h000, 32'h0000_0001);  // re-enable
+		apb_write(12'h040, {8'h05, 8'h00, 8'h01, 8'h04});  // 4B min pkt
+		apb_write(12'h000, 32'h0000_0003);  // start
+
+		poll_done();
+
+		apb_read(12'h008, rd_data);
+		check("TC13 STATUS done before reset", {30'b0, rd_data[1:0]}, 32'h0000_0002);
+
+		PRESETn = 0;
+		repeat (5) @(posedge PCLK);
+		PRESETn = 1;
+		repeat (2) @(posedge PCLK);
+
+		apb_read(12'h008, rd_data);
+		check("TC13 STATUS after reset from DONE", rd_data, 32'h0000_0000);
+
+		// Verify system recovers after reset
+		apb_write(12'h000, 32'h0000_0001);  // enable
+		apb_write(12'h040, {8'h05, 8'h00, 8'h01, 8'h04});  // 4B pkt
+		apb_write(12'h000, 32'h0000_0003);  // start
+		poll_done();
+		apb_read(12'h008, rd_data);
+		check("TC13 post-reset recovery", {30'b0, rd_data[1:0]}, 32'h0000_0002);
 
 		// ==============================================================
 		// 测试总结

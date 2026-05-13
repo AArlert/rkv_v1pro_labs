@@ -520,6 +520,107 @@ module ppa_tb;
 		check("PKT_LEN_EXP readback", rd_data, 32'h0000_0020);
 
 		// ==============================================================
+		// TC11: tc_toggle_exercise - M3 stub 信号全位翻转覆盖
+		//   驱动 stubs 到 0xFF/0x3F 再回 0，确保 M1 输入端口全位翻转
+		// ==============================================================
+		$display("\n========== TC11: tc_toggle_exercise ==========");
+
+		// Phase 1: drive all result stubs to max values
+		busy_stub            = 1'b1;
+		done_stub            = 1'b1;
+		res_pkt_len_stub     = 6'h3F;
+		res_pkt_type_stub    = 8'hFF;
+		res_payload_sum_stub = 8'hFF;
+		res_payload_xor_stub = 8'hFF;
+		format_ok_stub       = 1'b1;
+		length_error_stub    = 1'b1;
+		type_error_stub      = 1'b1;
+		chk_error_stub       = 1'b1;
+		repeat (2) @(posedge PCLK);
+
+		// Read STATUS and ERR_FLAG to exercise M1 read path with all-1 bits
+		apb_read(12'h008, rd_data);
+		check("STATUS all bits", rd_data[3:0], 4'hF);
+		apb_read(12'h028, rd_data);
+		check("ERR_FLAG all errors", rd_data[2:0], 3'h7);
+		apb_read(12'h018, rd_data);
+		check("RES_PKT_LEN max", rd_data[5:0], 6'h3F);
+		apb_read(12'h01C, rd_data);
+		check("RES_PKT_TYPE max", rd_data[7:0], 8'hFF);
+		apb_read(12'h020, rd_data);
+		check("RES_PAYLOAD_SUM max", rd_data[7:0], 8'hFF);
+		apb_read(12'h024, rd_data);
+		check("RES_PAYLOAD_XOR max", rd_data[7:0], 8'hFF);
+
+		// Phase 2: drive stubs back to zero (toggle 1->0)
+		busy_stub            = 1'b0;
+		done_stub            = 1'b0;
+		res_pkt_len_stub     = 6'h00;
+		res_pkt_type_stub    = 8'h00;
+		res_payload_sum_stub = 8'h00;
+		res_payload_xor_stub = 8'h00;
+		format_ok_stub       = 1'b0;
+		length_error_stub    = 1'b0;
+		type_error_stub      = 1'b0;
+		chk_error_stub       = 1'b0;
+		repeat (2) @(posedge PCLK);
+
+		apb_read(12'h008, rd_data);
+		check("STATUS cleared", rd_data, 32'h0000_0000);
+
+		// Phase 3: toggle done with err_irq enabled (exercises err_irq path with type_error)
+		apb_write(12'h00C, 32'h0000_0002);  // err_irq_en=1
+		type_error_stub = 1'b1;
+		repeat (1) @(posedge PCLK);
+		done_stub = 1'b1;
+		repeat (2) @(posedge PCLK);
+		check("irq_o=1 (type err_irq)", {31'b0, irq_o}, 32'h1);
+		apb_write(12'h010, 32'h0000_0002);  // clear err_irq
+		repeat (1) @(posedge PCLK);
+		check("irq_o=0 (cleared)", {31'b0, irq_o}, 32'h0);
+
+		done_stub = 0;
+		type_error_stub = 0;
+		apb_write(12'h00C, 32'h0000_0000);  // IRQ_EN=0
+
+		// Phase 4: PWDATA toggle all 32 bits (write 0xFFFFFFFF then 0 to PKT_MEM)
+		apb_write(12'h040, 32'hFFFF_FFFF);
+		apb_write(12'h044, 32'h0000_0000);
+		apb_write(12'h048, 32'hA5A5_A5A5);
+		apb_write(12'h04C, 32'h5A5A_5A5A);
+
+		// Phase 5: Read PKT_MEM via APB to toggle PRDATA high bits
+		sram_rd_en = 1; sram_rd_addr = 0;
+		@(posedge PCLK); @(posedge PCLK);
+		apb_read(12'h040, rd_data);
+		check("PKT_MEM APB read W0", rd_data, 32'hFFFF_FFFF);
+		sram_rd_addr = 1;
+		@(posedge PCLK); @(posedge PCLK);
+		apb_read(12'h044, rd_data);
+		check("PKT_MEM APB read W1", rd_data, 32'h0000_0000);
+		sram_rd_addr = 2;
+		@(posedge PCLK); @(posedge PCLK);
+		apb_read(12'h048, rd_data);
+		check("PKT_MEM APB read W2", rd_data, 32'hA5A5_A5A5);
+		sram_rd_addr = 3;
+		@(posedge PCLK); @(posedge PCLK);
+		apb_read(12'h04C, rd_data);
+		check("PKT_MEM APB read W3", rd_data, 32'h5A5A_5A5A);
+		sram_rd_en = 0;
+
+		// Phase 6: Toggle exp_pkt_len all bits and type_mask all bits
+		apb_write(12'h014, 32'h0000_003F);  // PKT_LEN_EXP = 6'b111111 (all 0→1)
+		apb_write(12'h014, 32'h0000_0000);  // PKT_LEN_EXP = 0 (all 1→0)
+		apb_write(12'h004, 32'h0000_0001);  // CFG: type_mask=0x0, algo_mode=1
+		apb_write(12'h004, 32'h0000_00F1);  // CFG: type_mask=0xF, algo_mode=1 (restore)
+
+		// Phase 7: PADDR high-bit toggle (access OOB addresses for toggle)
+		apb_read(12'h080, rd_data);   // PADDR bit 7
+		apb_read(12'h200, rd_data);   // PADDR bit 9
+		apb_read(12'h400, rd_data);   // PADDR bit 10
+		apb_read(12'h800, rd_data);   // PADDR bit 11
+
+		// ==============================================================
 		// 测试结束
 		// ==============================================================
 		$display("\n========== Test Summary ==========");

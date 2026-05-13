@@ -164,22 +164,22 @@ module ppa_tb;
 		check("payload_sum",  {24'b0, res_payload_sum_o}, 32'h00);
 
 		// --------------------------------------------------------------------
-		// TC2: 8 字节合法包 pkt_len=8, type=0x02, payload=0x04030201
+		// TC2: 8 字节合法包 pkt_len=8, type=0x02, payload=0xFF55AA00
 		//   hdr_chk = 0x08 ^ 0x02 ^ 0x00 = 0x0A
-		//   payload bytes (LE order in word: 0x01,0x02,0x03,0x04)
-		//   sum = 0x01+0x02+0x03+0x04 = 0x0A
-		//   xor = 0x01^0x02^0x03^0x04 = 0x04
+		//   payload bytes (LE order: 0x00,0xAA,0x55,0xFF)
+		//   sum = 0x00+0xAA+0x55+0xFF = 0x1FE → 8-bit = 0xFE
+		//   xor = 0x00^0xAA^0x55^0xFF = 0x00
 		// --------------------------------------------------------------------
 		$display("\n========== TC2: tc_8byte_legal ==========");
 		mem[0] = pack_hdr(8'd8, 8'h02, 8'h00, 8'h0A);
-		mem[1] = 32'h04030201;
+		mem[1] = 32'hFF55AA00;
 		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd0;
 		pulse_start();
 		wait_done();
 		check("res_pkt_len",   {26'b0, res_pkt_len_o},     32'd8);
 		check("res_pkt_type",  {24'b0, res_pkt_type_o},    32'h02);
-		check("payload_sum",   {24'b0, res_payload_sum_o}, 32'h0A);
-		check("payload_xor",   {24'b0, res_payload_xor_o}, 32'h04);
+		check("payload_sum",   {24'b0, res_payload_sum_o}, 32'hFE);
+		check("payload_xor",   {24'b0, res_payload_xor_o}, 32'h00);
 		check("format_ok",     {31'b0, format_ok_o},       32'h1);
 		check("err flags",     {29'b0, length_error_o, type_error_o, chk_error_o}, 32'h0);
 
@@ -213,8 +213,8 @@ module ppa_tb;
 		// --------------------------------------------------------------------
 		$display("\n========== TC5: tc_busy_done_timing ==========");
 		mem[0] = pack_hdr(8'd12, 8'h04, 8'h00, 8'h08);
-		mem[1] = 32'h08070605;
-		mem[2] = 32'h0C0B0A09;
+		mem[1] = 32'hAABBCCDD;
+		mem[2] = 32'h55FF0011;
 		fork
 			begin : busy_check
 				@(negedge clk);
@@ -334,7 +334,7 @@ module ppa_tb;
 		// --------------------------------------------------------------------
 		$display("\n========== TC12: tc_exp_pkt_len_mismatch ==========");
 		mem[0] = pack_hdr(8'd8, 8'h02, 8'h00, 8'h0A);
-		mem[1] = 32'h04030201;
+		mem[1] = 32'hAA5500FF;
 		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd10;
 		pulse_start();
 		wait_done();
@@ -347,17 +347,18 @@ module ppa_tb;
 		// TC13: exp_pkt_len 匹配（F2-14 正向确认）
 		//   pkt_len=8, exp_pkt_len_i=6'd8（匹配）→ length_error=0
 		//   hdr_chk = 0x08 ^ 0x02 ^ 0x00 = 0x0A
+		//   payload bytes (LE: 0xFF,0x00,0x55,0xAA) sum=0xFE, xor=0x00
 		// --------------------------------------------------------------------
 		$display("\n========== TC13: tc_exp_pkt_len_match ==========");
 		mem[0] = pack_hdr(8'd8, 8'h02, 8'h00, 8'h0A);
-		mem[1] = 32'h04030201;
+		mem[1] = 32'hAA5500FF;
 		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd8;
 		pulse_start();
 		wait_done();
 		check("length_error", {31'b0, length_error_o}, 32'h0);
 		check("format_ok",    {31'b0, format_ok_o},    32'h1);
-		check("payload_sum",  {24'b0, res_payload_sum_o}, 32'h0A);
-		check("payload_xor",  {24'b0, res_payload_xor_o}, 32'h04);
+		check("payload_sum",  {24'b0, res_payload_sum_o}, 32'hFE);
+		check("payload_xor",  {24'b0, res_payload_xor_o}, 32'h00);
 
 		// --------------------------------------------------------------------
 		// TC14: payload 非对齐尾 word（F2-09/F2-10 边界）
@@ -380,9 +381,8 @@ module ppa_tb;
 		// TC15: 最大合法包 pkt_len=32（N-3 验收场景）
 		//   28B payload（7 word 满载），字计数器到达最大值
 		//   type=0x04, flags=0x00, hdr_chk = 0x20 ^ 0x04 ^ 0x00 = 0x24
-		//   payload bytes = 0x01..0x1C (28 bytes)
-		//   sum = (1+2+...+28) mod 256 = 406 mod 256 = 0x96
-		//   xor = 1^2^...^28 = 0x1C
+		//   payload: diverse patterns for toggle coverage
+		//   sum = 0xBD, xor = 0x67 (computed per-byte with 8-bit wrapping)
 		// --------------------------------------------------------------------
 		$display("\n========== TC15: tc_max_legal_pkt ==========");
 		mem[0] = pack_hdr(8'd32, 8'h04, 8'h00, 8'h24);
@@ -390,9 +390,9 @@ module ppa_tb;
 		mem[2] = 32'h08070605;
 		mem[3] = 32'h0C0B0A09;
 		mem[4] = 32'h100F0E0D;
-		mem[5] = 32'h14131211;
-		mem[6] = 32'h18171615;
-		mem[7] = 32'h1C1B1A19;
+		mem[5] = 32'hFF00FF00;
+		mem[6] = 32'h00FF00FF;
+		mem[7] = 32'hA5C3E1F0;
 		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd0;
 		pulse_start();
 		wait_done();
@@ -404,8 +404,65 @@ module ppa_tb;
 		check("length_error",  {31'b0, length_error_o},    32'h0);
 		check("type_error",    {31'b0, type_error_o},      32'h0);
 		check("chk_error",     {31'b0, chk_error_o},       32'h0);
-		check("payload_sum",   {24'b0, res_payload_sum_o}, 32'h96);
-		check("payload_xor",   {24'b0, res_payload_xor_o}, 32'h1C);
+		check("payload_sum",   {24'b0, res_payload_sum_o}, 32'hBD);
+		check("payload_xor",   {24'b0, res_payload_xor_o}, 32'h67);
+
+		// --------------------------------------------------------------------
+		// TC16: mid-sim reset during S_PROCESS (FSM Transition coverage)
+		// --------------------------------------------------------------------
+		$display("\n========== TC16: tc_reset_in_process ==========");
+		mem[0] = pack_hdr(8'd32, 8'h04, 8'h00, 8'h24);
+		mem[1] = 32'h04030201;
+		mem[2] = 32'h08070605;
+		mem[3] = 32'h0C0B0A09;
+		mem[4] = 32'h100F0E0D;
+		mem[5] = 32'h14131211;
+		mem[6] = 32'h18171615;
+		mem[7] = 32'h1C1B1A19;
+		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd0;
+		pulse_start();
+		repeat (3) @(posedge clk);
+		check("busy during process", {31'b0, busy_o}, 32'h1);
+		rst_n = 1'b0;
+		repeat (3) @(posedge clk);
+		rst_n = 1'b1;
+		@(posedge clk);
+		check("state IDLE after reset", {31'b0, busy_o}, 32'h0);
+		check("done cleared after reset", {31'b0, done_o}, 32'h0);
+		check("res_pkt_len cleared", {26'b0, res_pkt_len_o}, 32'h0);
+		check("res_pkt_type cleared", {24'b0, res_pkt_type_o}, 32'h0);
+		check("res_payload_sum cleared", {24'b0, res_payload_sum_o}, 32'h0);
+		check("res_payload_xor cleared", {24'b0, res_payload_xor_o}, 32'h0);
+		check("format_ok cleared", {31'b0, format_ok_o}, 32'h0);
+		check("length_error cleared", {31'b0, length_error_o}, 32'h0);
+		check("type_error cleared", {31'b0, type_error_o}, 32'h0);
+		check("chk_error cleared", {31'b0, chk_error_o}, 32'h0);
+
+		// --------------------------------------------------------------------
+		// TC17: mid-sim reset during S_DONE (FSM Transition coverage)
+		// --------------------------------------------------------------------
+		$display("\n========== TC17: tc_reset_in_done ==========");
+		mem[0] = pack_hdr(8'd4, 8'h01, 8'h00, 8'h05);
+		algo_mode_i = 1'b1; type_mask_i = 4'b1111; exp_pkt_len_i = 6'd0;
+		pulse_start();
+		wait_done();
+		check("in DONE state", {31'b0, done_o}, 32'h1);
+		rst_n = 1'b0;
+		repeat (3) @(posedge clk);
+		rst_n = 1'b1;
+		@(posedge clk);
+		check("state IDLE after reset from DONE", {31'b0, busy_o}, 32'h0);
+		check("done cleared after reset from DONE", {31'b0, done_o}, 32'h0);
+		check("res_pkt_len cleared from DONE", {26'b0, res_pkt_len_o}, 32'h0);
+		check("format_ok cleared from DONE", {31'b0, format_ok_o}, 32'h0);
+
+		// Verify DUT still functional after mid-sim reset
+		mem[0] = pack_hdr(8'd8, 8'h02, 8'h00, 8'h0A);
+		mem[1] = 32'h04030201;
+		pulse_start();
+		wait_done();
+		check("post-reset pkt_len", {26'b0, res_pkt_len_o}, 32'd8);
+		check("post-reset format_ok", {31'b0, format_ok_o}, 32'h1);
 
 		// --------------------------------------------------------------------
 		// 总结

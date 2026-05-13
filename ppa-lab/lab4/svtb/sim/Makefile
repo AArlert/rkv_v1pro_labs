@@ -2,8 +2,8 @@
 # Lab4 — Unified Regression & Coverage Makefile
 #############################
 # Targets:
-#   make smoke   — quick sanity (Lab1 only, 10 TC / 61 checks)
-#   make regress — full regression (Lab1+2+3, 36 TC / 177 checks)
+#   make smoke   — quick sanity (Lab1 only, 11 TC / 74 checks)
+#   make regress — full regression (Lab1+2+3, 42 TC / 224 checks)
 #   make cov     — full regression + Questa coverage (line/branch/condition/FSM/toggle → HTML)
 #   make clean   — remove all generated artifacts
 #############################
@@ -63,24 +63,24 @@ UCDB_LAB3  := $(COV_DIR)/lab3.ucdb
 UCDB_MERGE := $(COV_DIR)/merged.ucdb
 
 #############################
-# smoke — quick sanity via Lab1 (CSR + SRAM, 10 TC)
+# smoke — quick sanity via Lab1 (CSR + SRAM, 11 TC)
 #############################
 smoke:
-	@echo "==== [SMOKE] Lab1: 10 TC / 61 checks ===="
+	@echo "==== [SMOKE] Lab1: 11 TC / 74 checks ===="
 	$(MAKE) -C $(LAB1_SIM) clean comp run
 	@echo "==== [SMOKE] PASS ===="
 
 #############################
-# regress — full 36 TC across Lab1 + Lab2 + Lab3
+# regress — full 42 TC across Lab1 + Lab2 + Lab3
 #############################
 regress:
-	@echo "==== [REGRESS] Lab1: 10 TC / 61 checks ===="
+	@echo "==== [REGRESS] Lab1: 11 TC / 74 checks ===="
 	$(MAKE) -C $(LAB1_SIM) clean comp run
-	@echo "==== [REGRESS] Lab2: 15 TC / 76 checks ===="
+	@echo "==== [REGRESS] Lab2: 17 TC / 94 checks ===="
 	$(MAKE) -C $(LAB2_SIM) clean comp run
-	@echo "==== [REGRESS] Lab3: 11 TC / 40 checks ===="
+	@echo "==== [REGRESS] Lab3: 14 TC / 56 checks ===="
 	$(MAKE) -C $(LAB3_SIM) clean comp run
-	@echo "==== [REGRESS] ALL 36 TC / 177 checks DONE ===="
+	@echo "==== [REGRESS] ALL 42 TC / 224 checks DONE ===="
 
 #############################
 # cov — compile with coverage, run all labs, merge, generate HTML report
@@ -95,24 +95,24 @@ cov_clean:
 cov_run_lab1:
 	@echo "---- [COV] Lab1: compile + run ----"
 	$(VLIB) work_lab1
-	$(VLOG) -work work_lab1 $(COV_COMP) -l comp_lab1.log \
-	    $(RTL_LAB1) $(TB_LAB1)
+	$(VLOG) -work work_lab1 $(COV_COMP) -l comp_lab1.log $(RTL_LAB1)
+	$(VLOG) -work work_lab1 -l comp_lab1_tb.log $(TB_LAB1)
 	$(VSIM) -work work_lab1 $(COV_RUN) -l run_lab1.log \
 	    -c -do "coverage save -onexit $(UCDB_LAB1); run -all; quit -f"
 
 cov_run_lab2:
 	@echo "---- [COV] Lab2: compile + run ----"
 	$(VLIB) work_lab2
-	$(VLOG) -work work_lab2 $(COV_COMP) -l comp_lab2.log \
-	    $(RTL_LAB2) $(TB_LAB2)
+	$(VLOG) -work work_lab2 $(COV_COMP) -l comp_lab2.log $(RTL_LAB2)
+	$(VLOG) -work work_lab2 -l comp_lab2_tb.log $(TB_LAB2)
 	$(VSIM) -work work_lab2 $(COV_RUN) -l run_lab2.log \
 	    -c -do "coverage save -onexit $(UCDB_LAB2); run -all; quit -f"
 
 cov_run_lab3:
 	@echo "---- [COV] Lab3: compile + run ----"
 	$(VLIB) work_lab3
-	$(VLOG) -work work_lab3 $(COV_COMP) -l comp_lab3.log \
-	    $(RTL_ALL) $(TB_LAB3)
+	$(VLOG) -work work_lab3 $(COV_COMP) -l comp_lab3.log $(RTL_ALL)
+	$(VLOG) -work work_lab3 -l comp_lab3_tb.log $(TB_LAB3)
 	$(VSIM) -work work_lab3 $(COV_RUN) -l run_lab3.log \
 	    -c -do "coverage save -onexit $(UCDB_LAB3); run -all; quit -f"
 

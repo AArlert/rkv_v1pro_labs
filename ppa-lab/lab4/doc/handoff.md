@@ -174,3 +174,61 @@ make clean    # 清除所有生成物
 2. **vlib 必须显式调用** — 使用非默认 library 名 (work_lab1 等) 时需先 `vlib`, 否则 vlog 报错
 3. **Lab3 编译需全部 RTL** — ppa_top 例化了 M1+M2+M3, 必须编译 `RTL_ALL` 而非仅 `RTL_LAB3`
 4. **Questa 2021.1 -cover flags** — `bcstf` (branch/condition/statement/fsm/toggle); 不含 `e` (expression) 因当前无需
+
+---
+
+## Handoff: Coverage Closure Agent → Next Agent (2026-05-13, Lab4 Phase 2)
+
+### 我做了什么
+
+1. **消除 TB 覆盖率污染** — Makefile `cov` target 拆分 vlog: RTL 加 `-cover bcstf`, TB 不加。即刻消除 `/ppa_tb` 实例中 condition/branch/toggle 的假性 miss。
+2. **FSM Transitions 60%→100%** — 新增 Lab2 TC16/TC17 (mid-sim reset during S_PROCESS 和 S_DONE) + Lab3 TC13 (集成级 mid-sim reset), 覆盖全部 5 条合法迁移。
+3. **err_irq E2E 路径** — Lab3 TC12: 设 err_irq_en=1 + PKT_LEN_EXP=8, 发 type_error 帧, 验证 irq_o→清除闭环。填补 M1 Condition 和 Branch 的 err_irq 相关空洞。
+4. **Toggle 覆盖率 88.85%→98.28%** — Lab1 TC11 Phase 6/7 + Lab3 TC14 (toggle exercise): 覆盖 exp_pkt_len/type_mask 全位翻转、pkt_len bit4 (pkt_len=20)、res_pkt_type bits4-7 (type=0xF0)、payload sum/xor 缺失位 (0xE3)、PADDR 高位。
+5. **数据多样性增强** — Lab2/Lab3 多个现有 TC payload 改为 0xFF/0xAA/0x55 模式, 增加结果寄存器位翻转覆盖。
+6. **覆盖率排除登记表** — `lab4/doc/coverage_exclusion.md` 登记 3 项合法排除 (PREADY toggle、PADDR[11:7] toggle、FSM default branch), 含 Spec 依据和 Questa `.do` 文件示例。
+
+### Coverage 最终结果 (Phase 2)
+
+| 覆盖率类型 | Phase 1 基线 | Phase 2 最终 | 判定 |
+|-----------|-------------|-------------|------|
+| Statements | 96.54% | **98.40%** | 优良 |
+| Branches | 87.79% | **96.25%** | 优良 |
+| Conditions | 75.71% | **91.93%** | 合格 |
+| FSM States | 100% | **100%** | 优秀 |
+| FSM Transitions | 60% | **100%** | 优秀 |
+| Toggles | 77.53% | **98.28%** | 优良 |
+| **Total** | **82.93%** | **97.47%** | **优良** |
+
+验收标准 (Spec §11.5 #2): 五类均 ≥90% ✓, 四类 ≥95% 优良。
+
+### 回归规模变化
+
+| Lab | Phase 0 | Phase 2 | 新增 TC |
+|-----|---------|---------|---------|
+| Lab1 | 10 TC / 61 chk | 11 TC / 74 chk | TC11 (toggle exercise) |
+| Lab2 | 15 TC / 76 chk | 17 TC / 94 chk | TC16 (reset in PROCESS), TC17 (reset in DONE) |
+| Lab3 | 11 TC / 40 chk | 14 TC / 56 chk | TC12 (err_irq), TC13 (mid-sim reset), TC14 (toggle exercise) |
+| **合计** | **36 TC / 177 chk** | **42 TC / 224 chk** | +6 TC / +47 chk |
+
+### 我没做什么 / 留给后续阶段的
+
+1. **Questa exclude file 实际应用** — `coverage_exclusion.md` 已列出 3 条排除项及 `.do` 示例, 但未实际创建并集成到 Makefile (当前已达标, 排除项仅作审查记录)
+2. **Condition 从 91.93% 推向 95%** — 剩余 5 个 miss bin 主要在 `ppa_apb_slave_if` 内部逻辑 (addr decode combination), 需更多 Lab3 CSR error path TC
+3. **UVM 升级** — 42 TC 全为纯 SV 过程式, 可统一为 UVM 环境
+4. **功能覆盖率 (covergroup)** — 当前仅有代码覆盖率
+
+### 踩过的坑 / 要小心的
+
+1. **`vcover merge -du` 不可用** — Questa 2021.1 的 `vcover merge` 不支持 `-du` 选项 (报 `vcover-17363`); 只能用纯 merge, 必须确保每个实例在其对应 TB 中覆盖充分
+2. **Lab2 TC15 payload sum 手算易错** — 28 字节逐字节累加需仔细; RTL 输出 0xBD 为正确值 (中间累加到 word4 后 sum=0x88, 非 0x7C)
+3. **Lab1 TC11 err_irq 需 done 上升沿** — M1 中断逻辑用 `done_i` 上升沿检测; 若 done_stub 已经为 1 不会再产生 irq; 必须先清 done_stub 再重新拉高
+4. **PADDR toggle 需实际驱动 OOB 地址** — 即使 SLVERR, PADDR 端口仍会翻转 (是合法的覆盖手段)
+
+### 验证成果的最小命令
+
+```bash
+cd ppa-lab/lab4/svtb/sim
+make cov   # 42 TC / 224 checks ALL PASS + coverage report
+# 输出: covhtmlreport/index.html (总覆盖 97.47%)
+```
