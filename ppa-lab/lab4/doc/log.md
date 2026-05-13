@@ -66,8 +66,34 @@
 3. 每个 lab 使用独立 work library (`work_lab1/2/3`) — 因 3 个 `ppa_tb` 模块名相同但实现不同
 4. UCDB merge 时 TB 代码覆盖率有 mismatch 警告 — 仅影响 TB 代码覆盖, RTL 覆盖率完整无损
 
-### 已知局限
-- FSM Transitions 仅 60%, 有 4 条缺失迁移 (可能是 error 短路径)
-- Toggle 77.53% 受限于 32-bit 数据路径高位未充分翻转
-- Lab3 集成级对 M1 的 error path 覆盖 (76.19% branch) 弱于 Lab1 独立验证 (97.61%)
-- TB 本身被包含在覆盖率统计中, 理想情况应排除
+### 已知局限 → 覆盖率根因分析
+
+Spec §11.5 #2 验收标准: ≥90% 合格 / ≥95% 优良。当前 Branches (87.79%), Conditions (75.71%), FSM Transitions (60%), Toggles (77.53%) 共 4 项不合格。
+
+#### 根因 A: TB 代码污染 RTL 覆盖率
+
+TB 的 check macro (`actual === expected`)、fail 计数器 (`fail_cnt`)、timeout 逻辑被纳入覆盖率统计。这些代码在全 PASS 回归中 false 分支永远不走, 导致 `/ppa_tb` 实例 branch=50%, condition=25%, toggle=67.82%。
+
+修复方法: Makefile `cov` target 的 vlog 拆成两步, RTL 用 `-cover bcstf`, TB 不加 `-cover`。
+
+#### 根因 B: 缺少异步复位测试
+
+FSM 缺失迁移 (ppa_packet_proc_core.sv:131):
+- `S_PROCESS → S_IDLE` (处理中途 reset)
+- `S_DONE → S_IDLE` (完成态 reset)
+
+所有 TB 在仿真开头一次性复位 (FSM 必在 S_IDLE), 之后不再 reset。`rst_n` 也只有 0→1 方向。
+
+修复方法: 新增 mid-sim reset TC, FSM Transitions 60% → 100%。另: `case(state) default` (line 243) 是结构性不可达, 应登记为排除项。
+
+#### 根因 C: 跨 Lab 实例重复统计
+
+`ppa_apb_slave_if` 两个实例: Lab1 独立 (branch 97.61%) 和 Lab3 集成 (branch 76.19%)。Lab3 集成测试不覆盖 CSR error path (`!is_valid_addr`/`write_ro`/`err_irq`), 拉低了 M1 的覆盖率。
+
+修复方法: ① `vcover merge -du` 按 Design Unit 合并; ② 新增 Lab3 err_irq E2E TC。
+
+#### 根因 D: 测试数据多样性不足
+
+32-bit 数据路径高位未充分翻转 (`res_pkt_type_o[3:7]`, `res_pkt_len_o[4]`, `exp_pkt_len_i` 等)。`PREADY` 硬连线 1 和 `PADDR[7:11]` 设计意图上不会翻转, 应排除。
+
+修复方法: 增加 payload 多样性 (0xFF/0xAA/0x55); 建立覆盖率排除登记表。

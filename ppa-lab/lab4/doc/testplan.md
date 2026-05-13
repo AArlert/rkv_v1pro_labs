@@ -257,3 +257,113 @@ make -C lab3/svtb/sim comp run   # 11 TC / 40 checks
 | `make clean` | 清除 work/ 和仿真生成物 |
 
 Lab4 需新增: `make smoke`, `make regress`, `make cov`
+
+---
+
+## 9 Coverage Gap 分析与 Closure 计划 (Phase 1 追加)
+
+> Verification Phase 1 Agent | 2026-05-13
+> 基于 `make cov` 全量回归后的 Questa 覆盖率详细报告
+
+### 9.1 Coverage 基线 vs 验收标准
+
+Spec §11.5 #2: ≥90% 合格 / ≥95% 优良 / 100% 优秀
+
+| 覆盖率类型 | 当前 | 判定 | 达标差距 |
+|-----------|------|------|---------|
+| Statements (line) | 96.54% | 优良 | — |
+| FSM States | 100.00% | 优秀 | — |
+| Branches | 87.79% | **不合格** | +2.21% |
+| Conditions | 75.71% | **不合格** | +14.29% |
+| FSM Transitions | 60.00% | **不合格** | +30% |
+| Toggles | 77.53% | **不合格** | +12.47% |
+
+### 9.2 根因定位
+
+#### 根因 A: TB 代码污染 RTL 覆盖率统计
+
+TB 的 check macro、fail 计数器、timeout 逻辑被纳入统计, 在全 PASS 回归中 false 分支永远不走。
+
+| 被污染的 TB 代码 | 影响覆盖率类型 | 具体 miss |
+|-----------------|--------------|----------|
+| `actual === expected` (lab1:157, lab2:129, lab3:120) | Condition | `_0` 分支不可能命中 (全 PASS) |
+| `fail_cnt == 0` (lab1:528) | Condition | `_0` 分支不可能命中 |
+| `t < timeout` (lab2:120, lab3:136) | Condition | `_0` 分支 (timeout 不发生) |
+| `fail_cnt[0:31]` 全 0 | Toggle | 64 bins 全 miss |
+| `pass_cnt[7:31]` 高位 | Toggle | 不够大翻转 |
+| TB 中 `$display("[FAIL]")` 所在 `else` 分支 | Branch / Statement | 全 PASS 不走 |
+
+`/ppa_tb` 实例合计: branch 50%, condition 25%, toggle 67.82%。
+
+**解决方案:** Makefile `cov` target 的 vlog 分两步 — RTL 编译加 `-cover bcstf`, TB 编译不加 `-cover`。
+
+#### 根因 B: 缺少异步复位测试
+
+M3 FSM (`ppa_packet_proc_core`) 共 5 条合法迁移, 3 条已覆盖, 2 条缺失:
+
+| 迁移 | 触发条件 | 覆盖状态 |
+|------|---------|---------|
+| S_IDLE → S_PROCESS | start_i in IDLE | COVERED (多个 TC) |
+| S_PROCESS → S_DONE | 处理完成 | COVERED (多个 TC) |
+| S_DONE → S_PROCESS | start_i in DONE | COVERED (L2_TC06, L3_TC02) |
+| S_PROCESS → S_IDLE | **reset during PROCESS** | **MISS** (line 131) |
+| S_DONE → S_IDLE | **reset during DONE** | **MISS** (line 131) |
+
+同时 `rst_n` toggle 只覆盖 0→1 (de-assert), miss 1→0 (assert)。
+
+另: `case(state) default: state <= S_IDLE` (line 243) 是结构性不可达代码 (state 仅 3 值, 无法到达 2'd3)。应作为合法排除项。
+
+**解决方案:** 新增 mid-sim reset TC。
+
+#### 根因 C: 跨 Lab 实例重复统计 + 测试焦点不同
+
+同一 RTL (`ppa_apb_slave_if`) 在不同 Lab 产生不同覆盖率实例, 各 Lab 测试焦点不同导致单个实例覆盖率偏低:
+
+| 缺失项 (Lab3 M1 实例 `/ppa_tb/u_dut/u_m1`) | RTL 位置 | Lab1 覆盖 | Lab3 缺失原因 |
+|----------------------------------------------|---------|----------|--------------|
+| `!is_valid_addr` → slverr 分支 | line 142 | 已覆盖 (TC4) | Lab3 不测非法地址 |
+| `write_ro` → slverr 分支 | line 144 | 已覆盖 (TC5) | Lab3 不测 RO 写保护 |
+| `err_irq` 路径 5 个 condition 项 | line 202 | 部分覆盖 (TC9) | Lab3 TC10 仅测 done_irq |
+| `ADDR_PKT_LEN_EXP` write 条件 | line 193 | 已覆盖 (TC10) | Lab3 从未写此寄存器 |
+| `ADDR_CTRL/CFG/IRQ_EN/IRQ_STA` read case | line 217-222 | 已覆盖 (TC1/TC10) | Lab3 只读结果寄存器 |
+| `type_mask[0:3]` toggle | — | 部分覆盖 (TC8) | Lab3 保持复位默认 4'b1111 |
+
+**解决方案:** ① `vcover merge` 改用 `-du` 模式按 Design Unit 合并; ② 新增 Lab3 err_irq E2E TC。
+
+#### 根因 D: 测试数据多样性不足
+
+| 未翻转信号 | 原因 | 可否排除 |
+|-----------|------|---------|
+| `PREADY` (硬连线 1) | Spec §4: PREADY 固定为 1, 无等待状态 | 合法排除 |
+| `PADDR[7:11]` | 地址空间仅到 0x05C, 高 5 位永为 0 | 合法排除 |
+| `res_pkt_type_o[3:7]` | 测试仅用 0x01/0x02/0x04/0x08 | 可补充 |
+| `res_pkt_len_o[4]` | 包长 4~32, 无 bit4=1 的值 (16 不在范围) | 合法排除 (pkt_len∈[4,32], bit4 翻转需 len=16 but [4,15] vs [16,32] 可覆盖) |
+| `exp_pkt_len_i[0:5]` (Lab3 实例) | Lab3 从未写 PKT_LEN_EXP | 可补充 |
+
+**解决方案:** 增加 payload 多样性 (0xFF/0xAA/0x55); Lab3 写 PKT_LEN_EXP; 建立排除登记表。
+
+### 9.3 Coverage Closure 计划
+
+#### 9.3.1 Makefile 修改 (不涉及 TC)
+
+| 编号 | 修改 | 影响范围 |
+|------|------|---------|
+| M-1 | `cov` target: RTL 和 TB 分开编译, TB 不加 `-cover` | Makefile cov_run_lab* |
+| M-2 | `vcover merge` 改用 `-du` 合并 Design Unit | Makefile cov_merge |
+
+#### 9.3.2 新增 TC
+
+| Regress ID | 建议 Lab | 名称 | 验证意图 | 覆盖 Gap |
+|------------|---------|------|---------|---------|
+| L2_TC16 | Lab2 | tc_mid_sim_reset | 在 S_PROCESS 和 S_DONE 态分别 assert rst_n, 验证 FSM 回到 IDLE 且输出清零 | FSM Trans ×2, rst_n toggle |
+| L3_TC12 | Lab3 | tc_err_irq_e2e | 设 err_irq_en=1 + PKT_LEN_EXP=8, 发 type_error 帧, 验 irq_o 置位→清除 | M1 cond line 202 ×3, M1 branch line 193/202 |
+| — | Lab2/3 | 改动已有 TC payload | 将部分 TC 的 payload 改用 0xFF/0xAA/0x55 模式 | Toggle: result 高位 |
+
+#### 9.3.3 合法排除项 (需建立排除登记表)
+
+| 排除对象 | RTL 位置 | 排除原因 |
+|---------|---------|---------|
+| `PREADY` toggle | ppa_apb_slave_if.sv:65 | Spec §4: PREADY 固定为 1, 设计意图 |
+| `PADDR[7:11]` toggle | ppa_apb_slave_if.sv 端口 | 地址空间 0x000~0x05C, 高 5 位无功能意义 |
+| FSM `default` branch | ppa_packet_proc_core.sv:243 | state 仅 3 值 (0/1/2), 2'd3 不可达 |
+| `hdr_b1` case `default` (Lab3 实例) | ppa_packet_proc_core.sv:84 | 同一分支在 Lab2 实例已覆盖; Lab3 合法类型覆盖场景不同 |
