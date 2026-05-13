@@ -69,9 +69,9 @@
 
 | ID | 功能描述 | Spec § | 实现状态 | TB 状态 | 关联 Testcase | 备注 |
 |----|----------|--------|----------|---------|---------------|------|
-| F4-01 | make smoke 一键冒烟 | — | #TODO | #TODO | — | |
-| F4-02 | make regress 全量回归 | — | #TODO | #TODO | — | |
-| F4-03 | make cov 覆盖率收集 | — | #TODO | #TODO | — | |
-| F4-04 | testplan 文档完整 | — | #DONE | #TODO | — | Phase 0 产出: lab4/doc/testplan.md (36 TC / 177 checks) |
-| F4-05 | 五类覆盖率达标 | — | #TODO | #TODO | — | |
-| F4-06 | result_summary 汇总 | — | #TODO | #TODO | — | |
+| F4-01 | make smoke 一键冒烟 | §11.5 | #DONE | #DONE | L1_TC01~TC11 | #VERIFIED 11 TC / 74 checks |
+| F4-02 | make regress 全量回归 | §11.5 | #DONE | #DONE | 42 TC / 224 checks | #VERIFIED Lab1+2+3 ALL PASS |
+| F4-03 | make cov 覆盖率收集 | §11.5 | #DONE | #DONE | 合并 HTML 报告 | #VERIFIED RTL-only coverage, vcover merge |
+| F4-04 | testplan 文档完整 | §11.5 | #DONE | #DONE | lab4/doc/testplan.md | #VERIFIED 42 TC 结构化列表 + Spec §10 全覆盖 |
+| F4-05 | 五类覆盖率达标 (≥90%) | §11.5 | #DONE | #DONE | make cov → 97.47% | #VERIFIED Stmt 98.4% / Branch 96.2% / Cond 91.9% / FSM 100% / Toggle 98.3% |
+| F4-06 | 覆盖率过滤合规（选做） | §11.5 | #DONE | #DONE | coverage_exclusion.md | #VERIFIED 3 项排除登记 (PREADY/PADDR/FSM default) |
