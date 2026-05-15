@@ -232,3 +232,49 @@ cd ppa-lab/lab4/svtb/sim
 make cov   # 42 TC / 224 checks ALL PASS + coverage report
 # 输出: covhtmlreport/index.html (总覆盖 97.47%)
 ```
+
+---
+
+## Phase 3 交接 (2026-05-15) — UVM 升级
+
+### 交付物
+
+新增 4 个文件 + 修改 1 个 Makefile：
+
+| 文件 | 说明 |
+|------|------|
+| `lab4/svtb/tb/ppa_apb_if.sv` | APB virtual interface + irq_o 嗅探（drv_ck/mon_ck） |
+| `lab4/svtb/tb/ppa_ref_model.sv` | **Spec 派生** 的纯函数预测模型（CSR 属性、hdr_chk、sum/xor、length/type/chk 错误判定） |
+| `lab4/svtb/tb/ppa_pkg.sv` | UVM 环境（item / driver / 2×monitor / scoreboard / coverage / env / 17 sequence / 18 test） |
+| `lab4/svtb/tb/ppa_uvm_tb.sv` | TB 顶层（clk/reset、ppa_top 实例化、`ppa_rst_req` 事件监听） |
+| `lab4/svtb/sim/Makefile` | 新增 `uvm` / `uvm_compile` / `uvm_cov` / `uvm_clean` target；不动 smoke/regress/cov |
+
+### 设计决策
+
+- **范围**：新建 UVM env 同时覆盖 Lab1（CSR/SRAM）+ Lab2（M3 corner）+ Lab3（E2E）三层场景，不局限于 ppa_top E2E
+- **统一 sequence_item**：用 `ppa_op_kind_e` 枚举派发（OP_PKT / OP_RAW_WRITE / OP_RAW_READ / OP_RESET / OP_WAIT / OP_IRQ_CHECK / OP_BUSY_WRITE_PROBE / OP_W1P_PROBE / OP_PKT_MEM_RW），单一 sequencer 不需多 agent
+- **Reference model 与 RTL 解耦**：`ppa_ref_model` 是 **pure spec**（§3/§5/§7/§9 的 12 个函数），item 在 `post_randomize()` 调用它生成 expected；scoreboard 直接对比 expected vs APB 观测值
+- **Reset 通路**：driver 的 OP_RESET 触发全局 `uvm_event "ppa_rst_req"`，TB 顶层 `initial` 监听并重新拉低 PRESETn 5 拍
+- **UVM 库**：用 Questa 内建 `-L mtiUvm`（uvm-1.1d），无需 `$QUESTA_HOME` 硬编码
+
+### 验证结果
+
+```
+make uvm        # 18/18 UVM tests PASS（含 ppa_regression_test 串接所有 17 个 sequence）
+make regress    # 原 SV 回归 224/224 不退化
+```
+
+### 实现期间踩到的坑（已修复）
+
+1. **`pack_hdr_word` 只产 30 bits** — `pkt_len` 是 6-bit，与 `{hdr_chk_field, flags, pkt_type, pkt_len}` 拼接位宽不足 32；修为 `{hdr_chk_field, flags, pkt_type, 2'b00, pkt_len}`
+2. **enable+start 同周期写 CTRL=0x3 首包不启动** — 必须先写 CTRL=0x1（enable=1）再写 CTRL=0x3（start W1P）；参考 lab3 tb 的两段式写
+3. **`uvm_event::trigger()` 不能传 int** — 原本 `rst_req_ev.trigger(it.n_cycles)` 编译错；改为无参 trigger
+4. **`payload.size() <= 28` 与 `(pkt_len >= 4) -> payload.size() == pkt_len-4` 在 ERR_LEN_OVER 下冲突** — 增加 `(pkt_len > 32) -> payload.size() == 28`
+5. **`err_mode` 是非 rand 字段，`randomize() with { err_mode == X }` 静默失败** — IRQ_E sequence 改为先 `it.err_mode = ERR_TYPE_BAD` 再 randomize
+6. **`set_timeout(5ms)` 因 timescale 实际仅 5us** — 改为 `set_timeout(1s)`，受跨 package timescale 影响也仍足够
+
+### 给下一位 Agent
+
+- 若要做 Phase 4 (UVM 覆盖率收集)：直接 `make uvm_cov`，UCDB 落到 `covdata_uvm/`，HTML 落到 `covhtml_uvm/`
+- 若要做 Phase 5 (functional coverage 扩展)：扩 `ppa_pkg.sv::ppa_coverage::cg_pkt`，已有 op/len/type/mask/algo/三类 err 的 coverpoint + cross
+- UVM env 当前覆盖率不强求与 SV 基线对齐（用户 2026-05-15 决定：先跑通即可）

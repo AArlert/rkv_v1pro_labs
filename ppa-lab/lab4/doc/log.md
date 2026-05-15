@@ -195,3 +195,46 @@ FSM 缺失迁移 (ppa_packet_proc_core.sv:131):
 1. **sum 手算陷阱** — 28 字节逐字节 8-bit wrapping sum 极易在中间步骤出错。关键是分段核对: 每 4 字节一组求和后取 mod 256, 再逐组累加。RTL 行为是唯一真相源。
 2. **done 上升沿 vs 电平** — M1 中断逻辑用 `done_i` 上升沿检测; 若 done_stub 已为高电平, 不会再触发中断。Lab1 TC11 Phase 3 必须先清 done 再重新拉高。
 3. **Toggle 覆盖率的非线性** — 前 10% 提升 (77→88%) 靠消除 TB 污染+基础多样性; 最后 10% (88→98%) 需要逐信号定位 miss bin 并设计定向激励。
+
+---
+
+## Phase 3 (2026-05-15) — UVM 升级
+
+### 阶段：设计 + 实现 + 验证
+
+**目标**：选做验收 #5 — 在 lab4 中用 UVM 重构 TB，覆盖 Lab1-3 用例，等效回归通过；reference model 从 spec 提取。
+
+**架构**：
+```
+ppa_apb_if (interface, vif)
+ppa_ref_model (pure spec functions)
+ppa_pkg
+  ├─ ppa_seq_item (op_kind 派发)
+  ├─ ppa_driver (APB read/write tasks + 9 个 op handler)
+  ├─ ppa_apb_monitor / ppa_irq_monitor
+  ├─ ppa_scoreboard (analysis_fifo + 按 op_kind 比对)
+  ├─ ppa_coverage / ppa_cov_subscriber
+  ├─ ppa_env
+  ├─ 17 个 sequence （CSR 默认值/RW/RO/SLVERR/W1P/PKT_MEM RW/basic/two_frame/error/algo bypass/exp_pkt_len/IRQ done/IRQ err/busy write protect/mid-sim reset/toggle exercise）
+  └─ 18 个 test （17 单 sequence + 1 regression 串接）
+ppa_uvm_tb (clk/reset/DUT/uvm_event listener)
+```
+
+**Spec 派生函数（ppa_ref_model）**：
+- `csr_reset_value/csr_attr/is_valid_csr_addr/is_ro_csr_addr/is_pkt_mem_addr` (§5.2/§4.2)
+- `compute_hdr_chk/compute_sum/compute_xor` (§3)
+- `predict_length_error/predict_type_error/predict_chk_error/predict_format_ok/predict_status_done` (§9/§7)
+
+**关键决策**：
+- 单一 sequencer + op_kind 派发（vs 多 agent / 多 item type） —— 简化结构
+- driver 在 `item_done` 之前把 item clone 经 `ap.write` 推给 scoreboard，避免 SB 反向 hook sequencer
+- reset 通过全局 `uvm_event` 协作（driver 触发 / TB 顶层监听），避免 vif 暴露 PRESETn 的 force/release
+
+**验证结果**：
+- `make uvm` → 18/18 PASS
+- `make regress` → 原 SV 224/224 不退化
+- `make uvm_cov` 路径预留，未在本阶段执行（用户决策：先跑通即可）
+
+### 挑战与修复
+
+详见 `handoff.md` Phase 3 段「实现期间踩到的坑」（6 项）。

@@ -127,12 +127,74 @@ cov_report:
 #############################
 # clean — remove all generated artifacts
 #############################
-clean:
+clean: uvm_clean
 	rm -rf work_lab1 work_lab2 work_lab3 $(COV_DIR) $(COV_HTML)
 	rm -f *.log *.wlf transcript
 	$(MAKE) -C $(LAB1_SIM) clean
 	$(MAKE) -C $(LAB2_SIM) clean
 	$(MAKE) -C $(LAB3_SIM) clean
 
+#############################
+# UVM (Lab4 Phase 3) — equivalent regression in UVM env covering Lab1-3 scenarios
+#############################
+TB_UVM    := ../tb/ppa_apb_if.sv ../tb/ppa_ref_model.sv ../tb/ppa_pkg.sv ../tb/ppa_uvm_tb.sv
+WORK_UVM  := work_uvm
+UVM_TOP   := ppa_uvm_tb
+UVM_TESTS := ppa_csr_default_test ppa_csr_rw_test ppa_csr_ro_test ppa_csr_slverr_test \
+             ppa_w1p_test ppa_pkt_mem_rw_test ppa_basic_test ppa_payload_unaligned_test \
+             ppa_two_frame_test ppa_error_test ppa_algo_bypass_test ppa_exp_pkt_len_test \
+             ppa_irq_done_test ppa_irq_err_test ppa_busy_write_protect_test \
+             ppa_mid_sim_reset_test ppa_toggle_exercise_test ppa_regression_test
+
+UCDB_UVM_DIR := covdata_uvm
+COV_HTML_UVM := covhtml_uvm
+
+uvm_compile:
+	@echo "==== [UVM] Compile ===="
+	$(VLIB) $(WORK_UVM)
+	$(VLOG) -work $(WORK_UVM) -L mtiUvm -l comp_uvm.log $(RTL_ALL) $(TB_UVM)
+
+uvm: uvm_compile
+	@set -e; for t in $(UVM_TESTS); do \
+		echo "==== [UVM] Run test: $$t ===="; \
+		vsim -c -L mtiUvm -sv_seed $(SEED) -work $(WORK_UVM) $(UVM_TOP) \
+		    +UVM_TESTNAME=$$t +UVM_VERBOSITY=UVM_LOW \
+		    -l run_uvm_$$t.log -do "run -all; quit -f"; \
+	done
+	@echo "==== [UVM] Per-test results ===="
+	@for t in $(UVM_TESTS); do \
+		pass=$$(grep -c "\[CMP_FINAL_PASS\]" run_uvm_$$t.log || true); \
+		errs=$$(grep -E "^UVM_ERROR :" run_uvm_$$t.log | tail -1); \
+		fats=$$(grep -E "^UVM_FATAL :" run_uvm_$$t.log | tail -1); \
+		printf "  %-40s pass=%s  %s  %s\n" "$$t" "$$pass" "$$errs" "$$fats"; \
+	done
+	@echo "==== [UVM] DONE ===="
+
+uvm_cov: uvm_cov_clean
+	@echo "==== [UVM_COV] Compile with coverage ===="
+	$(VLIB) $(WORK_UVM)
+	$(VLOG) -work $(WORK_UVM) -L mtiUvm $(COV_COMP) -l comp_uvm_cov.log $(RTL_ALL) $(TB_UVM)
+	mkdir -p $(UCDB_UVM_DIR)
+	@set -e; for t in $(UVM_TESTS); do \
+		echo "---- [UVM_COV] $$t ----"; \
+		vsim -c -L mtiUvm -sv_seed $(SEED) -work $(WORK_UVM) $(UVM_TOP) \
+		    +UVM_TESTNAME=$$t $(COV_RUN) \
+		    -l run_uvm_cov_$$t.log \
+		    -do "coverage save -onexit $(UCDB_UVM_DIR)/$$t.ucdb; run -all; quit -f"; \
+	done
+	@echo "---- [UVM_COV] Merge ----"
+	$(VCOVER) merge $(UCDB_UVM_DIR)/merged.ucdb $(UCDB_UVM_DIR)/*.ucdb
+	@echo "---- [UVM_COV] HTML ----"
+	$(VCOVER) report -html -output $(COV_HTML_UVM) $(UCDB_UVM_DIR)/merged.ucdb
+	@echo "==== [UVM_COV] HTML report: $(COV_HTML_UVM)/index.html ===="
+
+uvm_cov_clean:
+	rm -rf $(WORK_UVM) $(UCDB_UVM_DIR) $(COV_HTML_UVM)
+	rm -f run_uvm_cov_*.log comp_uvm_cov.log
+
+uvm_clean:
+	rm -rf $(WORK_UVM) $(UCDB_UVM_DIR) $(COV_HTML_UVM)
+	rm -f run_uvm_*.log comp_uvm*.log
+
 .PHONY: smoke regress cov cov_clean cov_run_lab1 cov_run_lab2 cov_run_lab3 \
-        cov_merge cov_report clean
+        cov_merge cov_report clean uvm uvm_compile uvm_cov uvm_cov_clean uvm_clean

@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-**Lab4 Phase 2 完成 — SV 框架下覆盖率 closure 达标 (97.47%)**
+**Lab4 Phase 3 完成 — UVM 升级，18/18 UVM 测试 PASS，原 SV 回归不退化**
 
 ## 已完成里程碑
 
@@ -26,10 +26,11 @@
 | Lab4 Phase 0 完成       | 2026-05-13 | 36 TC / 177 checks 结构化回归列表；Spec §10 全 14 场景覆盖；testplan.md 产出         |
 | Lab4 Phase 1 完成       | 2026-05-13 | Makefile 统一入口 (smoke/regress/cov)；36 TC 全 PASS；Coverage 基线 82.93%        |
 | Lab4 Phase 2 完成       | 2026-05-13 | Coverage Closure: 42 TC / 224 chk 全 PASS；五类覆盖率全 ≥90% (总 97.47%)；排除登记表 |
+| Lab4 Phase 3 完成       | 2026-05-15 | UVM 升级：纯 SV TB 重构为 UVM 环境（apb_if + ref_model + pkg + uvm_tb）；18 个 test 全 PASS；原 SV regress 224/224 不退化 |
 
 ## 进行中
 
-- 无（Phase 2 已完成，等待启动 Phase 3）
+- 无（Phase 3 已完成）
 
 ## 阻塞项
 
@@ -43,7 +44,6 @@
 
 ## 下一步
 
-1. **Lab4 Phase 3: UVM 升级** — 将纯 SV TB 重构为 UVM 环境 (vif/agent/driver/monitor/scoreboard/test)，参考 mcdt-lab
-2. **Lab4 Phase 4: UVM 验证执行与分析** — 在 UVM 框架下运行回归，确认功能等价性，分析覆盖率变化
-3. **Lab4 Phase 5: 功能覆盖率定义与收集** — 定义 covergroup/coverpoint（pkt_len/type/error 组合），收集 functional coverage
-4. **Lab4 Phase 6 (如需): 覆盖率提升** — 若 UVM 框架下覆盖率不满足验收标准，补充 TC 或约束随机序列
+1. **Lab4 Phase 4 (可选): UVM 覆盖率收集与对比** — `make uvm_cov` 收集 UCDB，与 SV 基线 (97.47%) 对比，必要时补充 sequence
+2. **Lab4 Phase 5 (可选): 功能覆盖率扩展** — 在 `ppa_coverage` 中增补 covergroup（pkt_len/type/error 多维 cross），收集 functional coverage
+3. **Lab4 Phase 6 (如需): 覆盖率提升** — 若 UVM 框架下覆盖率不满足验收标准，补充 TC 或约束随机序列
