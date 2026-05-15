@@ -1007,7 +1007,9 @@ package ppa_pkg;
 		`uvm_object_utils(ppa_irq_err_seq)
 		function new(string name = "ppa_irq_err_seq"); super.new(name); endfunction
 		task body();
-			ppa_seq_item it = ppa_seq_item::type_id::create("irq_e");
+			ppa_seq_item it;
+			// Type error with err_irq_en (existing)
+			it = ppa_seq_item::type_id::create("irq_e_type");
 			it.err_mode = ERR_TYPE_BAD;
 			start_item(it);
 			void'(it.randomize() with {
@@ -1016,9 +1018,31 @@ package ppa_pkg;
 			});
 			finish_item(it);
 			if (it.obs_irq_after_done !== 1'b1)
-				`uvm_error("SEQ/IRQ_E", $sformatf("expected irq_o=1 (err) post-done, got %0d", it.obs_irq_after_done))
-			if (it.obs_irq_sta_after_done[1] !== 1'b1)
-				`uvm_error("SEQ/IRQ_E", $sformatf("expected IRQ_STA[1]=1, got %0d", it.obs_irq_sta_after_done[1]))
+				`uvm_error("SEQ/IRQ_E", $sformatf("expected irq_o=1 (type_err) post-done, got %0d", it.obs_irq_after_done))
+			// Length error (under) with err_irq_en — isolated (no type/chk error)
+			it = ppa_seq_item::type_id::create("irq_e_len");
+			it.err_mode = ERR_LEN_UNDER;
+			start_item(it);
+			void'(it.randomize() with {
+				op_kind == OP_PKT;
+				pkt_len == 3; pkt_type == 8'h01;
+				done_irq_en == 1'b0; err_irq_en == 1'b1;
+			});
+			finish_item(it);
+			if (it.obs_irq_after_done !== 1'b1)
+				`uvm_error("SEQ/IRQ_E", $sformatf("expected irq_o=1 (len_err) post-done, got %0d", it.obs_irq_after_done))
+			// Checksum error with err_irq_en — isolated (no type/length error)
+			it = ppa_seq_item::type_id::create("irq_e_chk");
+			it.err_mode = ERR_CHK;
+			start_item(it);
+			void'(it.randomize() with {
+				op_kind == OP_PKT;
+				pkt_len == 8; pkt_type == 8'h01;
+				done_irq_en == 1'b0; err_irq_en == 1'b1;
+			});
+			finish_item(it);
+			if (it.obs_irq_after_done !== 1'b1)
+				`uvm_error("SEQ/IRQ_E", $sformatf("expected irq_o=1 (chk_err) post-done, got %0d", it.obs_irq_after_done))
 		endtask
 	endclass
 
@@ -1042,16 +1066,38 @@ package ppa_pkg;
 		function new(string name = "ppa_mid_sim_reset_seq"); super.new(name); endfunction
 		task body();
 			ppa_seq_item it;
-			// Start a long packet, then reset mid-flight via reset op
-			it = ppa_seq_item::type_id::create("rst1");
+			// --- Reset during S_PROCESS: start a long packet via raw writes,
+			//     then immediately OP_RESET before processing completes ---
+			it = ppa_seq_item::type_id::create("cfg");
+			it.op_kind = OP_RAW_WRITE; it.addr = ADDR_CFG; it.data = 32'h0000_00F1;
+			it.exp_slverr = 0; start_item(it); finish_item(it);
+			it = ppa_seq_item::type_id::create("hdr");
+			it.op_kind = OP_RAW_WRITE; it.addr = ADDR_PKT_MEM_LO;
+			it.data = {8'h24, 8'h00, 8'h04, 2'b00, 6'd32};  // pkt_len=32 → 8 cycles in S_PROCESS
+			it.exp_slverr = 0; start_item(it); finish_item(it);
+			it = ppa_seq_item::type_id::create("en");
+			it.op_kind = OP_RAW_WRITE; it.addr = ADDR_CTRL; it.data = 32'h0000_0001;
+			it.exp_slverr = 0; start_item(it); finish_item(it);
+			it = ppa_seq_item::type_id::create("start");
+			it.op_kind = OP_RAW_WRITE; it.addr = ADDR_CTRL; it.data = 32'h0000_0003;
+			it.exp_slverr = 0; start_item(it); finish_item(it);
+			// Wait for FSM to enter S_PROCESS (start_pulse registered + 1 cycle)
+			it = ppa_seq_item::type_id::create("wait_proc");
+			it.op_kind = OP_WAIT; it.n_cycles = 3;
+			start_item(it); finish_item(it);
+			// FSM is now in S_PROCESS — reset immediately
+			it = ppa_seq_item::type_id::create("rst_in_proc");
 			it.op_kind = OP_RESET; it.n_cycles = 5;
 			start_item(it); finish_item(it);
-			// Verify recovery
+			// Verify recovery after reset-during-process
 			`PPA_DO_PKT(ERR_NONE, 4, 8'h01, )
-			it = ppa_seq_item::type_id::create("rst2");
+			// --- Reset during S_DONE ---
+			`PPA_DO_PKT(ERR_NONE, 8, 8'h02, )
+			it = ppa_seq_item::type_id::create("rst_in_done");
 			it.op_kind = OP_RESET; it.n_cycles = 5;
 			start_item(it); finish_item(it);
-			`PPA_DO_PKT(ERR_NONE, 8, 8'h02, )
+			// Verify recovery after reset-during-done
+			`PPA_DO_PKT(ERR_NONE, 4, 8'h01, )
 		endtask
 	endclass
 

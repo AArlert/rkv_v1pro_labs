@@ -278,3 +278,59 @@ make regress    # 原 SV 回归 224/224 不退化
 - 若要做 Phase 4 (UVM 覆盖率收集)：直接 `make uvm_cov`，UCDB 落到 `covdata_uvm/`，HTML 落到 `covhtml_uvm/`
 - 若要做 Phase 5 (functional coverage 扩展)：扩 `ppa_pkg.sv::ppa_coverage::cg_pkt`，已有 op/len/type/mask/algo/三类 err 的 coverpoint + cross
 - UVM env 当前覆盖率不强求与 SV 基线对齐（用户 2026-05-15 决定：先跑通即可）
+
+---
+
+## Phase 4 交接 (2026-05-15) — UVM 覆盖率收集与对比
+
+### 我做了什么
+
+1. **消除 UVM TB 覆盖率污染** — Makefile `uvm_cov` target 拆分 vlog: RTL 用 `-cover bcstf`，TB 不加。消除 `ppa_ref_model`/`ppa_pkg`/`ppa_uvm_tb`/`ppa_apb_if` 实例的假性 miss。
+2. **FSM Transition `S_PROCESS→S_IDLE` 覆盖** — 修复 `ppa_mid_sim_reset_seq`：通过 RAW_WRITE 序列加载长包(pkt_len=32)并启动处理，插入 OP_WAIT(3) 确保 FSM 进入 S_PROCESS 后再 OP_RESET。FSM Transitions 80%→100%。
+3. **u_m1 Conditions 89.47%→100%** — 扩展 `ppa_irq_err_seq`：原仅测 `ERR_TYPE_BAD`+err_irq_en，新增独立的 `ERR_LEN_UNDER` 和 `ERR_CHK` 包（均 err_irq_en=1），覆盖 `length_error_i_1` 和 `chk_error_i_1` 两个 FEC condition bin。
+
+### UVM Coverage 最终结果 (Phase 4)
+
+| 覆盖率类型 | 修复前 | 修复后 | SV 基线 | 判定 |
+|-----------|--------|--------|---------|------|
+| Statements | 69.38% (含TB污染) | **99.36%** | 98.40% | 优良 |
+| Branches | 29.10% (含TB污染) | **98.78%** | 96.25% | 优良 |
+| Conditions | 30.00% (含TB污染) | **100%** | 91.93% | 优秀 |
+| FSM States | 100% (3/3) | **100%** (3/3) | 100% (6/6) | 优秀 |
+| FSM Transitions | 80% (4/5) | **100%** (5/5) | 100% (10/10) | 优秀 |
+| Toggles | 99.40% | **99.56%** | 98.28% | 优良 |
+| **Total** | **70.57%** | **97.84%** | **97.47%** | **优良** |
+
+#### RTL 逐模块 Coverage
+
+| Instance | Stmt | Branch | Cond | FSM St | FSM Tr | Toggle |
+|----------|------|--------|------|--------|--------|--------|
+| /ppa_uvm_tb/dut (ppa_top) | 100% | 100% | — | — | — | 99.52% |
+| /ppa_uvm_tb/dut/u_m1 (ppa_apb_slave_if) | 100% | 100% | 100% | — | — | 99.13% |
+| /ppa_uvm_tb/dut/u_m2 (ppa_packet_sram) | 100% | 100% | — | — | — | 100% |
+| /ppa_uvm_tb/dut/u_m3 (ppa_packet_proc_core) | 99.00% | 96.87% | 100% | 100% | 100% | 100% |
+
+验收标准 (Spec §11.5 #2): 各模块各项均 ≥90% ✓
+
+### FSM States 3 vs 6 根因说明
+
+SV 基线 FSM States=6 是因为 Lab2 独立 TB 和 Lab3 集成 TB 各有一个 `ppa_packet_proc_core` 实例（3×2=6 bins）。UVM 仅通过 `ppa_top` 测试（含 1 个 M3 实例），故 FSM States=3。实际只有 3 个状态（S_IDLE/S_PROCESS/S_DONE），两种拓扑覆盖率均为 100%。bin 数量差异是测试拓扑差异，不影响验证质量。
+
+### 验证成果的最小命令
+
+```bash
+cd ppa-lab/lab4/svtb/sim
+make uvm_cov   # 18 tests PASS + coverage report (97.84%)
+make regress   # 原 SV 回归 42 TC / 224 checks 不退化
+```
+
+### 我没做什么 / 留给后续阶段的
+
+1. **Covergroup (functional coverage) 目前 87.22%** — 未达 90% 但这是自定义功能覆盖率，非代码覆盖率必达项
+2. **u_m3 Branch 96.87%** — 剩余 1 个 miss 是 FSM `default` 分支（结构性不可达代码，可排除）
+3. **u_m3 Statements 99.00%** — 同上，`default` 分支内的赋值语句
+
+### 踩过的坑
+
+1. **`S_PROCESS→S_IDLE` 时序问题** — 直接在 RAW_WRITE CTRL=3 后发 OP_RESET 不够：start_pulse 是注册信号，需额外 2-3 cycles 才能让 FSM 进入 S_PROCESS。必须插入 OP_WAIT(3) 确保 FSM 已实际进入 S_PROCESS 再触发 reset。
+2. **TB 代码污染表现不同** — SV 基线中 TB 污染主要影响 condition/toggle；UVM 中 `ppa_pkg` 的 1051 条 statement 仅 64% hit，单项把总覆盖率从 97.84% 拖到 70.57%。

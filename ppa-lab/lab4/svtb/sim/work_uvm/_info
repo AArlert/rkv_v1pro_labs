@@ -12,10 +12,10 @@ cModel Technology
 Z0 dD:/OneDrive/Code/rkv_v1pro_labs/ppa-lab/lab4/svtb/sim
 T_opt
 !s11d ppa_pkg D:/OneDrive/Code/rkv_v1pro_labs/ppa-lab/lab4/svtb/sim/work_uvm 1 ppa_apb_if 1 D:/OneDrive/Code/rkv_v1pro_labs/ppa-lab/lab4/svtb/sim/work_uvm 
-!s110 1778834026
-V9?W>9?lVe9WSaKWDaLcU32
+!s110 1778840606
+VBjhFPb<HN0LDBA74;ANMf3
 04 10 4 work ppa_uvm_tb fast 0
-=1-fc9d056ea7c1-6a06da69-1e2-32250
+=1-fc9d056ea7c1-6a06f41c-3a6-34714
 !s124 OEM100
 o-quiet -auto_acc_if_foreign -work work_uvm -L mtiUvm
 Z1 tCvgOpt 0
@@ -23,28 +23,27 @@ n@_opt
 OL;O;2021.1;73
 Yppa_apb_if
 Z2 DXx6 sv_std 3 std 0 22 9oUSJO;AeEaW`l:M@^WG92
-Z3 !s110 1778834020
+Z3 !s110 1778840599
 !i10b 1
 !s100 T=N<9oVhXPkRjR>;Y4gc61
-I@eZR54B5RD^a95Ag2<4eU0
+Ib7oP8OKCJ[2^AL0Oj3J241
 S1
 R0
 Z4 w1778833892
 8../tb/ppa_apb_if.sv
 F../tb/ppa_apb_if.sv
-!i122 0
+!i122 1
 L0 8 0
 Z5 VDg1SIo80bB@j0V0VzS_@n1
 Z6 OL;L;2021.1;73
 r1
 !s85 0
 31
-Z7 !s108 1778834020.000000
-Z8 !s107 E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_deprecated_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_reg_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_callback_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_sequence_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/tlm1/uvm_tlm_imps.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_tlm_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_printer_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_object_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_phase_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_message_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_version_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/uvm_macros.svh|../tb/ppa_uvm_tb.sv|../tb/ppa_pkg.sv|../tb/ppa_ref_model.sv|../tb/ppa_apb_if.sv|../../../lab3/rtl/ppa_top.sv|../../../lab2/rtl/ppa_packet_proc_core.sv|../../../lab1/rtl/ppa_packet_sram.sv|../../../lab1/rtl/ppa_apb_slave_if.sv|
-Z9 !s90 -sv|-timescale=1ns/1ps|-work|work_uvm|-L|mtiUvm|-cover|bcstf|-l|comp_uvm_cov.log|../../../lab1/rtl/ppa_apb_slave_if.sv|../../../lab1/rtl/ppa_packet_sram.sv|../../../lab2/rtl/ppa_packet_proc_core.sv|../../../lab3/rtl/ppa_top.sv|../tb/ppa_apb_if.sv|../tb/ppa_ref_model.sv|../tb/ppa_pkg.sv|../tb/ppa_uvm_tb.sv|
+Z7 !s108 1778840599.000000
+Z8 !s107 E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_deprecated_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_reg_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_callback_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_sequence_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/tlm1/uvm_tlm_imps.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_tlm_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_printer_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_object_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_phase_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_message_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_version_defines.svh|E:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/uvm_macros.svh|../tb/ppa_uvm_tb.sv|../tb/ppa_pkg.sv|../tb/ppa_ref_model.sv|../tb/ppa_apb_if.sv|
+Z9 !s90 -sv|-timescale=1ns/1ps|-work|work_uvm|-L|mtiUvm|-l|comp_uvm_cov_tb.log|../tb/ppa_apb_if.sv|../tb/ppa_ref_model.sv|../tb/ppa_pkg.sv|../tb/ppa_uvm_tb.sv|
 !i113 0
-Z10 !s102 -cover bcstf
-Z11 o-sv -timescale=1ns/1ps -work work_uvm -L mtiUvm -cover bcstf -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUPF -L infact
+Z10 o-sv -timescale=1ns/1ps -work work_uvm -L mtiUvm -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUPF -L infact
 R1
 vppa_apb_slave_if
 R2
@@ -54,7 +53,7 @@ R3
 IbIzjVfLLIBYZ;M?^M=LlE3
 S1
 R0
-Z12 w1778544459
+Z11 w1778544459
 8../../../lab1/rtl/ppa_apb_slave_if.sv
 F../../../lab1/rtl/ppa_apb_slave_if.sv
 !i122 0
@@ -65,11 +64,11 @@ r1
 !s85 0
 31
 R7
-R8
-R9
+Z12 !s107 ../../../lab3/rtl/ppa_top.sv|../../../lab2/rtl/ppa_packet_proc_core.sv|../../../lab1/rtl/ppa_packet_sram.sv|../../../lab1/rtl/ppa_apb_slave_if.sv|
+Z13 !s90 -sv|-timescale=1ns/1ps|-work|work_uvm|-L|mtiUvm|-cover|bcstf|-l|comp_uvm_cov_rtl.log|../../../lab1/rtl/ppa_apb_slave_if.sv|../../../lab1/rtl/ppa_packet_sram.sv|../../../lab2/rtl/ppa_packet_proc_core.sv|../../../lab3/rtl/ppa_top.sv|
 !i113 0
-R10
-R11
+Z14 !s102 -cover bcstf
+Z15 o-sv -timescale=1ns/1ps -work work_uvm -L mtiUvm -cover bcstf -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUPF -L infact
 R1
 vppa_packet_proc_core
 R2
@@ -90,11 +89,11 @@ r1
 !s85 0
 31
 R7
-R8
-R9
+R12
+R13
 !i113 0
-R10
-R11
+R14
+R15
 R1
 vppa_packet_sram
 R2
@@ -115,41 +114,41 @@ r1
 !s85 0
 31
 R7
-R8
-R9
+R12
+R13
 !i113 0
-R10
-R11
+R14
+R15
 R1
 Xppa_pkg
 !s115 ppa_apb_if
 R2
-Z13 DXx6 mtiUvm 7 uvm_pkg 0 22 8V[`8]Q0W57le7Z>zYaAj1
-Z14 DXx4 work 13 ppa_ref_model 0 22 k@GQa7A<B0;GgQgCkIUB82
-R3
+Z16 DXx6 mtiUvm 7 uvm_pkg 0 22 8V[`8]Q0W57le7Z>zYaAj1
+Z17 DXx4 work 13 ppa_ref_model 0 22 Bk=ZL4AKO35[d>2>c084c1
+Z18 !s110 1778840600
 !i10b 1
-!s100 OazJhGBYC9Co9Io5Y^meJ2
-IXzmSbU309`Ol:gOl1gd4Z0
+!s100 26z8<@n?bnn>K=nEhjjSF2
+IVMnDoC>YSanz:L]AdQ0LP0
 S1
 R0
-R4
+w1778840546
 8../tb/ppa_pkg.sv
 F../tb/ppa_pkg.sv
-Z15 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/uvm_macros.svh
-Z16 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_version_defines.svh
-Z17 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_message_defines.svh
-Z18 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_phase_defines.svh
-Z19 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_object_defines.svh
-Z20 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_printer_defines.svh
-Z21 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_tlm_defines.svh
-Z22 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/tlm1/uvm_tlm_imps.svh
-Z23 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_sequence_defines.svh
-Z24 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_callback_defines.svh
-Z25 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_reg_defines.svh
-Z26 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_deprecated_defines.svh
-!i122 0
-Z27 L0 9 0
-VXzmSbU309`Ol:gOl1gd4Z0
+Z19 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/uvm_macros.svh
+Z20 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_version_defines.svh
+Z21 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_message_defines.svh
+Z22 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_phase_defines.svh
+Z23 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_object_defines.svh
+Z24 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_printer_defines.svh
+Z25 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_tlm_defines.svh
+Z26 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/tlm1/uvm_tlm_imps.svh
+Z27 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_sequence_defines.svh
+Z28 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_callback_defines.svh
+Z29 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_reg_defines.svh
+Z30 FE:/QuestaSim/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_deprecated_defines.svh
+!i122 1
+Z31 L0 9 0
+VVMnDoC>YSanz:L]AdQ0LP0
 R6
 r1
 !s85 0
@@ -159,22 +158,21 @@ R8
 R9
 !i113 0
 R10
-R11
 R1
 Xppa_ref_model
 R2
 R3
 !i10b 1
 !s100 YYnl1GDkY3?2dCb;1mQ871
-Ik@GQa7A<B0;GgQgCkIUB82
+IBk=ZL4AKO35[d>2>c084c1
 S1
 R0
 R4
 8../tb/ppa_ref_model.sv
 F../tb/ppa_ref_model.sv
-!i122 0
-R27
-Vk@GQa7A<B0;GgQgCkIUB82
+!i122 1
+R31
+VBk=ZL4AKO35[d>2>c084c1
 R6
 r1
 !s85 0
@@ -184,7 +182,6 @@ R8
 R9
 !i113 0
 R10
-R11
 R1
 vppa_top
 R2
@@ -194,7 +191,7 @@ R3
 IjYIcHHYe8@I9R;5NiY@^A3
 S1
 R0
-R12
+R11
 8../../../lab3/rtl/ppa_top.sv
 F../../../lab3/rtl/ppa_top.sv
 !i122 0
@@ -205,30 +202,26 @@ r1
 !s85 0
 31
 R7
-R8
-R9
+R12
+R13
 !i113 0
-R10
-R11
+R14
+R15
 R1
 vppa_uvm_tb
 R2
-R13
-R14
-DXx4 work 7 ppa_pkg 0 22 XzmSbU309`Ol:gOl1gd4Z0
-R3
+R16
+R17
+DXx4 work 7 ppa_pkg 0 22 VMnDoC>YSanz:L]AdQ0LP0
+R18
 !i10b 1
 !s100 B`K8:;k@C=Q[J3Oln5W1M1
-IzQ0cMkbe>zFE2Jd8zL2UK0
+I9EYGj[^lX]VGHOK:U6`1>3
 S1
 R0
 R4
 8../tb/ppa_uvm_tb.sv
 F../tb/ppa_uvm_tb.sv
-R15
-R16
-R17
-R18
 R19
 R20
 R21
@@ -237,7 +230,11 @@ R23
 R24
 R25
 R26
-!i122 0
+R27
+R28
+R29
+R30
+!i122 1
 L0 9 6537
 R5
 R6
@@ -249,5 +246,4 @@ R8
 R9
 !i113 0
 R10
-R11
 R1

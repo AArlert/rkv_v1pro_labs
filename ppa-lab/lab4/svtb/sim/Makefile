@@ -171,9 +171,10 @@ uvm: uvm_compile
 	@echo "==== [UVM] DONE ===="
 
 uvm_cov: uvm_cov_clean
-	@echo "==== [UVM_COV] Compile with coverage ===="
+	@echo "==== [UVM_COV] Compile with coverage (RTL only) ===="
 	$(VLIB) $(WORK_UVM)
-	$(VLOG) -work $(WORK_UVM) -L mtiUvm $(COV_COMP) -l comp_uvm_cov.log $(RTL_ALL) $(TB_UVM)
+	$(VLOG) -work $(WORK_UVM) -L mtiUvm $(COV_COMP) -l comp_uvm_cov_rtl.log $(RTL_ALL)
+	$(VLOG) -work $(WORK_UVM) -L mtiUvm -l comp_uvm_cov_tb.log $(TB_UVM)
 	mkdir -p $(UCDB_UVM_DIR)
 	@set -e; for t in $(UVM_TESTS); do \
 		echo "---- [UVM_COV] $$t ----"; \
@@ -190,7 +191,7 @@ uvm_cov: uvm_cov_clean
 
 uvm_cov_clean:
 	rm -rf $(WORK_UVM) $(UCDB_UVM_DIR) $(COV_HTML_UVM)
-	rm -f run_uvm_cov_*.log comp_uvm_cov.log
+	rm -f run_uvm_cov_*.log comp_uvm_cov*.log
 
 uvm_clean:
 	rm -rf $(WORK_UVM) $(UCDB_UVM_DIR) $(COV_HTML_UVM)
