@@ -1,0 +1,2 @@
+var g_data = {"1":["work.ppa_apb_if",99.40,1],"8":["work.ppa_apb_slave_if",97.15,1],"10":["work.ppa_packet_proc_core",95.98,1],"9":["work.ppa_packet_sram",100.00,1],"4":["work.ppa_pkg",43.88,1],"2":["work.ppa_ref_model",36.53,1],"7":["work.ppa_top",99.79,1],"6":["work.ppa_uvm_tb",79.82,1]};
+processDuLinks(g_data);
