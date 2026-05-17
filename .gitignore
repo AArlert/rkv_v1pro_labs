@@ -32,7 +32,7 @@ _info
 _vmake
 _opt_lock
 
-# Coverage artifacts (Questa vcover)
+# HTML Coverage artifacts (Questa vcover)
 covdata/
 covhtmlreport/
 VRMDATA/
