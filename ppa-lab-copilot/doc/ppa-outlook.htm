@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>PPA-Lab-Copilot 工作流概览</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+<style>
+  body { font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 1100px; margin: 24px auto; padding: 0 24px; color: #222; line-height: 1.55; }
+  h1 { border-bottom: 2px solid #2c5; padding-bottom: 8px; }
+  h2 { margin-top: 36px; border-left: 4px solid #2c5; padding-left: 10px; }
+  h3 { color: #444; margin-top: 22px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+  th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: #f6f8fa; }
+  code { background: #f4f4f4; padding: 1px 5px; border-radius: 3px; font-family: "JetBrains Mono", Consolas, monospace; font-size: 90%; }
+  .mermaid { background: #fafafa; padding: 12px; border-radius: 6px; margin: 12px 0; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; color: #fff; }
+  .b-todo { background: #999; }
+  .b-wip  { background: #e8a; }
+  .b-done { background: #2c5; }
+  .legend span { margin-right: 14px; font-size: 13px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .card { border: 1px solid #ddd; border-radius: 6px; padding: 14px 16px; background: #fff; }
+  .card h4 { margin: 0 0 8px; color: #2c5; }
+  .quote { background: #fffbea; border-left: 4px solid #fb3; padding: 8px 12px; margin: 12px 0; }
+  a { color: #2563eb; }
+</style>
+</head>
+<body>
+
+<h1>PPA-Lab-Copilot 工作流概览</h1>
+
+<p>这是一个<b>个人学习 + AI 辅助</b>的 PPA-Lite（APB 包处理加速器）课程项目。本页面是仓库工作流的可视化入口与维护看板，配合 <a href="ppa-plan.md">ppa-plan.md</a> 食用。</p>
+
+<div class="quote">
+  <b>定位</b>：本仓库 = 人主导 + Copilot Agent 辅助 + xwave/xtrace 喂 EDA 数据。
+  未来的 <code>ppa-lab-harness</code> = 纯 Agent harness。两者共享 <code>agents/skill/memory/</code> 规范。
+</div>
+
+<h2>1 系统框图</h2>
+<div class="mermaid">
+flowchart LR
+    SW["APB Master<br/>(TB / 上层软件)"]
+    subgraph TOP["ppa_top (顶层连线)"]
+        M1["M1 ppa_apb_slave_if<br/>APB 3.0 + 11 CSR"]
+        M2["M2 ppa_packet_sram<br/>8x32 dual-port"]
+        M3["M3 ppa_packet_proc_core<br/>3-FSM + 算法核"]
+    end
+    SW <-- APB --> M1
+    M1 -- wr_en/addr/data --> M2
+    M2 -- rd_data --> M3
+    M3 -- rd_en/addr --> M2
+    M1 -- "start/cfg/algo_mode" --> M3
+    M3 -- "busy/done/err/result" --> M1
+    M1 -- irq_o --> SW
+</div>
+
+<h2>2 8 周推进 Roadmap</h2>
+<div class="mermaid">
+gantt
+    title PPA-Lab-Copilot 8 周计划
+    dateFormat  YYYY-MM-DD
+    axisFormat %m/%d
+    section Lab0 预备
+    工具链 + 知识入门      :done, w0, 2026-05-18, 7d
+    section Lab1 M1+M2
+    架构 + RTL              :w1a, after w0, 5d
+    SV TB + 11 TC           :w1b, after w1a, 5d
+    section Lab2 M3
+    FSM + 算法核 RTL        :w2a, after w1b, 5d
+    SV TB + 17 TC + ref     :w2b, after w2a, 5d
+    section Lab3 集成
+    ppa_top + E2E TB        :w3, after w2b, 14d
+    section Lab4 回归+覆盖率+UVM
+    Make smoke/regress/cov  :w4a, after w3, 7d
+    UVM 升级 + 18 test      :w4b, after w4a, 7d
+</div>
+
+<h2>3 5 个角色协作（受 chuanseng-ng/digital-chip-design-agents 启发）</h2>
+<div class="mermaid">
+flowchart TB
+    ORCH["Orchestrator (我)<br/>读 design_state.json"]
+    ARCH["Architect"]
+    RTL["RTL Designer"]
+    DV["DV Engineer"]
+    REV["Reviewer (Copilot)"]
+    ORCH --> ARCH
+    ORCH --> RTL
+    ORCH --> DV
+    ORCH --> REV
+    ARCH -. design-prompt .-> RTL
+    RTL -. fix_request .-> DV
+    DV -. fix_request (bug) .-> RTL
+    REV -. review_notes .-> ORCH
+</div>
+
+<table>
+<thead><tr><th>角色</th><th>谁演</th><th>主要交付</th><th>启用 Lab</th></tr></thead>
+<tbody>
+<tr><td>Orchestrator</td><td>我</td><td><code>memory/design_state.json</code> 更新、stage 路由</td><td>每天</td></tr>
+<tr><td>Architect</td><td>我</td><td><code>lab*/doc/design-prompt.md</code>、CSR 表</td><td>Lab1/2/3 第 1 天</td></tr>
+<tr><td>RTL Designer</td><td>我 + Copilot 补齐</td><td><code>lab*/rtl/*.sv</code></td><td>Lab1–3</td></tr>
+<tr><td>DV Engineer</td><td>我 + Copilot 补齐</td><td><code>lab*/svtb/</code>、testplan、cov</td><td>Lab1–4</td></tr>
+<tr><td>Reviewer</td><td>Copilot Agent</td><td>review_notes（P0/P1/P2）</td><td>每个 Lab close 前</td></tr>
+</tbody>
+</table>
+
+<h2>4 状态看板</h2>
+<p class="legend">
+  <span class="badge b-todo">todo</span>
+  <span class="badge b-wip">wip</span>
+  <span class="badge b-done">done</span>
+  数据源：<code>memory/design_state.json</code>（手动同步本表）
+</p>
+<table>
+<thead><tr><th>Lab</th><th>RTL</th><th>TB</th><th>Cov</th><th>Accept</th></tr></thead>
+<tbody>
+<tr><td>lab1 (M1+M2)</td><td><span class="badge b-wip">wip</span></td><td><span class="badge b-todo">todo</span></td><td><span class="badge b-todo">todo</span></td><td><span class="badge b-todo">todo</span></td></tr>
+<tr><td>lab2 (M3)</td><td><span class="badge b-todo">todo</span></td><td><span class="badge b-todo">todo</span></td><td><span class="badge b-todo">todo</span></td><td><span class="badge b-todo">todo</span></td></tr>
+<tr><td>lab3 (ppa_top)</td><td><span class="badge b-todo">todo</span></td><td><span class="badge b-todo">todo</span></td><td><span class="badge b-todo">todo</span></td><td><span class="badge b-todo">todo</span></td></tr>
+<tr><td>lab4 (回归+UVM)</td><td><span class="badge b-todo">todo</span></td><td><span class="badge b-todo">todo</span></td><td><span class="badge b-todo">todo</span></td><td><span class="badge b-todo">todo</span></td></tr>
+</tbody>
+</table>
+
+<h2>5 仓库目录速览</h2>
+<div class="grid">
+  <div class="card">
+    <h4>doc/</h4>
+    <ul>
+      <li><a href="ppa-lite-spec.md">ppa-lite-spec.md</a> 权威 spec</li>
+      <li><a href="ppa-plan.md">ppa-plan.md</a> 实验计划</li>
+      <li>ppa-outlook.htm 本页</li>
+      <li>ppa-feature-matrix.md / ppa-status.md / glossary.md</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>agents/</h4>
+    <ul>
+      <li>orchestrator.md / architect.md / rtl-designer.md / dv-engineer.md / reviewer.md</li>
+      <li>每个角色都有 YAML frontmatter + Stage Sequence + Sign-off + Memory 引用</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>skill/</h4>
+    <ul>
+      <li><b>copilot-*</b>：wave-analyze / rtl-trace / log-triage / review-rtl / review-tb / make-script</li>
+      <li><b>manual-*</b>：apb-protocol / csr-attributes / vcs-flags / verdi-workflow / make-templates / sv-tb-patterns / uvm-env-skeleton / coverage-closure</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>memory/</h4>
+    <ul>
+      <li>design_state.json 跨角色共享</li>
+      <li>run_state.md 当前活跃 run</li>
+      <li>architecture/ rtl/ dv/ 各含 knowledge.md + experiences.jsonl</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>lab1/ lab2/ lab3/ lab4/</h4>
+    <ul>
+      <li>每个 lab：doc/ rtl/ svtb/{tb,sim} cov/</li>
+      <li>lab4 额外含 UVM env</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>tools/</h4>
+    <ul>
+      <li>xwave/ — FSDB NPI 查询 (<a href="https://github.com/BLANK2077/xwave">repo</a>)</li>
+      <li>xtrace/ — RTL driver/load 追踪 (<a href="https://github.com/BLANK2077/xtrace">repo</a>)</li>
+    </ul>
+  </div>
+</div>
+
+<h2>6 我的日常 SOP（Orchestrator 视角）</h2>
+<div class="mermaid">
+flowchart LR
+    A["1 读 design_state.json"] --> B["2 选角色"]
+    B --> C["3 读 knowledge.md + agents/&lt;role&gt;.md"]
+    C --> D["4 执行 stage"]
+    D --> E["5 写 experiences.jsonl"]
+    E --> F["6 更新 design_state.json"]
+    F --> G{"触发 FR?"}
+    G -- yes --> H["7a 写 fix_request"]
+    G -- no --> I["7b 写 handoff.md"]
+    H --> I
+</div>
+
+<h2>7 AI 调用约束</h2>
+<table>
+<thead><tr><th>档位</th><th>方式</th><th>适用</th><th>禁止</th></tr></thead>
+<tbody>
+<tr><td>A 代码补齐</td><td>Copilot 补齐单 token</td><td>RTL/TB 主战场 >80%</td><td>接受没看懂的行</td></tr>
+<tr><td>B 提问澄清</td><td>不写代码，先问概念</td><td>spec 不清时</td><td>"帮我写 M1"</td></tr>
+<tr><td>C 模板生成</td><td>让 AI 给脚手架</td><td>Makefile、covergroup 等不影响理解的部分</td><td>让 AI 生成交付的 RTL/TC 逻辑</td></tr>
+</tbody>
+</table>
+
+<h2>8 与 ppa-lab-harness 的差异</h2>
+<table>
+<thead><tr><th>维度</th><th>本仓库 ppa-lab-copilot</th><th>未来 ppa-lab-harness</th></tr></thead>
+<tbody>
+<tr><td>Orchestrator</td><td>我（人）</td><td>meta agent</td></tr>
+<tr><td>角色执行</td><td>我扮演</td><td>独立 sub-agent</td></tr>
+<tr><td>AI 用量</td><td>代码补齐为主</td><td>全流程</td></tr>
+<tr><td>知识沉淀</td><td>manual-* + copilot-*</td><td>仅 agent-readable skill</td></tr>
+<tr><td>目标</td><td>掌握设计+验证</td><td>展示 harness 能力</td></tr>
+</tbody>
+</table>
+
+<hr>
+<p style="color:#888;font-size:13px;">本页面手动维护。每完成一个 Lab，请同步：第 4 节状态徽章、design_state.json、ppa-status.md。</p>
+
+</body>
+</html>
