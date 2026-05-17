@@ -30,6 +30,7 @@ _data/
 exempt*
 _info
 _vmake
+_opt_lock
 
 # Coverage artifacts (Questa vcover)
 covdata/
@@ -40,6 +41,16 @@ work_lab*/
 *.ucdb
 *.js
 *.html
+*.css
+*.css.map
+*.eot
+*.svg
+*.ttf
+*.woff
+*.woff2
+*.otf
+*.png
+*.gif
 
 # Keep repo clean from local backup/temp files
 *~
