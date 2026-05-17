@@ -36,6 +36,7 @@ VRMDATA/
 vrmhtmlreport/
 work_lab*/
 *.ucdb
+*.js
 
 # Keep repo clean from local backup/temp files
 *~
