@@ -28,6 +28,8 @@ _tempmsg/
 @_opt*/
 _data/
 exempt*
+_info
+_vmake
 
 # Coverage artifacts (Questa vcover)
 covdata/
@@ -37,6 +39,7 @@ vrmhtmlreport/
 work_lab*/
 *.ucdb
 *.js
+*.html
 
 # Keep repo clean from local backup/temp files
 *~
