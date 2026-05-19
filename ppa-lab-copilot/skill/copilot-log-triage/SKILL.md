@@ -7,7 +7,7 @@ inputs:
   - log 文件路径列表
 outputs:
   - PASS/FAIL 统计
-  - 每条 FAIL 的：TC 名 / 错误类型 / 关键行号 / 是否建议登记 risk
+  - 每条 FAIL 的：TC 名 / 错误类型 / 关键行号 / 是否建议登记 blocker
 tools:
   - Read, Grep
 ---
@@ -40,10 +40,10 @@ Agent SOP：
 | TC | Status | Class | Hint |
 |---|---|---|---|
 | TC1 | PASS | — | — |
-| TC5 | FAIL | mismatch | PSLVERR expected 1 got 0 @ 235ns → 若 DV 自查后仍指向 RTL，登记 RISK-NNNN |
+| TC5 | FAIL | mismatch | PSLVERR expected 1 got 0 @ 235ns → 若 DV 自查后仍指向 RTL，登记 RISK-NNNN blocker |
 | TC8 | FAIL | timeout | done_o 未拉高 in 10us，看 FSM 是否卡 PROCESS |
 
-## Suggested risk items
+## Suggested blocker items
 - RISK-NNNN: expected / observed / evidence / owner / next action
 ```
 
