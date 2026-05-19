@@ -1,74 +1,98 @@
-# Memory — 二级记忆系统
+# Memory — 二级记忆系统（v6）
 
-参考 [chuanseng-ng/digital-chip-design-agents](https://github.com/chuanseng-ng/digital-chip-design-agents) 的记忆设计。
+> v6：继承 v5 的 `state.md` 单一来源、orchestrator 记忆位、`## RISKs` 段。
+> 模板（experiences 条目 / RISK 一条）拆到 [`../template/`](../template/) 单独小文件，不再内联在 workflow-vX.md。
+> 详细规则见 [`../workflow-v6.md`](../workflow-v6.md)。
 
 ## 结构
 
 ```
 memory/
-├── README.md           # 本文件
-├── design_state.json   # 跨角色共享状态（参考 ppa-plan.md §2.3 schema）
-├── run_state.md        # 当前活跃 run 的身份与上次中断点
+├── README.md
+├── state.md                  # 单一状态源 (Meta + Cursor + Dispatch + Labs Progress + RISKs + History)
+├── orchestrator/
+│   ├── knowledge.md          # ORCH 蒸馏页 (≤ 1 页)
+│   └── experiences.md        # ORCH 每次决策 / 关单复盘
 ├── architecture/
-│   ├── knowledge.md     # 蒸馏后的人类可读总结（≤ 1 页）
-│   └── experiences.jsonl # append-only 原始记录
+│   ├── knowledge.md
+│   └── experiences.md
 ├── rtl/
 │   ├── knowledge.md
-│   └── experiences.jsonl
+│   └── experiences.md
 └── dv/
     ├── knowledge.md
-    └── experiences.jsonl
+    └── experiences.md
 ```
 
 ## 写入协议
 
-### experiences.jsonl
+### state.md（单一状态源）
 
-任何角色完成一个 stage / 学到一个教训时 append 一行 JSON：
+ORCH 每 session 开头**只读这一份**。包含：
+- **Meta**：spec_version / workflow / created
+- **Cursor**：`lab` / `phase` ∈ `arch|rtl|dv|review|close` / `last`（≤1 行） / `next`（≤1 行）
+- **Dispatch**：`role` ∈ `ARCH|RTL|DV|REV|ORCH-decide` / `reason`
+- **Labs Progress**：每 lab 的 `arch/rtl/tb/cov/accept`，取值 `todo/wip/blocked/done`
+- **RISKs**：`### Open` / `### Resolved` 两段，每条 RISK 全字段（id / time / from / to / lab.phase / summary / evidence / advice / status / resolution）
+- **History**：append-only 表
 
-```json
-{"run_id":"rtl-2026-05-20-01","ts":"2026-05-20T16:30","role":"rtl-designer","lab":"lab1","stage":"impl-W1P","decision":"start_o 用 hit_ctrl & wdata[1] & PENABLE & ~start_o_d","outcome":"TC6 PASS","artifacts":["lab1/svtb/sim/run.log"],"lessons":"忘了 ~start_o_d 会双拍"}
+原子写：
+```bash
+cp memory/state.md memory/state.md.tmp
+# 编辑 .tmp
+mv memory/state.md.tmp memory/state.md
 ```
 
-字段约定：
-- `run_id`：自由文本，建议 `<role>-<date>-<seq>`
-- `ts`：ISO8601
-- `role`：5 个角色之一
-- `lab`：lab1/lab2/lab3/lab4
-- `stage`：自由文本
-- `decision`：本次做了什么决定
-- `outcome`：结果（PASS/FAIL/blocked）
-- `artifacts`：相关日志/波形/文件路径
-- `lessons`：教训（可空）
+### experiences.md（无序列表，append-only）
+
+任何角色完成 stage / 学到一次教训 / ORCH 做出决策时，按 [`../template/experiences-entry.md`](../template/experiences-entry.md) 追加一个列表块。蒸馏到 `knowledge.md` 后**不删**。
 
 ### knowledge.md
 
-每个 Lab 关单时，把本 Lab 的 experiences.jsonl 蒸馏为 knowledge.md：
-- 用主题分组（≤ 5 个主题）
+每个 Lab 关单时，把本 lab 的 experiences 蒸馏为 ≤ 1 页：
+- 主题分组（≤ 5 个主题）
 - 每条 ≤ 3 行
-- 引文件:行或 experiences.jsonl `run_id` 作证
-
-蒸馏由我手动做（或让 Copilot Agent 用 `skill/copilot-log-triage` 辅助）。**蒸馏后 experiences.jsonl 不删**，仅作 history。
-
-### design_state.json
-
-任何角色更新都遵守原子写：
-```bash
-cp memory/design_state.json memory/design_state.json.tmp
-# 编辑 .tmp
-mv memory/design_state.json.tmp memory/design_state.json
-```
-
-并发风险：本仓库单人单 session，几乎不可能并发。harness 化时需加 flock。
+- 引文件:行或 experiences.md 中的"时间 + 场景"作证
 
 ## 读取协议
 
-- Orchestrator 每个 session 开头 `cat design_state.json` + `cat run_state.md`
-- 每个角色启用时读对应 `<domain>/knowledge.md`（不读 experiences.jsonl 全文，太长）
-- Reviewer 读 spec + 当前文件 + `<domain>/knowledge.md`
+- ORCH 每次 session 开头：`cat memory/state.md`（一次读全，含 RISKs）
+- 每个角色启用时读对应 `<domain>/knowledge.md`（不读 experiences.md 全文，太长）
+- REV 读 spec + 当前 lab 文件 + `<domain>/knowledge.md`；产物写 `lab*/doc/review_report/<时间戳>-<trigger>-<target>.md`
+- `doc/ppa-outlook.htm` 浏览器端 `fetch('../memory/state.md')` 解析渲染（v4 起）
 
 ## 与 git 的关系
 
-- `design_state.json`、`run_state.md`、`knowledge.md` → **commit**
-- `experiences.jsonl` → **commit**（append-only，不会大）
+- `state.md` / `knowledge.md` / `experiences.md` → **commit**
 - 临时 `*.tmp` → `.gitignore`
+
+## v3 → v6 迁移说明
+
+**v3 → v4**：
+
+| v3 | v4 |
+|---|---|
+| `doc/ppa-risk-register.md`（详情） + `state.md` 的 `Open RISKs` 摘要表 | **合并** → `state.md` 的 `## RISKs` 段，每条全字段 |
+| `lab*/doc/review_report/INDEX.md`（手工目录） | **删除**；按时间戳文件名的目录列表即索引 |
+| ORCH "SOP 自维护反思"（独立仪式） | 降级为 `orchestrator/experiences.md` 一条普通关单复盘 |
+
+**v4 → v5**：
+
+| v4 | v5 |
+|---|---|
+| 模板（handoff/acceptance/log/testplan/cov_exclusion/experiences）散落或缺失 | 全部内嵌 `workflow-v5.md` §7 |
+| Skill ↔ Agent 对应散落 | 单一矩阵 `workflow-v5.md` §4 |
+| `Cursor.phase` 含 `close` 但从不使用 | 枚举去 `close`（关单由 `Labs Progress.<lab>.accept=done` 表达） |
+| EDA 工具版本无处明示 | 锁定 VCS/Verdi/Spyglass 2018 + Ubuntu 22.04 |
+| 无 Spyglass | 新增 `manual-spyglass-lint` skill；RTL Sign-off 加一条 |
+
+**v5 → v6**：
+
+| v5 | v6 |
+|---|---|
+| 模板内嵌 `workflow-v5.md` §7 | 拆到 `../template/*.md` 单独小文件；workflow 不再内联 |
+| 完整文件树在 `workflow-v5.md` §3 | 搬到 `../doc/ppa-outlook.htm` 新章 + `../doc/ppa-plan.md` §1.2 |
+| REV 不直接跑 EDA | REV 可经 `make <target>` 在本机重跑 VCS/Verdi/Spyglass |
+| ppa-plan.md 与 workflow/agents 内容重复 | 蒸馏为人用计划，删 §1.2/§1.4-1.5/§2/§9 重复段 |
+
+旧 `doc/ppa-risk-register.md` 已在 v4 移除；如需历史可查 git。
