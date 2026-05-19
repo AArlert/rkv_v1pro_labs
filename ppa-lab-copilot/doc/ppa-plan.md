@@ -155,11 +155,11 @@ flowchart LR
 
 ### 3.1 工具链安装与冒烟
 
-- [ ] 0.1 Ubuntu 22.04 LTS 上确认 `vcs -id` 打印 **VCS 2018** 版本
-- [ ] 0.2 确认 `verdi -version` 是 **Verdi 2018**；`LD_LIBRARY_PATH` 含 `$VERDI_HOME/share/PLI/VCS/LINUX64`
-- [ ] 0.3 确认 `spyglass -version` 是 **Spyglass 2018**；`$SPYGLASS_HOME/GuideWare/latest/block/rtl_handoff` 存在
-- [ ] 0.4 把 xwave / xtrace 软链或 submodule 到 `tools/{xwave,xtrace}/`，跑 `xwave --help` / `xtrace --help`
-- [ ] 0.5 写最小 `hello.sv`（`initial $display("hello")`），VCS 编译 + simv 跑通；加 `$fsdbDumpvars` 跑出 `.fsdb`；Verdi 打开看
+- [x] 0.1 Ubuntu 22.04 LTS 上用 `dve -full64` 确认 VCS 2018 可用
+- [x] 0.2 确认 `verdi -version`；GUI 用 `verdi &`
+- [ ] 0.3 检查 `~/.bashrc` 中 `SPYGLASS_HOME` / `PATH` 已配置；确认 `spyglass -version` 可执行；确认 `$SPYGLASS_HOME/GuideWare/latest/block/rtl_handoff` 存在
+- [ ] 0.4 克隆并编译 [xwave](https://github.com/BLANK2077/xwave) / [xtrace](https://github.com/BLANK2077/xtrace) 至 `tools/{xwave,xtrace}/`（依赖 `VERDI_HOME` 已配置）；各目录 `make clean && make`；确认 `xwave --help` / `tools/xtrace-env --help` 可跑
+- [ ] 0.5 写最小 `hello.sv`（`initial $display("hello")`），VCS 编译 + simv 跑通；加 `$fsdbDumpvars` 跑出 `.fsdb`；用 `verdi &` 打开看
 - [ ] 0.6 把命令整理进 `skill/manual-vcs-flags/SKILL.md` 与 `skill/manual-verdi-workflow/SKILL.md`（对照已有 SKILL.md 增补本机版本细节）
 
 ### 3.2 知识入门（不写代码，只读 + 笔记）
