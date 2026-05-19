@@ -5,12 +5,19 @@ model: human + copilot-completion
 effort: high
 maxTurns: 多 session
 skills:
+  - manual-apb-protocol
+  - manual-csr-attributes
   - manual-sv-tb-patterns
   - manual-uvm-env-skeleton
   - manual-coverage-closure
+  - manual-vcs-flags
+  - manual-verdi-workflow
+  - manual-make-templates
   - copilot-log-triage
-  - copilot-review-tb
+  - copilot-make-script
 ---
+
+> Workflow: [`../workflow-v5.md`](../workflow-v5.md) · 完整文件树见 workflow-v5 §3 · 模板（testplan/acceptance/cov_exclusion）见 workflow-v5 §7
 
 ## Inputs（监控/读取）
 
@@ -96,9 +103,14 @@ flowchart LR
 
 ## Tool Options
 
-- VCS 仿真 + Verdi 看波形（人手工）
-- `copilot-log-triage`：让 Copilot 看 run.log 自动归类 FAIL
-- xwave / xtrace（**REV 工具**）：要用时通过"按需调 REV"
+| 工具 | 版本 | 用途 |
+|---|---|---|
+| `vcs` | Synopsys VCS 2018 | 仿真编译 / 覆盖率（manual-vcs-flags） |
+| `verdi` | Synopsys Verdi 2018 | FSDB 看波形（manual-verdi-workflow；GUI 与 `make wave` 二选一） |
+| `urg` | (随 VCS) | 覆盖率合并/报表（manual-coverage-closure） |
+| `make smoke/regress/cov/uvm/wave` | — | 一键流程（manual-make-templates） |
+| Copilot (Business) | — | `copilot-log-triage` 看 run.log；`copilot-make-script` 起 Makefile |
+| 按需调 REV | — | `copilot-review-tb` 查"假 PASS"；xwave 经 REV 查复杂波形 |
 
 ## Sign-off Criteria
 

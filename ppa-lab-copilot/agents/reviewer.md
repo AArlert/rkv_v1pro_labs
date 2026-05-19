@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: 评审者（纯 Agent）。两种触发：任何 Agent 按需调用、labX 关单 ORCH 强制调用。报告独立文件存 lab*/doc/review_report/。强依赖 xwave/xtrace。
+description: 评审者（纯 AI Agent）。两种触发：任何 Agent 按需调用、labX 关单 ORCH 强制调用。报告独立文件存 lab*/doc/review_report/。强依赖 xwave/xtrace。**禁用 manual-* skill**。
 model: copilot
 effort: medium
 maxTurns: 5
@@ -10,7 +10,10 @@ skills:
   - copilot-wave-analyze
   - copilot-rtl-trace
   - copilot-log-triage
+  - copilot-make-script
 ---
+
+> Workflow: [`../workflow-v5.md`](../workflow-v5.md) · 完整文件树见 workflow-v5 §3 · 报告模板见本文 §Output Format
 
 ## Inputs（监控/读取）
 
@@ -93,15 +96,18 @@ flowchart LR
 
 ## Tool Options
 
-| 工具 | 用途 |
-|---|---|
-| `Read` | 读 spec / design-prompt / rtl / tb |
-| **xwave** | FSDB 波形 NPI 查询：验证关键波形是否符合 spec / design-prompt |
-| **xtrace** | RTL driver/load 追踪：验证综合性、信号驱动链 |
-| `copilot-log-triage` | run.log / vcs.log FAIL 归因 |
-| `copilot-review-rtl` / `copilot-review-tb` | checklist |
+| 工具 | 版本 | 用途 |
+|---|---|---|
+| `Read` | — | 读 spec / design-prompt / rtl / tb |
+| **xwave** | latest | FSDB 波形 NPI 查询；验证关键波形是否符合 spec / design-prompt |
+| **xtrace** | latest | RTL driver/load 追踪；验证可综合性、信号驱动链 |
+| `copilot-log-triage` | — | run.log / vcs.log / spyglass.rpt FAIL 归因 |
+| `copilot-review-rtl` / `copilot-review-tb` | — | checklist |
+| `copilot-make-script` | — | 审查 Makefile 是否漏 flag |
+| Spyglass `.rpt` | (RTL commit 进仓) | 读 `lab*/svtb/spyglass_reports/moresimple/lint_rtl/*.rpt` 验证 0 critical |
 
-> **xwave 与 xtrace 是 REV 的核心证据工具，不可绕开 / 不可删除。**
+> **xwave、xtrace、Spyglass 报告** 是 REV 的核心证据来源，不可绕开。
+> **禁止** REV 调用任何 `manual-*` skill（人速查卡）——避免被无证据的口诀带偏。
 
 ## Sign-off Criteria（review 自身完成条件）
 

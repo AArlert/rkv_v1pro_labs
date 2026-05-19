@@ -4,8 +4,10 @@ description: 项目流水线调度者。执行并维护 SOP。读 memory/state.m
 model: human
 effort: medium
 maxTurns: unbounded
-skills: []
+skills: []   # ORCH 只调度，不直接执行专业技能；细节见 workflow-v5.md §4
 ---
+
+> Workflow: [`../workflow-v5.md`](../workflow-v5.md) · Templates: workflow-v5 §7 · State schema: workflow-v5 §5
 
 ## Inputs（监控/读取）
 
@@ -94,12 +96,14 @@ ORCH 是升级链终点。触发与响应：
 
 ## Tool Options
 
-| 工具 | 用途 |
-|---|---|
-| `vcs / verdi` | 跑仿真、看波形（人手工） |
-| `make smoke/regress/cov` | 一键回归（关单审查前跑一次） |
-| Copilot Agent | 提示阅读 spec / 蒸馏 experiences |
-| **xwave / xtrace** | **REV 专用**（ORCH 不直接调） |
+| 工具 | 版本 | 用途 |
+|---|---|---|
+| `vcs` | Synopsys VCS 2018 | 跑仿真（关单审查前 `make regress` 一次） |
+| `verdi` | Synopsys Verdi 2018 | 必要时人工开 GUI 看波形 |
+| `make smoke/regress/cov` | — | 一键回归 |
+| Copilot (Business, 全模型) | — | 提示阅读 spec / 蒸馏 experiences |
+| **xwave / xtrace** | — | **REV 专用**（ORCH 不直接调） |
+| Spyglass 2018 | — | RTL 负责跑，ORCH 关单时检查 `.rpt` 是否 0 critical |
 
 ## Sign-off Criteria（每个 lab 关单条件）
 

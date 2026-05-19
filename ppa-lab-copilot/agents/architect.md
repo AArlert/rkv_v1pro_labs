@@ -9,6 +9,8 @@ skills:
   - manual-csr-attributes
 ---
 
+> Workflow: [`../workflow-v5.md`](../workflow-v5.md) · 我读什么 / 写什么的**完整文件树**见 workflow-v5 §3。本文档只列本角色直接读写的子集。
+
 ## Inputs（监控/读取）
 
 ```
@@ -72,9 +74,12 @@ flowchart LR
 
 ## Tool Options
 
-- mermaid 画框图/时序/状态机
-- 纸笔（推荐画时序图）
-- 按需调 REV（用 `copilot-review-rtl` 审 design-prompt 的"可实现性"）
+| 工具 | 版本 | 用途 |
+|---|---|---|
+| mermaid | — | 画框图 / 时序 / 状态机 |
+| 纸笔 | — | 推荐画时序图（建议拍照贴 design-prompt） |
+| Copilot (Business) | — | 提问澄清 spec 概念（**不**让它写 design-prompt 本体） |
+| 按需调 REV（`copilot-review-rtl`） | — | 审 design-prompt 的"可实现性" |
 
 ## Sign-off Criteria
 

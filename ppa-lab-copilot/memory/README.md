@@ -1,6 +1,7 @@
-# Memory — 二级记忆系统（v4）
+# Memory — 二级记忆系统（v5）
 
-> v4：合并 v3 的独立 risk-register 进 `state.md` 的 `## RISKs` 段；继续保留 v3 的 `state.md` 单文件与 orchestrator 记忆位。详细规则见 `../workflow-v4.md`。
+> v5：继承 v4 的 `state.md` 单一来源、orchestrator 记忆位、`## RISKs` 段；新增对**人友好的标准模板**全部内嵌在 `../workflow-v5.md` §7。
+> 详细规则见 [`../workflow-v5.md`](../workflow-v5.md)。
 
 ## 结构
 
@@ -75,7 +76,9 @@ mv memory/state.md.tmp memory/state.md
 - `state.md` / `knowledge.md` / `experiences.md` → **commit**
 - 临时 `*.tmp` → `.gitignore`
 
-## v3 → v4 迁移说明
+## v3 → v5 迁移说明
+
+**v3 → v4**：
 
 | v3 | v4 |
 |---|---|
@@ -83,4 +86,14 @@ mv memory/state.md.tmp memory/state.md
 | `lab*/doc/review_report/INDEX.md`（手工目录） | **删除**；按时间戳文件名的目录列表即索引 |
 | ORCH "SOP 自维护反思"（独立仪式） | 降级为 `orchestrator/experiences.md` 一条普通关单复盘 |
 
-旧 `doc/ppa-risk-register.md` 已在转换后移除；如需历史可查 git。
+**v4 → v5**：
+
+| v4 | v5 |
+|---|---|
+| 模板（handoff/acceptance/log/testplan/cov_exclusion/experiences）散落或缺失 | 全部内嵌 `../workflow-v5.md` §7 |
+| Skill ↔ Agent 对应散落 | 单一矩阵 `../workflow-v5.md` §4 |
+| `Cursor.phase` 含 `close` 但从不使用 | 枚举去 `close`（关单由 `Labs Progress.<lab>.accept=done` 表达） |
+| EDA 工具版本无处明示 | 锁定 VCS/Verdi/Spyglass 2018 + Ubuntu 22.04 |
+| 无 Spyglass | 新增 `manual-spyglass-lint` skill；RTL Sign-off 加一条 |
+
+旧 `doc/ppa-risk-register.md` 已在 v4 移除；如需历史可查 git。

@@ -1,14 +1,22 @@
 ---
 name: rtl-designer
-description: RTL 工程师。把 design-prompt 翻译成可综合 SystemVerilog；写最小可验证 tb 自跑；自查 lint/CDC/可综合性；不写完整 DV TB。
+description: RTL 工程师。把 design-prompt 翻译成可综合 SystemVerilog；写最小可验证 tb 自跑；自查 lint/CDC/可综合性（Spyglass）；不写完整 DV TB。
 model: human + copilot-completion
 effort: high
 maxTurns: 多 session
 skills:
+  - manual-apb-protocol
   - manual-csr-attributes
   - manual-sv-tb-patterns
-  - copilot-review-rtl
+  - manual-vcs-flags
+  - manual-verdi-workflow
+  - manual-make-templates
+  - manual-spyglass-lint
+  - copilot-log-triage
+  - copilot-make-script
 ---
+
+> Workflow: [`../workflow-v5.md`](../workflow-v5.md) · 完整文件树见 workflow-v5 §3 · 模板（log/handoff）见 workflow-v5 §7
 
 ## Inputs（监控/读取）
 
@@ -83,14 +91,19 @@ flowchart LR
 
 ## Tool Options
 
-- `vcs -sverilog -full64`（含可选 `-lint=all`）
-- `make comp / run`（自己写的最小 tb）
-- Copilot 补齐（仅单 token / 一行）
-- xtrace（追 driver/load）—— **REV 工具**；要用时通过"按需调 REV"
+| 工具 | 版本 | 用途 |
+|---|---|---|
+| `vcs` | Synopsys VCS 2018 | `vcs -sverilog -full64`（可选 `-lint=all`） |
+| `make comp / run` | — | 跑自己写的最小 tb（manual-make-templates） |
+| **`spyglass`** | Synopsys Spyglass 2018 | **sign-off 前必跑 `lint_rtl`（manual-spyglass-lint）** |
+| `verdi` | Synopsys Verdi 2018 | 看波形（必要时 GUI） |
+| Copilot (Business) | — | 单 token / 一行补齐；调 `copilot-log-triage` 看 comp/run.log |
+| 按需调 REV | — | `copilot-review-rtl` 审 RTL；`xtrace`/`xwave` 经 REV 间接使用 |
 
 ## Sign-off Criteria
 
 - [ ] `vcs -sverilog` 0 error，warning 已分类（保留的写到 log.md）
+- [ ] **Spyglass `lint_rtl` 0 critical 0 error**，报告在 `lab*/svtb/spyglass_reports/moresimple/lint_rtl/` 已 commit
 - [ ] lint 0 critical（CDC / multi-driver / latch）
 - [ ] 端口与 design-prompt 表 100% 一致
 - [ ] 最小可验证 tb 跑通（证明语法+顶层活着）
