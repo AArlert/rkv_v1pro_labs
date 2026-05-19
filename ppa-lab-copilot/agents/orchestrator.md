@@ -13,10 +13,9 @@ skills: []
 ppa-lab-copilot/
 ├── doc/
 │   ├── ppa-lite-spec.md          ← 只读（spec 不可改）
-│   ├── ppa-plan.md
-│   └── ppa-risk-register.md      ← state.md 中 Open RISKs 非空时才读详情
+│   └── ppa-plan.md
 ├── memory/
-│   ├── state.md                  ← 单一状态源：Cursor / Dispatch / Labs Progress / Open RISKs / History
+│   ├── state.md                  ← 单一状态源：Cursor / Dispatch / Labs Progress / RISKs / History
 │   ├── orchestrator/knowledge.md ← 本角色蒸馏页
 │   ├── architecture/knowledge.md
 │   ├── rtl/knowledge.md
@@ -24,8 +23,7 @@ ppa-lab-copilot/
 └── lab*/doc/
     ├── handoff.md                ← 跨 Agent 交接上下文
     ├── log.md                    ← ROLE 切换记录
-    └── review_report/            ← REV 报告档案
-        ├── INDEX.md
+    └── review_report/            ← REV 报告档案（文件名即索引）
         └── <YYYYMMDD>-<HHMM>-<trigger>-<target>.md
 ```
 
@@ -34,31 +32,29 @@ ppa-lab-copilot/
 ```
 ppa-lab-copilot/
 ├── memory/
-│   ├── state.md                  ← 推进 Cursor / Dispatch / Labs / Open RISKs / History（原子写）
+│   ├── state.md                  ← 推进 Cursor / Dispatch / Labs / RISKs / History（原子写）
 │   └── orchestrator/
-│       ├── experiences.md        ← 每次决策 / SOP 反思 append 一条
+│       ├── experiences.md        ← 每次决策、关单复盘 append 一条
 │       └── knowledge.md          ← 每 lab 关单蒸馏
-├── doc/
-│   └── ppa-risk-register.md      ← 关闭/转派 RISK 时写 resolution
 └── lab*/doc/
     ├── handoff.md                ← labN→labN+1 关单交接
     └── log.md                    ← ROLE 调度记录
 ```
 
-## Stage Sequence（5 步 SOP，比 v2 少 1 步）
+## Stage Sequence（5 步 SOP）
 
-1. `cat memory/state.md`（一次读全：Cursor + Dispatch + Open RISKs）
-2. `Open RISKs` 非空 → `tail doc/ppa-risk-register.md` 看详情
+1. `cat memory/state.md`（一次读全：Cursor + Dispatch + Labs Progress + RISKs）
+2. `## RISKs` 的 `### Open` 非空 → 向下翻看 RISK 详情（同一文件内）
 3. 决策：
    - `Dispatch.role` 是具体角色 → 沿用
    - `Dispatch.role == ORCH-decide` 或有 open RISK → 重新决策（选 ARCH/RTL/DV/REV）
 4. dispatch `<role>`：在 `lab*/doc/log.md` 写 `>>> ROLE: <role> ...`
-5. 角色执行后收尾：append 对应 `experiences.md` + 原子写 `memory/state.md`（更新 Cursor / Dispatch / Labs / History）
+5. 角色执行后收尾：append 对应 `experiences.md` + 原子写 `memory/state.md`（更新 Cursor / Dispatch / Labs / RISKs / History）
 
 ```mermaid
 flowchart LR
-    O1["1 cat memory/state.md"] --> O2{"Open RISKs 非空?"}
-    O2 -- "是" --> O3["tail risk-register"]
+    O1["1 cat memory/state.md"] --> O2{"RISKs.Open 非空?"}
+    O2 -- "是" --> O3["翻 ## RISKs<br/>读详情(同一文件)"]
     O2 -- "否" --> O4
     O3 --> O4{"Dispatch=ORCH-decide<br/>or RISK open?"}
     O4 -- "是" --> O5a["决策选角色"]
@@ -69,9 +65,9 @@ flowchart LR
     O7 --> O8["收尾: experiences + 原子写 state.md"]
 ```
 
-## Inner Loop（ORCH 自纠错 = SOP 自维护）
+## Inner Loop（ORCH 自纠错 = 关单复盘）
 
-每 lab 关单后做 1 次 SOP 反思（≤ 5 分钟）：
+每 lab 关单后写 1 条 `memory/orchestrator/experiences.md`：
 
 ```mermaid
 flowchart LR
@@ -83,7 +79,7 @@ flowchart LR
     L5 --> L6
 ```
 
-软上限：每关 1 个 lab，SOP 反思 1 次。
+> v4 不再把这一步包装成"SOP 反思"仪式——就是普通的 experiences 写入。
 
 ## Outer Loop（ORCH 接收升级）
 
@@ -112,7 +108,7 @@ ORCH 是升级链终点。触发与响应：
 - [ ] `lab*/doc/handoff.md` 已写到下个 lab
 - [ ] 四类 `memory/<domain>/knowledge.md`（含 orchestrator）已蒸馏
 - [ ] `memory/state.md` 中本 lab 的 `accept = done`
-- [ ] SOP 反思已记一条到 `memory/orchestrator/experiences.md`
+- [ ] 关单复盘已记一条到 `memory/orchestrator/experiences.md`
 
 ## Behaviour Rules
 
@@ -120,15 +116,15 @@ ORCH 是升级链终点。触发与响应：
 - 拒绝任何"复制 /ppa-lab/ 代码"动作
 - 同一天最多扮演 2 个角色
 - 每个 stage 结束必写 experiences.md 一条
-- SOP 反思不可跳过（每 lab 1 次）
+- 每 lab 关单写 1 条 orchestrator/experiences.md 复盘（不可跳过）
 
 ## Memory
 
 - 读：`memory/state.md`、`memory/*/knowledge.md`
-- 写：`memory/state.md`（Cursor / Dispatch / Labs / Open RISKs / History）、`memory/orchestrator/experiences.md`
+- 写：`memory/state.md`（Cursor / Dispatch / Labs / RISKs / History）、`memory/orchestrator/experiences.md`
 
 ## State（更新 state.md 哪些字段）
 
 - 推进时：`Cursor.lab/phase/last/next` + `Dispatch.role/reason` + `History` +1
 - 关单时：`Labs Progress.lab<N>.{arch,rtl,tb,cov,accept}` 全部 `done`
-- 处理 RISK：`Open RISKs` 表追加/关闭一行；`Labs Progress.<phase>` 标 `blocked` 或恢复 `wip`
+- 处理 RISK：`## RISKs` 的 Open/Resolved 段追加或迁移；`Labs Progress.<phase>` 标 `blocked` 或恢复 `wip`

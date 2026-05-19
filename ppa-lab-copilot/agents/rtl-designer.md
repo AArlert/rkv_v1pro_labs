@@ -15,10 +15,9 @@ skills:
 ```
 ppa-lab-copilot/
 ├── doc/
-│   ├── ppa-lite-spec.md             ← 兜底参考（只读）
-│   └── ppa-risk-register.md         ← 是否有指向 RTL 的 open RISK
+│   └── ppa-lite-spec.md             ← 兜底参考（只读）
 ├── memory/
-│   ├── state.md                     ← 单一状态源
+│   ├── state.md                     ← 单一状态源（含 RISKs）
 │   └── rtl/knowledge.md
 └── lab*/
     ├── doc/
@@ -41,11 +40,9 @@ ppa-lab-copilot/
 │   └── doc/
 │       ├── log.md                   ← ROLE 段 + 实现决策
 │       └── handoff.md               ← 回退给 ARCH 时填
-├── memory/
-│   ├── rtl/experiences.md
-│   └── state.md                     ← 更新 Labs Progress / Cursor / Dispatch
-└── doc/
-    └── ppa-risk-register.md         ← 自纠错失败 / 回退时登记
+└── memory/
+    ├── rtl/experiences.md
+    └── state.md                     ← 更新 Labs Progress / Cursor / Dispatch / RISKs
 ```
 
 ## Stage Sequence
@@ -79,9 +76,9 @@ flowchart LR
 
 | 触发 | 方向 | 动作（登记 + 交接） |
 |---|---|---|
-| 发现 design-prompt 不可实现 / 歧义 / 端口冲突 | RTL → ARCH | **登记**：risk-register 详情 + state.md（Open RISKs 摘要 + `Labs Progress.lab<N>.rtl = blocked` + `Dispatch.role = ARCH`）；**交接**：handoff.md 写"design-prompt §X 行 Y-Z 我尝试两种解释" |
+| 发现 design-prompt 不可实现 / 歧义 / 端口冲突 | RTL → ARCH | **登记**：在 `memory/state.md` 的 `## RISKs.Open` 加一条 RISK（全字段）+ `Labs Progress.lab<N>.rtl = blocked` + `Dispatch.role = ARCH`；**交接**：handoff.md 写"design-prompt §X 行 Y-Z 我尝试两种解释" |
 | 自纠错 3 轮仍 FAIL 但不确定根因 | RTL → ORCH | 登记 RISK（to=ORCH，`Dispatch.role = ORCH-decide`）；handoff 写 debug 历程 |
-| 收到 DV 回退 | 接收 | 复现 minimal repro → 修 RTL → risk-register 写 resolution → state.md 关 RISK + `Labs Progress.lab<N>.rtl = wip→done` + `Dispatch.role = DV`；handoff 回写一段"修了 module X 的 Y 逻辑" |
+| 收到 DV 回退 | 接收 | 复现 minimal repro → 修 RTL → 在 `## RISKs` 把对应条目填 resolution 迁到 Resolved 段 → `Labs Progress.lab<N>.rtl = wip→done` + `Dispatch.role = DV`；handoff 回写一段"修了 module X 的 Y 逻辑" |
 | 收到 REV P0 | 接收 | 同上 |
 
 ## Tool Options
@@ -128,4 +125,4 @@ flowchart LR
 ## State（更新 state.md 哪些字段）
 
 - 推进：`Labs Progress.lab<N>.rtl: todo→wip→done`；`Cursor.phase: rtl→dv`；`Dispatch.role: DV`
-- 升级 / 被回退：`Labs Progress.lab<N>.rtl = blocked` 或回 `wip`；Open RISKs 表追加/关闭
+- 升级 / 被回退：`Labs Progress.lab<N>.rtl = blocked` 或回 `wip`；`## RISKs.Open` 追加 / 关闭一条

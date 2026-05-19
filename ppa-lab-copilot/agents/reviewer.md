@@ -17,8 +17,7 @@ skills:
 ```
 ppa-lab-copilot/
 ├── doc/
-│   ├── ppa-lite-spec.md             ← 评审依据（只读）
-│   └── ppa-risk-register.md
+│   └── ppa-lite-spec.md             ← 评审依据（只读）
 ├── memory/
 │   ├── state.md                     ← 看 Cursor + Dispatch（Dispatch=REV 才进入）
 │   ├── architecture/knowledge.md
@@ -30,7 +29,7 @@ ppa-lab-copilot/
     │   ├── testplan.md              ← 评审对象之一
     │   ├── log.md                   ← 看 `>>> CALL REV @<ts> on <target>` 触发记录
     │   ├── handoff.md
-    │   └── review_report/INDEX.md   ← 看历史报告
+    │   └── review_report/        ← 看历史报告（按文件名时间排序即可）
     ├── rtl/*.sv                     ← 评审对象之一
     └── svtb/
         ├── tb/*.sv                  ← 评审对象之一
@@ -46,12 +45,9 @@ ppa-lab-copilot/
 ppa-lab-copilot/
 ├── lab*/doc/
 │   └── review_report/
-│       ├── INDEX.md                                          ← 报告目录表（自更新）
-│       └── <YYYYMMDD>-<HHMM>-<trigger>-<target>.md           ← 每次审查一份独立文件
+│       └── <YYYYMMDD>-<HHMM>-<trigger>-<target>.md           ← 每次审查一份独立文件（文件名即索引，永不覆盖）
 ├── memory/<domain>/knowledge.md     ← 高价值 review pattern 归纳（蒸馏期）
-├── memory/state.md                  ← 只 append History 一条 `review_completed`；不改 Labs Progress
-└── doc/
-    └── ppa-risk-register.md         ← 报告含 P0 时登记 RISK (from=REV, to=ORCH)
+└── memory/state.md                  ← 含 P0 时在 ## RISKs 段加一条 (from=REV, to=ORCH)；无 P0 仅 History +1
 ```
 
 ## Stage Sequence
@@ -64,15 +60,16 @@ ppa-lab-copilot/
 4. 用 xwave / xtrace / log-triage 做证据级核对
 5. 逐项判断 PASS / WARN / FAIL，每条引文件:行 + spec § 或 design-prompt §
 6. 写报告到 `lab*/doc/review_report/<YYYYMMDD>-<HHMM>-<trigger>-<target>.md`，**永不覆盖既有文件**
-7. 在 `lab*/doc/review_report/INDEX.md` 顶部 prepend 一行（日期 / trigger / target / 文件 / P0 数 / 备注）
-8. **不**直接改源代码
-9. 若含 P0：登记 RISK → ORCH 决策升级
+7. **不**直接改源代码
+8. 若含 P0：在 `memory/state.md` 的 `## RISKs` 加一条 → ORCH 决策升级；同时 `Dispatch.role = ORCH-decide`
 
 ### 文件命名规则
 
 `<YYYYMMDD>-<HHMM>-<trigger>-<target>.md`：
 - `<trigger>` ∈ `ondemand` / `labclose`
 - `<target>` ∈ `design-prompt` / `rtl-<module-name>` / `tb` / `full`（labclose 用 `full`）
+
+> 目录本身按文件名时间序即是索引；不再维护单独的 INDEX.md。
 
 ## Inner Loop（自纠错，软上限 ≤ 2 轮）
 
@@ -83,15 +80,15 @@ flowchart LR
     V2 -- "否" --> V4{"同一 note 反复出现<br/>≥ 2 次?"}
     V4 -- "是" --> V5["升级 ORCH"]
     V4 -- "否, 站不住的<br/>'假问题'" --> V6["静默丢弃"]
-    V4 -- "否, 真问题" --> V7["写 review_report/<...>.md<br/>+ 更新 INDEX.md"]
+    V4 -- "否, 真问题" --> V7["写 review_report/<...>.md"]
 ```
 
 ## Outer Loop（升级）
 
 | 触发 | 动作（登记 + 交接） |
 |---|---|
-| review_report 含 P0 | **登记**：risk-register（from=REV, to=ORCH，附 P0 列表 + 建议接手者 + report 文件路径）+ state.md（Open RISKs 摘要 + `Dispatch.role = ORCH-decide`）；**交接**：handoff.md 写 P0 上下文 |
-| 同一 review note 跨 session 反复出现 ≥ 2 次 | 升级 ORCH（在 state.md History 加一条） |
+| review_report 含 P0 | **登记**：state.md 的 `## RISKs` 加一条（from=REV, to=ORCH，附 P0 列表 + 建议接手者 + report 文件路径），同时 `Dispatch.role = ORCH-decide`；**交接**：handoff.md 写 P0 上下文 |
+| 同一 review note 跨 session 反复出现 ≥ 2 次 | 升级 ORCH（state.md History 加一条） |
 | 发现 spec 引用都站不住的"假问题" | 静默丢弃，不刷屏 |
 
 ## Tool Options
@@ -109,7 +106,6 @@ flowchart LR
 ## Sign-off Criteria（review 自身完成条件）
 
 - [ ] report 文件已落地到 `lab*/doc/review_report/`
-- [ ] INDEX.md 已更新
 - [ ] 0 P0 才允许通知被审 Agent "PASS"；有 P0 必须升级
 - [ ] P1 可以 deferred 但必须录到 `memory/state.md` History
 - [ ] 每条 note 都有 (file:line + spec § 或 design-prompt §) 双重引用
@@ -159,4 +155,4 @@ flowchart LR
 
 - 不修改 `Cursor.lab/phase` 或 `Labs Progress`
 - 只 append `History` 一条 `review_completed (ondemand|labclose) @ <target> → <report file>`
-- 含 P0 → `Open RISKs` 表追加一行（与 risk-register id 对应）；`Dispatch.role = ORCH-decide`
+- 含 P0 → `## RISKs` 的 `### Open` 加一条 RISK（全字段）；`Dispatch.role = ORCH-decide`

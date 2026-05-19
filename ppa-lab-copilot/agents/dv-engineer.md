@@ -17,10 +17,9 @@ skills:
 ```
 ppa-lab-copilot/
 ├── doc/
-│   ├── ppa-lite-spec.md             ← 测试点的权威来源
-│   └── ppa-risk-register.md         ← 是否有指向 DV 的 open RISK
+│   └── ppa-lite-spec.md             ← 测试点的权威来源
 ├── memory/
-│   ├── state.md                     ← 单一状态源
+│   ├── state.md                     ← 单一状态源（含 RISKs）
 │   └── dv/knowledge.md
 └── lab*/
     ├── doc/
@@ -48,11 +47,9 @@ ppa-lab-copilot/
 │   │   ├── tb/ppa_tb.sv (+UVM 组件@lab4)   ← TB
 │   │   └── sim/Makefile             ← comp/run/wave/regress/cov/uvm 目标
 │   └── cov/                         ← .vdb / urgReport
-├── memory/
-│   ├── dv/experiences.md
-│   └── state.md                     ← 更新 Labs Progress / Cursor / Dispatch
-└── doc/
-    └── ppa-risk-register.md         ← 自纠错失败 / 回退 RTL 或 ARCH 时登记
+└── memory/
+    ├── dv/experiences.md
+    └── state.md                     ← 更新 Labs Progress / Cursor / Dispatch / RISKs
 ```
 
 ## Stage Sequence
@@ -90,12 +87,12 @@ flowchart LR
 
 | 触发 | 方向 | 动作（登记 + 交接） |
 |---|---|---|
-| 判定 RTL bug（xwave 证据明确） | DV → RTL | **登记**：risk-register 详情（含 module/file:line/expected/observed/log 行号/波形路径） + state.md（Open RISKs 摘要 + `Labs Progress.lab<N>.rtl = blocked` + `Dispatch.role = RTL`）；**交接**：handoff.md 写 minimal repro |
+| 判定 RTL bug（xwave 证据明确） | DV → RTL | **登记**：在 `memory/state.md` 的 `## RISKs.Open` 加一条 RISK（含 module/file:line/expected/observed/log 行号/波形路径）+ `Labs Progress.lab<N>.rtl = blocked` + `Dispatch.role = RTL`；**交接**：handoff.md 写 minimal repro |
 | 发现 testplan 必须改 design-prompt 才能对齐 spec | DV → ARCH | 同上模板（to=ARCH，`Dispatch.role = ARCH`） |
 | 覆盖率打不到，且非 RTL/TB 设计能解决 | DV → ORCH | 登记 RISK（to=ORCH，`Dispatch.role = ORCH-decide`），ORCH 决策豁免（写 `coverage_exclusion.md`）或加 TC |
-| 收到 REV P0 | 接收 | 修 TB → risk-register 写 resolution → state.md 关 RISK |
+| 收到 REV P0 | 接收 | 修 TB → 在 `## RISKs` 把对应条目填 resolution 迁到 Resolved 段 |
 
-> 注意：v3 与 v2 一致——**不使用 `fix_requests[]` 队列**；所有跨 Agent 升级走 risk-register + state.md。
+> 注意：v4 与 v2/v3 一致——**不使用 `fix_requests[]` 队列**；所有跨 Agent 升级走 `memory/state.md` 的 `## RISKs` 段。
 
 ## Tool Options
 
@@ -135,4 +132,4 @@ flowchart LR
 ## State（更新 state.md 哪些字段）
 
 - 推进：`Labs Progress.lab<N>.{tb,cov}: todo→wip→done`；`Cursor.phase: dv→review`；`Dispatch.role: REV`
-- 升级 / 被回退：相应 phase 改 `blocked` 或恢复 `wip`；Open RISKs 表追加/关闭
+- 升级 / 被回退：相应 phase 改 `blocked` 或恢复 `wip`；`## RISKs.Open` 追加 / 关闭一条

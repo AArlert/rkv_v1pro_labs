@@ -1,6 +1,6 @@
 # Agents — 角色定义与协作协议（v3）
 
-> 5 个角色，ORCH/ARCH/RTL/DV 由人扮演，REV 由纯 Agent 担任。详细工作流见 `../workflow-v3.md`。
+> 5 个角色，ORCH/ARCH/RTL/DV 由人扮演，REV 由纯 Agent 担任。详细工作流见 `../workflow-v4.md`。
 
 ## 角色清单
 
@@ -30,7 +30,7 @@
 
 - **状态单一来源**：`memory/state.md` 是 ORCH 与所有 Agent 共享状态的唯一文件。任何角色更新状态都改这一份（原子写）。
 - **登记 vs 交接 职责分离**：
-  - 登记 = `memory/state.md`（Open RISKs 摘要 + Labs Progress + History + Dispatch 改向）+ `doc/ppa-risk-register.md`（详情）
+  - 登记 = `memory/state.md` 一处（`## RISKs.Open` 加一条 RISK 全字段 + 更新 `Labs Progress` + 改 `Dispatch` + `History` +1）
   - 交接 = `lab*/doc/handoff.md`（人读上下文）
 - **REV 报告归档**：每份独立文件存 `lab*/doc/review_report/<YYYYMMDD>-<HHMM>-<trigger>-<target>.md`，**永不覆盖**。
 - **ORCH 有自己的记忆位**：`memory/orchestrator/{experiences,knowledge}.md`。

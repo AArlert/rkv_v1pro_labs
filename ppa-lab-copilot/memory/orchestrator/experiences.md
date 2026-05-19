@@ -13,7 +13,7 @@
 - **操作**: 复盘 RISK-0002（DV 报 "Makefile 调通后又 FAIL"，实际是 DV 自己漏配 +UVM_TESTNAME）→ 这条本应进 DV Inner Loop
 - **结果**: 把"DV 跑 UVM 前先核对 testname"补进 agents/dv-engineer.md Inner Loop
 - **教训**: 升级前的"自纠错预算耗尽"判断要更严格，不能 ≤3 轮就升级
-- **artifacts**: doc/ppa-risk-register.md#RISK-0002, agents/dv-engineer.md
+- **artifacts**: memory/state.md#RISK-0002, agents/dv-engineer.md
 -->
 
 （暂无）

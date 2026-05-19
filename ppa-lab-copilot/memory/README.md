@@ -1,16 +1,16 @@
-# Memory — 二级记忆系统（v3）
+# Memory — 二级记忆系统（v4）
 
-> v3：合并 v2 的 `run_state.md` + `design_state.md` → `state.md` 单文件；新增 ORCH 自己的记忆位。详细规则见 `../workflow-v3.md`。
+> v4：合并 v3 的独立 risk-register 进 `state.md` 的 `## RISKs` 段；继续保留 v3 的 `state.md` 单文件与 orchestrator 记忆位。详细规则见 `../workflow-v4.md`。
 
 ## 结构
 
 ```
 memory/
 ├── README.md
-├── state.md                  # 单一状态源 (Meta + Cursor + Dispatch + Labs Progress + Open RISKs + History)
+├── state.md                  # 单一状态源 (Meta + Cursor + Dispatch + Labs Progress + RISKs + History)
 ├── orchestrator/
-│   ├── knowledge.md          # ORCH SOP 蒸馏页 (≤ 1 页)
-│   └── experiences.md        # ORCH 每次决策/SOP 反思
+│   ├── knowledge.md          # ORCH 蒸馏页 (≤ 1 页)
+│   └── experiences.md        # ORCH 每次决策 / 关单复盘
 ├── architecture/
 │   ├── knowledge.md
 │   └── experiences.md
@@ -27,11 +27,11 @@ memory/
 ### state.md（单一状态源）
 
 ORCH 每 session 开头**只读这一份**。包含：
-- **Meta**：spec_version / created / workflow
+- **Meta**：spec_version / workflow / created
 - **Cursor**：`lab` / `phase` ∈ `arch|rtl|dv|review|close` / `last`（≤1 行） / `next`（≤1 行）
 - **Dispatch**：`role` ∈ `ARCH|RTL|DV|REV|ORCH-decide` / `reason`
 - **Labs Progress**：每 lab 的 `arch/rtl/tb/cov/accept`，取值 `todo/wip/blocked/done`
-- **Open RISKs**：摘要表（id / from→to / lab.phase / 一句话 / 状态）
+- **RISKs**：`### Open` / `### Resolved` 两段，每条 RISK 全字段（id / time / from / to / lab.phase / summary / evidence / advice / status / resolution）
 - **History**：append-only 表
 
 原子写：
@@ -65,22 +65,22 @@ mv memory/state.md.tmp memory/state.md
 
 ## 读取协议
 
-- ORCH 每次 session 开头：`cat memory/state.md` → 若 `Open RISKs` 非空再 `tail doc/ppa-risk-register.md`
+- ORCH 每次 session 开头：`cat memory/state.md`（一次读全，含 RISKs）
 - 每个角色启用时读对应 `<domain>/knowledge.md`（不读 experiences.md 全文，太长）
 - REV 读 spec + 当前 lab 文件 + `<domain>/knowledge.md`；产物写 `lab*/doc/review_report/<时间戳>-<trigger>-<target>.md`
+- `doc/ppa-outlook.htm` 浏览器端 `fetch('../memory/state.md')` 解析渲染（v4 起）
 
 ## 与 git 的关系
 
 - `state.md` / `knowledge.md` / `experiences.md` → **commit**
 - 临时 `*.tmp` → `.gitignore`
 
-## v2 → v3 迁移说明
+## v3 → v4 迁移说明
 
-| v2 | v3 |
+| v3 | v4 |
 |---|---|
-| `memory/run_state.md`（2 行） | **合并** → `memory/state.md` 的 `Cursor` 段 |
-| `memory/design_state.json` / v2 `memory/design_state.md` | **合并** → `memory/state.md` 余下各表 |
-| ORCH 复盘塞进 `memory/architecture/experiences.md` | 独立 `memory/orchestrator/{experiences,knowledge}.md` |
-| `current_lab` / `current_stage` 自由字符串 | 正交字段：`Cursor.lab` / `Cursor.phase` / `Dispatch.role` |
+| `doc/ppa-risk-register.md`（详情） + `state.md` 的 `Open RISKs` 摘要表 | **合并** → `state.md` 的 `## RISKs` 段，每条全字段 |
+| `lab*/doc/review_report/INDEX.md`（手工目录） | **删除**；按时间戳文件名的目录列表即索引 |
+| ORCH "SOP 自维护反思"（独立仪式） | 降级为 `orchestrator/experiences.md` 一条普通关单复盘 |
 
-旧 `run_state.md` / `design_state.md` 已在转换后移除；如需历史可查 git。
+旧 `doc/ppa-risk-register.md` 已在转换后移除；如需历史可查 git。

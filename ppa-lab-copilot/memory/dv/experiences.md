@@ -13,7 +13,7 @@
 - **操作**: 自纠错 1 轮（检查 TB 期望、apb_write task），仍 FAIL；调 xwave 看 PSLVERR 波形，确认 RTL 未拉高
 - **结果**: 登记 RISK-0001，handoff → RTL
 - **教训**: 自纠错前先排除"TB 期望写错"，本次确认 expect_slverr=1 正确
-- **artifacts**: lab1/svtb/sim/run.log, doc/ppa-risk-register.md#RISK-0001
+- **artifacts**: lab1/svtb/sim/run.log, memory/state.md#RISK-0001
 -->
 
 （暂无）

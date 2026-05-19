@@ -1,20 +1,25 @@
-# State (Single Source of Truth)
+# State (memory/state.md)
 
-> v3：合并 v2 的 `run_state.md` + `design_state.md`。ORCH 每 session 开头**只读这一份**。原子写：`cp state.md{,.tmp} && 编辑.tmp && mv .tmp state.md`。
+<!--
+v4 单一状态源。ORCH 每 session 开头只读这一份；outlook.htm 也通过 fetch 解析这一份。
+解析锚点：以下 H2 标题（## Cursor / ## Dispatch / ## Labs Progress / ## RISKs）
+是机器约定，**勿改名/勿改顺序**。表头列名也是机器约定。
+原子写：cp state.md{,.tmp} && 编辑 .tmp && mv .tmp state.md
+-->
 
 ## Meta
 
 | 字段 | 值 |
 |---|---|
 | spec_version | `ppa-lite-spec.md@2026-04-13` |
+| workflow | `workflow-v4.md` |
 | created | 2026-05-18 |
-| workflow | `workflow-v3.md` |
 
 ## Cursor
 
 - **lab**: lab1
 - **phase**: arch              <!-- arch | rtl | dv | review | close -->
-- **last**: ORCH 完成 v3 工作流迁移（state.md 合并 / review_report/ 目录化 / orchestrator 记忆位）— 2026-05-19
+- **last**: ORCH 完成 v4 迁移（risk-register 合入 state.md / outlook 加实时监控） — 2026-05-19
 - **next**: 切 ARCH 角色，读 spec §2/§4，开始写 lab1/doc/design-prompt.md
 
 ## Dispatch
@@ -31,18 +36,45 @@
 | lab3 | todo | todo | todo | todo | todo |
 | lab4 | todo | todo | todo | todo | todo |
 
-> 取值：`todo / wip / blocked / done`。出现跨 Agent 回退 → 把对应字段改 `blocked` + `Dispatch.role` 指接手者 + RISK 入下表。
+<!-- 取值：todo / wip / blocked / done -->
 
-## Open RISKs（摘要；详情见 `doc/ppa-risk-register.md`）
+## RISKs
 
-| RISK id | from → to | lab.phase | 一句话现象 | 状态 |
-|---|---|---|---|---|
-| — | — | — | — | — |
+<!--
+v4：合并原 doc/ppa-risk-register.md。
+每条 RISK 是一个二级列表块，字段固定如下；状态机：open → in-progress → resolved | dropped。
+登记触发：自纠错预算耗尽 / 跨 Agent 回退 / REV P0。
+登记动作：append 本段一条 + 改 Cursor/Dispatch/Labs 字段 + History +1 + 在 lab*/doc/handoff.md 写交接段。
+-->
+
+### Open
+
+（暂无）
+
+### Resolved / Dropped (recent)
+
+（暂无）
+
+### 模板
+
+```
+- **id**: RISK-0001
+- **time**: 2026-05-20T14:00
+- **from**: DV
+- **to**: RTL
+- **lab.phase**: lab1.dv
+- **summary**: TC5 (RO 写保护) PSLVERR 期望 1 实测 0
+- **evidence**: lab1/svtb/sim/run.log:120-128；spec §2.3.1；lab1/doc/review_report/20260520-1400-ondemand-rtl-ppa_apb_slave_if.md
+- **advice**: 排查 ppa_apb_slave_if.sv 写路径 RO 判定
+- **status**: open
+- **resolution**: —
+```
 
 ## History
 
 | 时间 | role | action | ref |
 |---|---|---|---|
 | 2026-05-18T00:00 | ORCH | project initialized | doc/ppa-plan.md |
-| 2026-05-18T12:00 | ORCH | v2 落地（agents/memory/risk-register 对齐 v2） | workflow-v2.md |
-| 2026-05-19T08:30 | ORCH | v3 落地（state.md 合并 / review_report 目录 / orchestrator 记忆位） | workflow-v3.md |
+| 2026-05-18T12:00 | ORCH | v2 落地 | workflow-v2.md |
+| 2026-05-19T08:30 | ORCH | v3 落地 | workflow-v3.md |
+| 2026-05-19T09:00 | ORCH | v4 落地（RISKs 入 state；outlook 实时监控） | workflow-v4.md |

@@ -14,10 +14,9 @@ skills:
 ```
 ppa-lab-copilot/
 ├── doc/
-│   ├── ppa-lite-spec.md             ← 主输入（只读，权威）
-│   └── ppa-risk-register.md         ← 是否有指向 ARCH 的 open RISK
+│   └── ppa-lite-spec.md             ← 主输入（只读，权威）
 ├── memory/
-│   ├── state.md                     ← 看 Cursor + Dispatch（若 Dispatch.role=ARCH 才进入）
+│   ├── state.md                     ← 看 Cursor / Dispatch / RISKs（有指向 ARCH 的 open RISK 才进入）
 │   └── architecture/knowledge.md    ← 已蒸馏经验
 └── lab*/doc/
     ├── handoff.md                   ← 看 RTL/DV/REV 给我的交接段
@@ -33,11 +32,9 @@ ppa-lab-copilot/
 │   ├── design-prompt.md             ← 主交付物
 │   ├── log.md                       ← ROLE 段
 │   └── handoff.md                   ← 若我回退给 ORCH 时填
-├── memory/
-│   ├── architecture/experiences.md  ← append-only
-│   └── state.md                     ← 更新 Labs Progress / Cursor / History
-└── doc/
-    └── ppa-risk-register.md         ← 自纠错失败时登记
+└── memory/
+    ├── architecture/experiences.md  ← append-only
+    └── state.md                     ← 更新 Labs Progress / Cursor / RISKs / History
 ```
 
 ## Stage Sequence
@@ -69,8 +66,8 @@ flowchart LR
 
 | 触发 | 动作 |
 |---|---|
-| 自纠错 2 轮后仍存在 spec 歧义无法决断 | **登记**：在 `doc/ppa-risk-register.md` 写 RISK 详情（from=ARCH, to=ORCH）；在 `memory/state.md` 写 `Open RISKs` 摘要 + `Labs Progress.lab<N>.arch = blocked` + `Dispatch.role = ORCH-decide` + History +1。**交接**：`lab*/doc/handoff.md` 写"我读到 spec §X.Y 有 A/B 两种解释，倾向 A 因 …" |
-| 收到 RTL/DV/REV 回退（handoff 有指向 ARCH 的 RISK） | 重走 Stage Sequence；修 design-prompt；在 risk-register 写 resolution；state.md 关闭 RISK；handoff 回写一段"已修订 §X" |
+| 自纠错 2 轮后仍存在 spec 歧义无法决断 | **登记**：在 `memory/state.md` 的 `## RISKs.Open` 加一条 RISK 全字段（from=ARCH, to=ORCH）+ `Labs Progress.lab<N>.arch = blocked` + `Dispatch.role = ORCH-decide` + History +1。**交接**：`lab*/doc/handoff.md` 写"我读到 spec §X.Y 有 A/B 两种解释，倾向 A 因 …" |
+| 收到 RTL/DV/REV 回退（handoff 有指向 ARCH 的 RISK） | 重走 Stage Sequence；修 design-prompt；在 `## RISKs` 把对应条目 status 改 resolved（填 resolution）→ 迁移到 Resolved 段；handoff 回写一段"已修订 §X" |
 | 同一段被反复回退 ≥ 2 次 | 升级 ORCH，建议重读 spec |
 
 ## Tool Options
@@ -112,4 +109,4 @@ flowchart LR
 ## State（更新 state.md 哪些字段）
 
 - 推进：`Labs Progress.lab<N>.arch: todo→wip→done`；`Cursor.phase: arch→rtl`；`Dispatch.role: RTL`
-- 升级 / 被回退：`Labs Progress.lab<N>.arch = blocked`（升级）/ `wip`（被回退后重新工作）；Open RISKs 表追加/关闭
+- 升级 / 被回退：`Labs Progress.lab<N>.arch = blocked`（升级）/ `wip`（被回退后重新工作）；`## RISKs.Open` 追加 / 关闭一条
