@@ -119,8 +119,9 @@
 
   // ---- 渲染 mermaid 三节点流 ----
   function renderFlow(s){
-    // Sanitize for mermaid node text: strip ", ], and newlines
-    var clean = function(v){ return String(v||'?').replace(/["\]\[\n]/g,'').slice(0,40); };
+    // Strict allow-list for mermaid label tokens: alphanumeric, dot, hyphen, underscore, space.
+    // Anything else is replaced with '?'. Truncate to 40 chars.
+    var clean = function(v){ return String(v||'?').replace(/[^A-Za-z0-9._\- ]/g,'?').slice(0,40) || '?'; };
     var lab = clean(s.cursor.lab);
     var phase = clean(s.cursor.phase);
     var role = clean(s.dispatch.role);

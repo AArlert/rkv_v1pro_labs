@@ -1,4 +1,4 @@
-# Agents — 角色定义与协作协议（v3）
+# Agents — 角色定义与协作协议（v4）
 
 > 5 个角色，ORCH/ARCH/RTL/DV 由人扮演，REV 由纯 Agent 担任。详细工作流见 `../workflow-v4.md`。
 
@@ -26,7 +26,7 @@
 1. **Inner Loop（自纠错，不出阶段）**：产物→自检→重读输入→改产物 + 软上限
 2. **Outer Loop（跨 Agent 回退/升级，出阶段）**：自纠错失败 → "登记" + "交接" → ORCH 重新 dispatch
 
-## v3 关键约束
+## v4 关键约束
 
 - **状态单一来源**：`memory/state.md` 是 ORCH 与所有 Agent 共享状态的唯一文件。任何角色更新状态都改这一份（原子写）。
 - **登记 vs 交接 职责分离**：
