@@ -1,17 +1,19 @@
-# Memory — 二级记忆系统（v2）
+# Memory — 二级记忆系统（v3）
 
-> 本目录在 v2 工作流下已 md 化（替换原 jsonl/json）。详细规则见 `../workflow-v2.md`。
+> v3：合并 v2 的 `run_state.md` + `design_state.md` → `state.md` 单文件；新增 ORCH 自己的记忆位。详细规则见 `../workflow-v3.md`。
 
 ## 结构
 
 ```
 memory/
 ├── README.md
-├── design_state.md     # 跨角色共享状态（表格）
-├── run_state.md        # 仅 2 行: last / next
+├── state.md                  # 单一状态源 (Meta + Cursor + Dispatch + Labs Progress + Open RISKs + History)
+├── orchestrator/
+│   ├── knowledge.md          # ORCH SOP 蒸馏页 (≤ 1 页)
+│   └── experiences.md        # ORCH 每次决策/SOP 反思
 ├── architecture/
-│   ├── knowledge.md      # 蒸馏页 (≤ 1 页)
-│   └── experiences.md    # append-only, 无序列表
+│   ├── knowledge.md
+│   └── experiences.md
 ├── rtl/
 │   ├── knowledge.md
 │   └── experiences.md
@@ -22,20 +24,37 @@ memory/
 
 ## 写入协议
 
+### state.md（单一状态源）
+
+ORCH 每 session 开头**只读这一份**。包含：
+- **Meta**：spec_version / created / workflow
+- **Cursor**：`lab` / `phase` ∈ `arch|rtl|dv|review|close` / `last`（≤1 行） / `next`（≤1 行）
+- **Dispatch**：`role` ∈ `ARCH|RTL|DV|REV|ORCH-decide` / `reason`
+- **Labs Progress**：每 lab 的 `arch/rtl/tb/cov/accept`，取值 `todo/wip/blocked/done`
+- **Open RISKs**：摘要表（id / from→to / lab.phase / 一句话 / 状态）
+- **History**：append-only 表
+
+原子写：
+```bash
+cp memory/state.md memory/state.md.tmp
+# 编辑 .tmp
+mv memory/state.md.tmp memory/state.md
+```
+
 ### experiences.md（无序列表，append-only）
 
-任何角色完成 stage / 学到一次教训时，追加一个列表块：
+任何角色完成 stage / 学到一次教训 / ORCH 做出决策时，追加一个列表块：
 
 ```
-- **场景**: <lab / stage / 目标>
+- **场景**: <lab / phase / 目标>
 - **时间**: <ISO8601>
 - **操作**: <做了什么>
 - **结果**: <PASS/FAIL/blocked + 一句话>
 - **教训**: <可空>
-- **artifacts**: <文件:行 / log / 波形路径>
+- **artifacts**: <文件:行 / log / 波形 / review_report 路径>
 ```
 
-蒸馏后**不删**，仅作 history。
+蒸馏到 `knowledge.md` 后**不删**。
 
 ### knowledge.md
 
@@ -44,42 +63,24 @@ memory/
 - 每条 ≤ 3 行
 - 引文件:行或 experiences.md 中的"时间 + 场景"作证
 
-### design_state.md（表格）
-
-包含 `Meta` / `Labs Progress` / `Open RISKs` / `History` 四张表。原子写：
-```bash
-cp memory/design_state.md memory/design_state.md.tmp
-# 编辑 .tmp
-mv memory/design_state.md.tmp memory/design_state.md
-```
-
-### run_state.md
-
-仅 2 行：
-```
-last: <谁/在哪/做到啥>
-next: <谁/做啥>
-```
-
-ORCH 每次 session 头尾改一次。
-
 ## 读取协议
 
-- ORCH 每次 session 开头 `cat run_state.md` → `cat design_state.md` → `tail doc/ppa-risk-register.md`
+- ORCH 每次 session 开头：`cat memory/state.md` → 若 `Open RISKs` 非空再 `tail doc/ppa-risk-register.md`
 - 每个角色启用时读对应 `<domain>/knowledge.md`（不读 experiences.md 全文，太长）
-- REV 读 spec + 当前 lab 文件 + `<domain>/knowledge.md`
+- REV 读 spec + 当前 lab 文件 + `<domain>/knowledge.md`；产物写 `lab*/doc/review_report/<时间戳>-<trigger>-<target>.md`
 
 ## 与 git 的关系
 
-- `design_state.md` / `run_state.md` / `knowledge.md` / `experiences.md` → **commit**
+- `state.md` / `knowledge.md` / `experiences.md` → **commit**
 - 临时 `*.tmp` → `.gitignore`
 
-## v1 → v2 迁移说明
+## v2 → v3 迁移说明
 
-| v1 | v2 |
+| v2 | v3 |
 |---|---|
-| `design_state.json` | `design_state.md`（表格） |
-| `<domain>/experiences.jsonl` | `<domain>/experiences.md`（无序列表块） |
-| `run_state.md`（多段） | `run_state.md`（2 行） |
+| `memory/run_state.md`（2 行） | **合并** → `memory/state.md` 的 `Cursor` 段 |
+| `memory/design_state.json` / v2 `memory/design_state.md` | **合并** → `memory/state.md` 余下各表 |
+| ORCH 复盘塞进 `memory/architecture/experiences.md` | 独立 `memory/orchestrator/{experiences,knowledge}.md` |
+| `current_lab` / `current_stage` 自由字符串 | 正交字段：`Cursor.lab` / `Cursor.phase` / `Dispatch.role` |
 
-旧 jsonl / json 已在转换后移除；如需历史可查 git。
+旧 `run_state.md` / `design_state.md` 已在转换后移除；如需历史可查 git。

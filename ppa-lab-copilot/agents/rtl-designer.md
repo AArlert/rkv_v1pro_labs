@@ -16,16 +16,16 @@ skills:
 ppa-lab-copilot/
 ├── doc/
 │   ├── ppa-lite-spec.md             ← 兜底参考（只读）
-│   └── ppa-risk-register.md         ← 看是否有指向 RTL 的 open RISK
+│   └── ppa-risk-register.md         ← 是否有指向 RTL 的 open RISK
 ├── memory/
-│   ├── rtl/knowledge.md
-│   ├── design_state.md
-│   └── run_state.md
+│   ├── state.md                     ← 单一状态源
+│   └── rtl/knowledge.md
 └── lab*/
     ├── doc/
     │   ├── design-prompt.md         ← 主输入（必读完整）
-    │   ├── handoff.md               ← 看 DV/REV/ARCH 给我的交接
-    │   └── log.md
+    │   ├── handoff.md
+    │   ├── log.md
+    │   └── review_report/<...>-ondemand-rtl-*.md  ← 历史按需审记录
     └── rtl/                         ← 既存代码（如 ppa_packet_sram.sv）
 ```
 
@@ -35,29 +35,29 @@ ppa-lab-copilot/
 ppa-lab-copilot/
 ├── lab*/
 │   ├── rtl/*.sv                     ← 主交付
-│   └── svtb/
-│       ├── tb/<最小可验证 tb>.sv    ← RTL 阶段的自跑 tb（不替代 DV）
-│       └── sim/Makefile             ← 最小 comp/run 目标
+│   ├── svtb/
+│   │   ├── tb/<最小可验证 tb>.sv    ← RTL 阶段的自跑 tb（不替代 DV）
+│   │   └── sim/Makefile             ← 最小 comp/run 目标
 │   └── doc/
 │       ├── log.md                   ← ROLE 段 + 实现决策
 │       └── handoff.md               ← 回退给 ARCH 时填
 ├── memory/
 │   ├── rtl/experiences.md
-│   └── design_state.md
+│   └── state.md                     ← 更新 Labs Progress / Cursor / Dispatch
 └── doc/
     └── ppa-risk-register.md         ← 自纠错失败 / 回退时登记
 ```
 
 ## Stage Sequence
 
-1. 读 `lab*/doc/design-prompt.md`（完整）+ `memory/rtl/knowledge.md` + 检查 handoff.md 是否有给我的回退
+1. 读 `lab*/doc/design-prompt.md`（完整）+ `memory/rtl/knowledge.md` + handoff.md
 2. 写 module 端口（不写逻辑）→ `make comp` 端口语法过
 3. 按 design-prompt 顺序逐段写 `always_ff` / `always_comb`，**Copilot 仅允许补齐单 token / 一行**
-4. 每写完一个寄存器/一段 FSM 就 `make comp`（防止编译错堆积）
+4. 每写完一个寄存器/一段 FSM 就 `make comp`
 5. 同步写最小可验证 tb（极少 stimulus 即可，确认产出活着）+ Makefile（comp/run）
-6. 进入 **Inner Loop**（§ Inner Loop）
+6. 进入 **Inner Loop**
 7. 全 module 完成后：跑 lint + 按需调 REV
-8. Sign-off → 更新 `design_state.md`
+8. Sign-off → 更新 `memory/state.md`：`Labs Progress.lab<N>.rtl = done`、`Cursor.phase = dv`、`Dispatch.role = DV`
 
 ## Inner Loop（自纠错，软上限 ≤ 3 轮）
 
@@ -69,7 +69,7 @@ flowchart LR
     R3 -- "是" --> R5{"行为与<br/>design-prompt 对齐?"}
     R5 -- "否" --> R6["对照 design-prompt §<br/>找差异 → 改 rtl"] --> R1
     R5 -- "是" --> R7{"按需调 REV?"}
-    R7 -- "调" --> R8["读 review_notes,<br/>修 P0"] --> R1
+    R7 -- "调" --> R8["读 review_report/...md,<br/>修 P0"] --> R1
     R7 -- "不调" --> R9["Sign-off"]
 ```
 
@@ -77,14 +77,12 @@ flowchart LR
 
 ## Outer Loop（跨 Agent 回退/升级）
 
-| 触发 | 方向 | 动作 |
+| 触发 | 方向 | 动作（登记 + 交接） |
 |---|---|---|
-| 发现 design-prompt 不可实现 / 歧义 / 端口冲突 | RTL → ARCH | 登记 RISK（from=RTL, to=ARCH，附 design-prompt 行号 + 我尝试的两种解释）；handoff.md 写；ORCH 切回 ARCH |
-| 自纠错 3 轮仍 FAIL 但不确定根因 | RTL → ORCH | 登记 RISK（to=ORCH），ORCH 决策（重读 spec 或切 ARCH） |
-| 收到 DV 回退（handoff.md 有 RISK 指向 RTL） | 接收 | 复现 minimal repro → 修 RTL → 在 RISK 加 `resolution` + handoff 回写 → 等 DV 重跑 |
+| 发现 design-prompt 不可实现 / 歧义 / 端口冲突 | RTL → ARCH | **登记**：risk-register 详情 + state.md（Open RISKs 摘要 + `Labs Progress.lab<N>.rtl = blocked` + `Dispatch.role = ARCH`）；**交接**：handoff.md 写"design-prompt §X 行 Y-Z 我尝试两种解释" |
+| 自纠错 3 轮仍 FAIL 但不确定根因 | RTL → ORCH | 登记 RISK（to=ORCH，`Dispatch.role = ORCH-decide`）；handoff 写 debug 历程 |
+| 收到 DV 回退 | 接收 | 复现 minimal repro → 修 RTL → risk-register 写 resolution → state.md 关 RISK + `Labs Progress.lab<N>.rtl = wip→done` + `Dispatch.role = DV`；handoff 回写一段"修了 module X 的 Y 逻辑" |
 | 收到 REV P0 | 接收 | 同上 |
-
-每次都要同步：`doc/ppa-risk-register.md` + `memory/design_state.md` + `memory/run_state.md` + `lab*/doc/handoff.md`。
 
 ## Tool Options
 
@@ -99,7 +97,7 @@ flowchart LR
 - [ ] lint 0 critical（CDC / multi-driver / latch）
 - [ ] 端口与 design-prompt 表 100% 一致
 - [ ] 最小可验证 tb 跑通（证明语法+顶层活着）
-- [ ] 若按需调用 REV：0 P0
+- [ ] 若按需调用 REV：对应 `review_report/<...>-ondemand-rtl-*.md` 0 P0
 
 ## Output Format
 
@@ -127,7 +125,7 @@ flowchart LR
 - 读：`memory/rtl/knowledge.md`
 - 写：`memory/rtl/experiences.md`（决策 + 教训 + 被回退后的修订）
 
-## Design State
+## State（更新 state.md 哪些字段）
 
-- 推进时：`Labs Progress.lab<N>.rtl: wip → done`
-- 回退 / 被回退时：`current_stage` 改 `rtl-revise` 或 `blocked-handoff-to-ARCH`；Open RISKs 表追加/关闭
+- 推进：`Labs Progress.lab<N>.rtl: todo→wip→done`；`Cursor.phase: rtl→dv`；`Dispatch.role: DV`
+- 升级 / 被回退：`Labs Progress.lab<N>.rtl = blocked` 或回 `wip`；Open RISKs 表追加/关闭

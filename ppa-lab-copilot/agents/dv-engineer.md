@@ -18,16 +18,16 @@ skills:
 ppa-lab-copilot/
 ├── doc/
 │   ├── ppa-lite-spec.md             ← 测试点的权威来源
-│   └── ppa-risk-register.md         ← 看是否有指向 DV 的 open RISK
+│   └── ppa-risk-register.md         ← 是否有指向 DV 的 open RISK
 ├── memory/
-│   ├── dv/knowledge.md
-│   ├── design_state.md
-│   └── run_state.md
+│   ├── state.md                     ← 单一状态源
+│   └── dv/knowledge.md
 └── lab*/
     ├── doc/
     │   ├── design-prompt.md         ← 理解被验证对象
-    │   ├── handoff.md               ← 看 RTL/REV 给我的交接
-    │   └── log.md
+    │   ├── handoff.md
+    │   ├── log.md
+    │   └── review_report/<...>-ondemand-tb.md  ← 历史按需审记录
     ├── rtl/*.sv                     ← DUT
     └── svtb/
         └── tb/*.sv                  ← RTL 最小 tb（参考用）
@@ -50,7 +50,7 @@ ppa-lab-copilot/
 │   └── cov/                         ← .vdb / urgReport
 ├── memory/
 │   ├── dv/experiences.md
-│   └── design_state.md
+│   └── state.md                     ← 更新 Labs Progress / Cursor / Dispatch
 └── doc/
     └── ppa-risk-register.md         ← 自纠错失败 / 回退 RTL 或 ARCH 时登记
 ```
@@ -61,11 +61,11 @@ ppa-lab-copilot/
 2. **先写 testplan.md**：每条 TC = name / feature / spec-ref / input / expected / check-points
 3. 写 TB 顶层（clk/rst/DUT/stub/dump）+ task（`apb_write/read`、`build_packet`、`check_*`）+ Makefile
 4. 按 testplan 顺序逐条实现 TC，跑通一条立刻 commit
-5. 进入 **Inner Loop**（§ Inner Loop）
+5. 进入 **Inner Loop**
 6. 全 TC PASS → 跑 cov → 加 covergroup / TC 直到 ≥ 90%
 7. Lab4：SV TC 翻译为 UVM tests，跑 `make uvm`
 8. 按需调 REV（用 `copilot-review-tb` 查"假 PASS"）
-9. Sign-off
+9. Sign-off → 更新 `memory/state.md`：`Labs Progress.lab<N>.{tb,cov} = done`、`Cursor.phase = review`、`Dispatch.role = REV`（触发 labclose 审查）
 
 ## Inner Loop（自纠错，软上限 ≤ 3 轮）
 
@@ -80,7 +80,7 @@ flowchart LR
     D7 -- "TB bug" --> D8["修 TB / task / ref model"] --> D1
     D7 -- "RTL bug" --> D9["跳到 Outer Loop"]
     D5 -- "是, 全 PASS" --> D10{"按需调 REV?"}
-    D10 -- "调" --> D11["读 review_notes, 修 P0"] --> D1
+    D10 -- "调" --> D11["读 review_report/...md,<br/>修 P0"] --> D1
     D10 -- "不调" --> D12["Sign-off"]
 ```
 
@@ -88,16 +88,14 @@ flowchart LR
 
 ## Outer Loop（跨 Agent 回退/升级）
 
-| 触发 | 方向 | 动作 |
+| 触发 | 方向 | 动作（登记 + 交接） |
 |---|---|---|
-| 判定 RTL bug（xwave 证据明确） | DV → RTL | 登记 RISK（from=DV, to=RTL，含 module/file:line/expected/observed/log 行号/波形路径）；handoff.md 写；ORCH 切 RTL |
-| 发现 testplan 必须改 design-prompt 才能对齐 spec | DV → ARCH | 登记 RISK（to=ARCH）；handoff |
-| 覆盖率打不到，但既不是 RTL bug 也不是 TB 设计能解决 | DV → ORCH | 登记 RISK（to=ORCH），ORCH 决策是否豁免（写 `coverage_exclusion.md`）或加 TC |
-| 收到 REV P0 | 接收 | 修 TB → 关 RISK |
+| 判定 RTL bug（xwave 证据明确） | DV → RTL | **登记**：risk-register 详情（含 module/file:line/expected/observed/log 行号/波形路径） + state.md（Open RISKs 摘要 + `Labs Progress.lab<N>.rtl = blocked` + `Dispatch.role = RTL`）；**交接**：handoff.md 写 minimal repro |
+| 发现 testplan 必须改 design-prompt 才能对齐 spec | DV → ARCH | 同上模板（to=ARCH，`Dispatch.role = ARCH`） |
+| 覆盖率打不到，且非 RTL/TB 设计能解决 | DV → ORCH | 登记 RISK（to=ORCH，`Dispatch.role = ORCH-decide`），ORCH 决策豁免（写 `coverage_exclusion.md`）或加 TC |
+| 收到 REV P0 | 接收 | 修 TB → risk-register 写 resolution → state.md 关 RISK |
 
-每次都要同步：`doc/ppa-risk-register.md` + `memory/design_state.md` + `memory/run_state.md` + `lab*/doc/handoff.md`。
-
-> 注意：v2 中**不再使用 `fix_requests[]` 队列**。所有跨 Agent 升级走 risk-register。
+> 注意：v3 与 v2 一致——**不使用 `fix_requests[]` 队列**；所有跨 Agent 升级走 risk-register + state.md。
 
 ## Tool Options
 
@@ -111,7 +109,7 @@ flowchart LR
 - [ ] 所有 TC PASS（self-check，不允许"看波形判定"）
 - [ ] 5 类覆盖率 ≥ 90%（lab4 强制）
 - [ ] 豁免项写到 `coverage_exclusion.md` 含 spec 引用
-- [ ] 若按需调用 REV：0 P0
+- [ ] 若按需调用 REV：对应 `review_report/<...>-ondemand-tb.md` 0 P0
 
 ## Output Format
 
@@ -134,7 +132,7 @@ flowchart LR
 - 读：`memory/dv/knowledge.md`、Lab1-3 的 testplan.md
 - 写：`memory/dv/experiences.md`（FAIL 根因、TC 设计思路、被回退后的修订）
 
-## Design State
+## State（更新 state.md 哪些字段）
 
-- 推进时：`Labs Progress.lab<N>.tb / cov / accept`
-- 回退 / 被回退时：`current_stage` 改 `dv-revise` 或 `blocked-handoff-to-RTL/ARCH`；Open RISKs 表追加/关闭
+- 推进：`Labs Progress.lab<N>.{tb,cov}: todo→wip→done`；`Cursor.phase: dv→review`；`Dispatch.role: REV`
+- 升级 / 被回退：相应 phase 改 `blocked` 或恢复 `wip`；Open RISKs 表追加/关闭
