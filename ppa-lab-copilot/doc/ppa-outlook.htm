@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>PPA-Lab-Copilot 工作流概览</title>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-<script>mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });</script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'antiscript' });</script>
 <style>
   body { font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 1100px; margin: 24px auto; padding: 0 24px; color: #222; line-height: 1.55; }
   h1 { border-bottom: 2px solid #2c5; padding-bottom: 8px; }
@@ -79,6 +79,7 @@
     var s = { cursor:{}, dispatch:{}, labs:[], risks:[] };
     // sections by H2
     var sections = {};
+    // Split by H2: capture (heading, body-until-next-H2-or-H1-or-EOS)
     var re = /^##\s+([^\n]+)\n([\s\S]*?)(?=^##\s+|^# |$(?![\s\S]))/gm;
     var m;
     while ((m = re.exec(md)) !== null) {
@@ -118,9 +119,11 @@
 
   // ---- 渲染 mermaid 三节点流 ----
   function renderFlow(s){
-    var lab = s.cursor.lab || '?';
-    var phase = s.cursor.phase || '?';
-    var role = s.dispatch.role || '?';
+    // Sanitize for mermaid node text: strip ", ], and newlines
+    var clean = function(v){ return String(v||'?').replace(/["\]\[\n]/g,'').slice(0,40); };
+    var lab = clean(s.cursor.lab);
+    var phase = clean(s.cursor.phase);
+    var role = clean(s.dispatch.role);
     var src =
       'flowchart LR\n' +
       '    A["lab: ' + lab + '"]:::cur --> B["phase: ' + phase + '"]:::cur --> C["dispatch: ' + role + '"]:::cur\n' +
@@ -131,30 +134,31 @@
     if (window.mermaid && mermaid.run) mermaid.run({ nodes: [el] }); else mermaid.init(undefined, el);
   }
 
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
   function badge(v){
     var cls = ({todo:'b-todo', wip:'b-wip', blocked:'b-wip', done:'b-done'})[v] || 'b-todo';
     var style = v === 'blocked' ? ' style="background:#c33;"' : '';
-    return '<span class="badge ' + cls + '"' + style + '>' + v + '</span>';
+    return '<span class="badge ' + cls + '"' + style + '>' + esc(v) + '</span>';
   }
   function renderLabs(s){
     var tb = document.querySelector('#live-labs tbody');
     if (!s.labs.length){ tb.innerHTML = '<tr><td colspan="6" style="color:#888;">(空)</td></tr>'; return; }
     tb.innerHTML = s.labs.map(function(l){
-      return '<tr><td>'+l.lab+'</td><td>'+badge(l.arch)+'</td><td>'+badge(l.rtl)+'</td><td>'+badge(l.tb)+'</td><td>'+badge(l.cov)+'</td><td>'+badge(l.accept)+'</td></tr>';
+      return '<tr><td>'+esc(l.lab)+'</td><td>'+badge(l.arch)+'</td><td>'+badge(l.rtl)+'</td><td>'+badge(l.tb)+'</td><td>'+badge(l.cov)+'</td><td>'+badge(l.accept)+'</td></tr>';
     }).join('');
   }
   function renderRisks(s){
     var ul = document.getElementById('live-risks');
     if (!s.risks.length){ ul.innerHTML = '<li style="color:#888;">(无)</li>'; return; }
     ul.innerHTML = s.risks.map(function(r){
-      return '<li><b>'+r.id+'</b> ['+(r.from||'?')+'→'+(r.to||'?')+'] <code>'+(r['lab.phase']||'?')+'</code> '+(r.summary||'')+' <span style="color:#c33;">['+(r.status||'open')+']</span></li>';
+      return '<li><b>'+esc(r.id)+'</b> ['+esc(r.from||'?')+'→'+esc(r.to||'?')+'] <code>'+esc(r['lab.phase']||'?')+'</code> '+esc(r.summary||'')+' <span style="color:#c33;">['+esc(r.status||'open')+']</span></li>';
     }).join('');
   }
   function renderCursor(s){
     document.getElementById('live-cursor').innerHTML =
-      '<div style="margin-top:6px;"><b>last</b>: '+(s.cursor.last||'—')+'</div>' +
-      '<div><b>next</b>: '+(s.cursor.next||'—')+'</div>' +
-      '<div style="color:#888;font-size:12px;margin-top:4px;">dispatch.reason: '+(s.dispatch.reason||'—')+'</div>';
+      '<div style="margin-top:6px;"><b>last</b>: '+esc(s.cursor.last||'—')+'</div>' +
+      '<div><b>next</b>: '+esc(s.cursor.next||'—')+'</div>' +
+      '<div style="color:#888;font-size:12px;margin-top:4px;">dispatch.reason: '+esc(s.dispatch.reason||'—')+'</div>';
   }
   function render(md){
     try {
