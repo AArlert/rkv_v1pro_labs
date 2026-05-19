@@ -1,61 +1,56 @@
-# Agents — 角色定义与协作协议
+# Agents — 角色定义与协作协议（v2）
 
-本目录定义本仓库的 5 个角色。我（人）轮流扮演这些角色；未来的 `ppa-lab-harness` 仓库会把这些角色交给独立 Agent。
+> 本目录定义 5 个角色。在 v2 工作流（见 `../workflow-v2.md`）下，**ORCH/ARCH/RTL/DV 由人扮演，REV 由纯 Agent 担任**。
 
 ## 角色清单
 
-| 文件 | 角色 | 主要交付物 |
-|---|---|---|
-| `orchestrator.md` | Orchestrator（流水线调度） | `memory/design_state.json` 更新、stage 路由 |
-| `architect.md` | 微架构师 | `lab*/doc/design-prompt.md`、CSR 表、模块划分 |
-| `rtl-designer.md` | RTL 工程师 | `lab*/rtl/*.sv`、lint 通过 |
-| `dv-engineer.md` | 验证工程师 | `lab*/doc/testplan.md`、`lab*/svtb/`、cov 报告 |
-| `reviewer.md` | 评审者（通常由 Copilot Agent 担任） | review_notes（含 P0/P1/P2 issue） |
+| 文件 | 角色 | 担任 | 主要交付 |
+|---|---|---|---|
+| `orchestrator.md` | ORCH | 人 | 调度 + 执行/维护 SOP + 升级决策 |
+| `architect.md` | ARCH | 人 | `lab*/doc/design-prompt.md` |
+| `rtl-designer.md` | RTL | 人 + Copilot 补齐 | `lab*/rtl/*.sv` + 最小可验证 tb |
+| `dv-engineer.md` | DV | 人 + Copilot 补齐 | `lab*/doc/testplan.md`、`lab*/svtb/`、cov |
+| `reviewer.md` | REV | 纯 Agent | `lab*/doc/review_notes.md`（P0/P1/P2） |
 
-## 切换协议
+## 切换协议（与 v1 同）
 
-每次切换角色时，**必须**在当前 lab 的 `doc/log.md` 写一行：
+切换角色时在 `lab*/doc/log.md` 写：
 ```
 >>> ROLE: rtl-designer @ 2026-05-20 14:00 — 开始实现 W1P start 逻辑
-... 工作内容 ...
-<<< ROLE: rtl-designer @ 2026-05-20 16:30 — 完成，FR-0001 已 open
+<<< ROLE: rtl-designer @ 2026-05-20 16:30 — 完成
 ```
 
-这样未来 harness 化时可以把每段 log 精确归属到某个 agent。
+## 两层纠错（v2 核心）
+
+每个 agent .md 都明示：
+1. **Inner Loop（自纠错）**：在自己阶段内的"产物→自检→重读输入→改产物"循环 + 软上限
+2. **Outer Loop（跨 Agent 回退/升级）**：自纠错失败 → 登记 `doc/ppa-risk-register.md` + 更新 `memory/design_state.md` + 更新 `memory/run_state.md` + 写 `lab*/doc/handoff.md`，由 ORCH 重新 dispatch
 
 ## 共享状态
 
-唯一跨角色通道是 `memory/design_state.json`。任何角色完成 stage 后：
-1. `cp design_state.json design_state.json.tmp`
-2. 修改 tmp（更新 `current_stage` / append `history[]` / 提交 `fix_requests[]`）
-3. `mv design_state.json.tmp design_state.json` 原子替换
+唯一跨角色通道：`memory/design_state.md` + `doc/ppa-risk-register.md` + `memory/run_state.md`。任何角色完成 stage 或登记 RISK 后都按原子写更新这三处。
 
-## Fix-Request 闭环
+## REV 调用模式
 
-见 `ppa-plan.md §2.5`。同一 FR 反复打开 ≥ 3 次时，Orchestrator 必须停下来重读 spec。
+- **按需**：任何 Agent 在自己 inner loop 中觉得需要外部 sanity-check，可调 REV（在 `lab*/doc/log.md` 写一行 `>>> CALL REV @<ts> on <target>`）
+- **强制**：labX 关单前 ORCH 必须 dispatch REV 对整 lab（ARCH+RTL+DV 三方产物）做完整审查
+- REV 报告若含 P0 → 走升级流程（同跨 Agent 回退）
 
-## 模板格式
+## 模板
 
-每个角色文件按下列骨架填写（参考 chuanseng-ng/digital-chip-design-agents）：
-
-```markdown
+每个 agent .md 按下述骨架：
+```
 ---
-name: <role-name>
-description: 一句话职责
-model: human / copilot
-effort: low/medium/high
-maxTurns: <int>
-skills:
-  - manual-<topic>
-  - copilot-<topic>
+name / description / model / effort / maxTurns / skills
 ---
-
+## Inputs（监控/读取的文件，目录树）
+## Outputs（产出文件，目录树）
 ## Stage Sequence
+## Inner Loop（自纠错流程图 + 软上限）
+## Outer Loop（跨 Agent 回退条件 + 登记动作）
 ## Tool Options
-## Loop-Back Rules
 ## Sign-off Criteria
-## Output Format (JSON 或 markdown)
 ## Behaviour Rules
-## Memory（读哪些 knowledge.md / 写哪些 experiences.jsonl）
-## Design State（关心 design_state.json 的哪些字段）
+## Memory（读哪些 knowledge.md / 写哪些 experiences.md）
+## Design State（关心 design_state.md 哪些字段）
 ```
