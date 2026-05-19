@@ -1,74 +1,91 @@
-# Memory — 二级记忆系统
+# Memory — v2 人可读记忆系统
 
-参考 [chuanseng-ng/digital-chip-design-agents](https://github.com/chuanseng-ng/digital-chip-design-agents) 的记忆设计。
+本目录保存 ORCH/ARCH/RTL/DV/REV 之间的轻量共享状态。v2 取消 JSONL/JSON 作为主要人工维护格式，改为 Markdown。
 
 ## 结构
 
-```
+```text
 memory/
-├── README.md           # 本文件
-├── design_state.json   # 跨角色共享状态（参考 ppa-plan.md §2.3 schema）
-├── run_state.md        # 当前活跃 run 的身份与上次中断点
+├── README.md
+├── design_state.md          # 跨角色共享状态，表格维护
+├── run_state.md             # 只保留两行：上次干到哪、下次先干啥
 ├── architecture/
-│   ├── knowledge.md     # 蒸馏后的人类可读总结（≤ 1 页）
-│   └── experiences.jsonl # append-only 原始记录
+│   ├── knowledge.md
+│   └── experiences.md       # 架构经验登记
 ├── rtl/
 │   ├── knowledge.md
-│   └── experiences.jsonl
+│   └── experiences.md       # RTL 经验登记
 └── dv/
     ├── knowledge.md
-    └── experiences.jsonl
+    └── experiences.md       # DV 经验登记
 ```
 
 ## 写入协议
 
-### experiences.jsonl
+### experiences.md
 
-任何角色完成一个 stage / 学到一个教训时 append 一行 JSON：
+任何角色完成一个 stage、定位一次问题、形成一条可复用教训时，追加一个条目。不用表格，用无序列表，便于人手写。
 
-```json
-{"run_id":"rtl-2026-05-20-01","ts":"2026-05-20T16:30","role":"rtl-designer","lab":"lab1","stage":"impl-W1P","decision":"start_o 用 hit_ctrl & wdata[1] & PENABLE & ~start_o_d","outcome":"TC6 PASS","artifacts":["lab1/svtb/sim/run.log"],"lessons":"忘了 ~start_o_d 会双拍"}
+```markdown
+## EXP-YYYY-MM-DD-NNN — <一句话标题>
+
+- 场景：labX / role / stage
+- 时间：YYYY-MM-DDTHH:MM:SSZ
+- 角色：architect | rtl-designer | dv-engineer | reviewer | orchestrator
+- 输入：相关 spec/doc/RTL/TB/log 路径
+- 操作：本次实际做了什么
+- 结果：PASS / FAIL / blocked / deferred
+- 证据：日志、波形、文件、review notes 路径
+- 教训：可复用经验
+- 后续：无 / RISK-XXXX / 下一动作
 ```
-
-字段约定：
-- `run_id`：自由文本，建议 `<role>-<date>-<seq>`
-- `ts`：ISO8601
-- `role`：5 个角色之一
-- `lab`：lab1/lab2/lab3/lab4
-- `stage`：自由文本
-- `decision`：本次做了什么决定
-- `outcome`：结果（PASS/FAIL/blocked）
-- `artifacts`：相关日志/波形/文件路径
-- `lessons`：教训（可空）
 
 ### knowledge.md
 
-每个 Lab 关单时，把本 Lab 的 experiences.jsonl 蒸馏为 knowledge.md：
-- 用主题分组（≤ 5 个主题）
-- 每条 ≤ 3 行
-- 引文件:行或 experiences.jsonl `run_id` 作证
+每个 Lab 关单时，把本 Lab 的 experiences.md 蒸馏为 knowledge.md：
 
-蒸馏由我手动做（或让 Copilot Agent 用 `skill/copilot-log-triage` 辅助）。**蒸馏后 experiences.jsonl 不删**，仅作 history。
+- 按主题分组，保留 1 页以内。
+- 每条尽量引用 spec、文件路径或 EXP id。
+- 只写未来会复用的经验，不写流水账。
 
-### design_state.json
+### design_state.md
 
-任何角色更新都遵守原子写：
-```bash
-cp memory/design_state.json memory/design_state.json.tmp
-# 编辑 .tmp
-mv memory/design_state.json.tmp memory/design_state.json
+`design_state.md` 是 ORCH 和各角色共享的状态快照：
+
+- 顶部记录当前 lab/stage/owner。
+- Lab 状态用表格维护。
+- 风险只记录索引，详细内容写 `doc/ppa-risk-register.md`。
+- History 只记录关键事件，不替代 `labX/handoff.md`。
+
+### run_state.md
+
+只允许两行：
+
+```markdown
+上次干到哪：<一句话>
+下次先干啥：<一句话>
 ```
-
-并发风险：本仓库单人单 session，几乎不可能并发。harness 化时需加 flock。
 
 ## 读取协议
 
-- Orchestrator 每个 session 开头 `cat design_state.json` + `cat run_state.md`
-- 每个角色启用时读对应 `<domain>/knowledge.md`（不读 experiences.jsonl 全文，太长）
-- Reviewer 读 spec + 当前文件 + `<domain>/knowledge.md`
+- ORCH：每个 session 开头读 `run_state.md` → `design_state.md` → `doc/ppa-risk-register.md`。
+- ARCH：读 spec、`memory/architecture/knowledge.md`、当前 `labX/handoff.md`。
+- RTL：读 design-prompt、`memory/rtl/knowledge.md`、当前 `labX/handoff.md`。
+- DV：读 spec/design-prompt/RTL、`memory/dv/knowledge.md`、当前 `labX/handoff.md`。
+- REV：读 spec、被审对象、相关 knowledge、risk register。
 
-## 与 git 的关系
+## 升级规则
 
-- `design_state.json`、`run_state.md`、`knowledge.md` → **commit**
-- `experiences.jsonl` → **commit**（append-only，不会大）
-- 临时 `*.tmp` → `.gitignore`
+当前角色先内部自纠错；只有以下情况进入跨角色登记：
+
+- 内部循环无法收敛。
+- 证据指向上游产物错误。
+- REV 发现 P0。
+- 需要 ORCH 裁决责任或取舍。
+
+跨角色问题必须同步更新：
+
+1. `doc/ppa-risk-register.md`
+2. `memory/design_state.md`
+3. `memory/run_state.md`
+4. `labX/handoff.md`

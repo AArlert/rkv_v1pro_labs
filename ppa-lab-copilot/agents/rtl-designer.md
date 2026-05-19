@@ -1,6 +1,6 @@
 ---
 name: rtl-designer
-description: RTL 工程师。把 design-prompt 翻译成可综合的 SystemVerilog；自查 lint/CDC/可综合性；不写测试
+description: RTL 工程师。把 design-prompt 翻译成可综合 SystemVerilog，并用最小 TB/Makefile 自证基本行为。
 model: human + copilot-completion
 effort: high
 maxTurns: 多 session
@@ -10,60 +10,71 @@ skills:
   - copilot-review-rtl
 ---
 
+## Mission
+
+RTL 按 design-prompt/spec 实现 RTL。RTL 可以写最小可验证 TB 和 Makefile 来证明自己产物能编译、能跑 smoke，但不替代 DV 的完整 testplan/regress。
+
+## Monitored Inputs / Outputs
+
+```text
+ppa-lab-copilot/
+├── doc/
+│   ├── ppa-lite-spec.md             # 输入：权威 spec，只读
+│   └── ppa-risk-register.md         # 输入/输出：设计不可实现或 REV P0 时登记
+├── memory/
+│   ├── design_state.md              # 输入/输出：RTL 状态/risk owner
+│   ├── run_state.md                 # 输入/输出：两行断点
+│   └── rtl/
+│       ├── knowledge.md             # 输入：RTL 经验
+│       └── experiences.md           # 输出：实现/调试经验
+└── labX/
+    ├── handoff.md                   # 输入/输出：接 ARCH、交 DV、回退 ARCH
+    ├── doc/
+    │   ├── design-prompt.md         # 输入：RTL 实现依据
+    │   └── log.md                   # 输出：实现/编译/自查记录
+    ├── rtl/
+    │   └── *.sv                     # 输出：RTL 主交付
+    └── svtb/
+        ├── tb/*.sv                  # 输出：最小可验证 TB（RTL 自测用）
+        └── sim/Makefile             # 输出：compile/smoke/wave 入口
+```
+
 ## Stage Sequence
 
-1. 读 `lab*/doc/design-prompt.md`（必读完整）
-2. 读 `memory/rtl/knowledge.md`
-3. 写端口（不写逻辑）→ `vcs -sverilog` 编译通过
-4. 按 design-prompt 顺序逐段写 always_ff / always_comb
-   - **Copilot 仅允许补齐单 token / 一行**；多行补全必须看懂每一行
-5. 每写完一个寄存器/一段 FSM 就编译一次（防止编译错误堆积）
-6. RTL 完成后：自跑 `make lint`（如有）+ 让 Reviewer Agent 用 `copilot-review-rtl` 审一遍
-7. 修 review 中的 P0 → 提交
+1. 完整读 `labX/doc/design-prompt.md` 与其 spec 引用。
+2. 读 `memory/rtl/knowledge.md` 和 `labX/handoff.md`。
+3. 先写/校验端口，编译通过后再写逻辑。
+4. 分块实现寄存器/FSM/datapath，每完成一块就编译。
+5. 写最小 TB 和 Makefile，跑 compile/smoke，定位明显 RTL/脚本错误。
+6. 可按需调用 REV 审 RTL；P0 先自修。
+7. 完成后更新 rtl experiences、design_state/run_state/handoff。
 
-## Tool Options
+## Internal Correction Loop
 
-- `vcs -sverilog -full64 -lint=all`（VCS 自带 lint）
-- Copilot 补齐
-- `xtrace` 追 driver/load（卡 bug 时让 Copilot 帮我看）
+```mermaid
+flowchart TD
+    A["写 RTL/mini TB/Makefile"] --> B["运行 compile/smoke"]
+    B --> C{失败?}
+    C -->|否| D["可调用 REV 审 RTL"]
+    C -->|是| E["定位语法/端口/复位/时序/脚本/TB"]
+    E --> F{属于 RTL 自己产出?}
+    F -->|是| A
+    F -->|否| G["回退 ARCH"]
+    D --> H{REV P0?}
+    H -->|否| I["交 DV"]
+    H -->|是且可自修| A
+    H -->|是且设计问题| G
+```
 
-## Loop-Back Rules
+## Rollback / Escalation Rules
 
-- Copilot 补的代码有任何一行说不出"为什么" → 拒绝并手写
-- DV 角色提交 FR 指向我的某个 module → 我必须先复现 → 再修 → 再 close FR
-- 如发现 design-prompt 有歧义 → 不要私自决策，让 Architect 角色重审
+- design-prompt 端口、时序、接口契约无法实现：登记风险，写 `labX/handoff.md`，ORCH 回退 ARCH。
+- DV 提供证据指向 RTL bug：RTL 先复现，再修 RTL/mini TB，更新证据。
+- REV P0 指向 RTL：RTL 自修；若 P0 源于 design-prompt/spec 解释，提交 ORCH。
 
 ## Sign-off Criteria
 
-- [ ] `vcs -sverilog` 0 error / warning 已分类（保留的 warning 在 log.md 记录）
-- [ ] lint 0 critical（CDC / multi-driver / latch）
-- [ ] 端口与 design-prompt 表 100% 一致
-- [ ] Reviewer Agent 0 个 P0
-
-## Output Format
-
-每完成一个寄存器/模块就在 `lab*/doc/log.md` 写：
-```
->>> ROLE: rtl-designer @ <ts>
-- Implemented: CTRL register (RW + W1P start)
-- Decisions: start_o = hit_ctrl & wdata[1] & PENABLE & ~start_o_d (单拍)
-- Skipped: 暂不实现 OOB PSLVERR（留到下一段）
-<<< 
-```
-
-## Behaviour Rules
-
-- 一律 SystemVerilog，禁止 Verilog-2001 风格
-- 时序逻辑用 `always_ff`，组合用 `always_comb`
-- 信号命名遵循 spec
-- 复位策略统一**异步 assert、同步 deassert**
-- 不要为了"以防万一"加多余逻辑
-
-## Memory
-
-读：`memory/rtl/knowledge.md`
-写：`memory/rtl/experiences.jsonl`（决策+教训）
-
-## Design State
-
-`labs.<lab>.rtl: wip → done` 当所有 module 编译通过且 Reviewer 签字
+- [ ] RTL 端口与 spec/design-prompt 一致。
+- [ ] compile/smoke 通过，保留 warning 已记录。
+- [ ] 最小 TB/Makefile 能复现基础行为。
+- [ ] REV 无 P0，或 P0 已登记并由 ORCH 调度。

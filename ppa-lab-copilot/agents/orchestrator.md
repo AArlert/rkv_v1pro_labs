@@ -1,74 +1,78 @@
 ---
 name: orchestrator
-description: 项目流水线调度者，读 design_state.json 决定下一步该哪个角色干什么；本仓库由人扮演，未来 harness 化交给 meta-agent
+description: 项目流水线调度者。执行和维护 SOP，读状态/风险决定下一步调用 ARCH、RTL、DV 或 REV。
 model: human
 effort: medium
 maxTurns: unbounded
 skills: []
 ---
 
+## Mission
+
+ORCH 不替代 ARCH/RTL/DV 写设计细节；ORCH 负责让流程可控、可恢复、可交接：维护 SOP、状态、风险、handoff，决定何时推进、何时回退、何时调用 REV。
+
+## Monitored Inputs / Outputs
+
+```text
+ppa-lab-copilot/
+├── doc/
+│   ├── ppa-lite-spec.md         # 输入：权威 spec，只读
+│   ├── ppa-plan.md              # 输入：v1 完整计划
+│   └── ppa-risk-register.md     # 输入/输出：跨角色风险、REV P0、blocker
+├── workflow-v1.md               # 输入：完整流程说明
+├── workflow-v2.md               # 输入：轻量流程说明
+├── agents/
+│   ├── architect.md             # 输入：ARCH SOP
+│   ├── rtl-designer.md          # 输入：RTL SOP
+│   ├── dv-engineer.md           # 输入：DV SOP
+│   └── reviewer.md              # 输入：REV SOP
+├── memory/
+│   ├── design_state.md          # 输入/输出：lab/stage/owner/risk 表格
+│   └── run_state.md             # 输入/输出：两行断点
+└── labX/
+    ├── handoff.md               # 输入/输出：跨角色交接
+    └── doc/log.md               # 输出：角色切换和关键决策记录
+```
+
 ## Stage Sequence
 
-每个 session 开头都按以下 SOP：
+1. 读 `memory/run_state.md` 两行，确认断点和下一动作。
+2. 读 `memory/design_state.md`，确认 current lab/stage/owner/risk。
+3. 读 `doc/ppa-risk-register.md`，若有 open P0/blocker，优先处理。
+4. 选择本 session 调用角色：ARCH、RTL、DV 或 REV。
+5. 确认该角色的输入文件存在且 `labX/handoff.md` 交接足够清楚。
+6. 角色执行完成后，更新 `design_state.md`、`run_state.md`、`labX/handoff.md`。
+7. Lab close 前强制调用 REV 审查完整 lab。
 
-1. `cat memory/design_state.json` 查看 `current_lab` / `current_stage` / open `fix_requests[]`
-2. 检查 `memory/run_state.md` 中上次中断点
-3. 决定本次 session 的目标：推进 stage？修 FR？跑回归？
-4. 选择要扮演的角色，读对应 `agents/<role>.md`
-5. （可选）请 Copilot Agent 协助 = 调用对应 `skill/copilot-*` skill
-6. 执行
-7. Session 结束：append `history[]`、更新 `current_stage`、写 handoff
+## Internal Loop
 
-## Tool Options
+```mermaid
+flowchart TD
+    A["读 run_state/design_state/risk"] --> B{有 open P0/blocker?}
+    B -->|有| C["调度 owner 角色处理"]
+    B -->|无| D["按 ARCH→RTL→DV→REV 推进"]
+    C --> E["检查交接是否充分"]
+    D --> E
+    E --> F{交接缺证据?}
+    F -->|是| G["要求当前角色补 handoff/证据"]
+    F -->|否| H["切换角色执行"]
+    G --> A
+    H --> I["更新状态并写两行 run_state"]
+    I --> A
+```
 
-| 工具 | 调用方 | 用途 |
-|---|---|---|
-| `vcs / verdi` | 我 | 跑仿真、看波形 |
-| `xwave` | Copilot Agent | FSDB 波形 NPI 查询 |
-| `xtrace` | Copilot Agent | RTL driver/load 追踪 |
-| `make smoke/regress/cov` | 我 | 一键回归 |
+## Rollback / Escalation Rules
 
-## Loop-Back Rules
-
-| 触发 | 动作 | 上限 |
-|---|---|---|
-| TC FAIL | DV 写 fix_request → 切 RTL 角色修 | 同 FR 重开 ≤ 3 次 |
-| 覆盖率 < 90% | DV 加 TC / covergroup | 一个 Lab 加 ≤ 5 轮 |
-| spec 与实现冲突 | 切 Architect 角色重审 | 立即停手，不要继续写代码 |
-| Copilot 给的代码我看不懂 | 拒绝接受，改回手写 | 总在 Copilot 输出>3 行时触发 |
+| 触发 | ORCH 动作 |
+|---|---|
+| RTL 证明 design-prompt 无法实现 | 回退 ARCH，要求修 design-prompt，并登记风险 |
+| DV 证明 RTL bug | 回退 RTL，要求复现和最小修复，并登记风险 |
+| REV 发现 P0 | 停止关单，登记风险，按 P0 归属调度 ARCH/RTL/DV |
+| 同一问题内部循环仍无法收敛 | ORCH 重读 spec，明确裁决或拆分任务 |
 
 ## Sign-off Criteria
 
-每个 Lab 关单条件：
-- [ ] `lab*/doc/acceptance.md` 全部必做项 ✅
-- [ ] `lab*/doc/handoff.md` 已写
-- [ ] `memory/<domain>/knowledge.md` 已 distill 本 Lab 的经验
-- [ ] `memory/design_state.json` 中本 lab 的 `accept` 字段=`done`
-
-## Output Format
-
-handoff 段落直接写入 `lab*/doc/handoff.md`：
-```
-## Handoff: Lab<N> → Lab<N+1> (date)
-### I did
-### I didn't / TODO
-### Gotchas
-### Min verify cmd
-### Next steps
-```
-
-## Behaviour Rules
-
-- 永远先读 spec，再读 knowledge.md，最后才写代码
-- 任何"复制 /ppa-lab/ 代码"的动作立刻拒绝
-- 同一天最多扮演 2 个角色，避免上下文糊掉
-- 每个 stage 结束必写 experiences.jsonl 一条
-
-## Memory
-
-读：`memory/*/knowledge.md`、`memory/design_state.json`
-写：`memory/design_state.json`（history/state）、`memory/run_state.md`
-
-## Design State
-
-关心字段：`current_lab`、`current_stage`、`labs.*.{rtl,tb,cov,accept}`、`fix_requests[]`、`cross_role_iteration_count`
+- [ ] 当前角色、当前 lab、下一动作清晰。
+- [ ] `memory/run_state.md` 只有两行且可直接恢复工作。
+- [ ] `memory/design_state.md` 与 `doc/ppa-risk-register.md` 一致。
+- [ ] Lab close 前 REV 完整审查无 P0。

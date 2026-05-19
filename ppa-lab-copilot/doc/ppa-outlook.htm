@@ -31,7 +31,7 @@
 
 <h1>PPA-Lab-Copilot 工作流概览</h1>
 
-<p>这是一个<b>个人学习 + AI 辅助</b>的 PPA-Lite（APB 包处理加速器）课程项目。本页面是仓库工作流的可视化入口与维护看板，配合 <a href="ppa-plan.md">ppa-plan.md</a> 食用。</p>
+<p>这是一个<b>个人学习 + AI 辅助</b>的 PPA-Lite（APB 包处理加速器）课程项目。本页面是仓库工作流的可视化入口与维护看板，配合 <a href="ppa-plan.md">ppa-plan.md</a>、<a href="../workflow-v1.md">workflow-v1.md</a>、<a href="../workflow-v2.md">workflow-v2.md</a> 食用。</p>
 
 <div class="quote">
   <b>定位</b>：本仓库 = 人主导 + Copilot Agent 辅助 + xwave/xtrace 喂 EDA 数据。
@@ -80,7 +80,7 @@ gantt
 <h2>3 5 个角色协作（受 chuanseng-ng/digital-chip-design-agents 启发）</h2>
 <div class="mermaid">
 flowchart TB
-    ORCH["Orchestrator (我)<br/>读 design_state.json"]
+    ORCH["Orchestrator (我)<br/>读 design_state.md"]
     ARCH["Architect"]
     RTL["RTL Designer"]
     DV["DV Engineer"]
@@ -90,15 +90,15 @@ flowchart TB
     ORCH --> DV
     ORCH --> REV
     ARCH -. design-prompt .-> RTL
-    RTL -. fix_request .-> DV
-    DV -. fix_request (bug) .-> RTL
+    RTL -. 内部自纠错/风险 .-> DV
+    DV -. 风险回退 (bug) .-> RTL
     REV -. review_notes .-> ORCH
 </div>
 
 <table>
 <thead><tr><th>角色</th><th>谁演</th><th>主要交付</th><th>启用 Lab</th></tr></thead>
 <tbody>
-<tr><td>Orchestrator</td><td>我</td><td><code>memory/design_state.json</code> 更新、stage 路由</td><td>每天</td></tr>
+<tr><td>Orchestrator</td><td>我</td><td><code>memory/design_state.md</code> 更新、stage 路由</td><td>每天</td></tr>
 <tr><td>Architect</td><td>我</td><td><code>lab*/doc/design-prompt.md</code>、CSR 表</td><td>Lab1/2/3 第 1 天</td></tr>
 <tr><td>RTL Designer</td><td>我 + Copilot 补齐</td><td><code>lab*/rtl/*.sv</code></td><td>Lab1–3</td></tr>
 <tr><td>DV Engineer</td><td>我 + Copilot 补齐</td><td><code>lab*/svtb/</code>、testplan、cov</td><td>Lab1–4</td></tr>
@@ -111,7 +111,7 @@ flowchart TB
   <span class="badge b-todo">todo</span>
   <span class="badge b-wip">wip</span>
   <span class="badge b-done">done</span>
-  数据源：<code>memory/design_state.json</code>（手动同步本表）
+  数据源：<code>memory/design_state.md</code>（手动同步本表）
 </p>
 <table>
 <thead><tr><th>Lab</th><th>RTL</th><th>TB</th><th>Cov</th><th>Accept</th></tr></thead>
@@ -151,9 +151,9 @@ flowchart TB
   <div class="card">
     <h4>memory/</h4>
     <ul>
-      <li>design_state.json 跨角色共享</li>
+      <li>design_state.md 表格化跨角色共享</li>
       <li>run_state.md 当前活跃 run</li>
-      <li>architecture/ rtl/ dv/ 各含 knowledge.md + experiences.jsonl</li>
+      <li>architecture/ rtl/ dv/ 各含 knowledge.md + experiences.md</li>
     </ul>
   </div>
   <div class="card">
@@ -175,13 +175,13 @@ flowchart TB
 <h2>6 我的日常 SOP（Orchestrator 视角）</h2>
 <div class="mermaid">
 flowchart LR
-    A["1 读 design_state.json"] --> B["2 选角色"]
+    A["1 读 run_state.md + design_state.md"] --> B["2 选角色"]
     B --> C["3 读 knowledge.md + agents/&lt;role&gt;.md"]
     C --> D["4 执行 stage"]
-    D --> E["5 写 experiences.jsonl"]
-    E --> F["6 更新 design_state.json"]
-    F --> G{"触发 FR?"}
-    G -- yes --> H["7a 写 fix_request"]
+    D --> E["5 写 experiences.md"]
+    E --> F["6 更新 design_state.md"]
+    F --> G{"需跨角色回退?"}
+    G -- yes --> H["7a 登记 risk"]
     G -- no --> I["7b 写 handoff.md"]
     H --> I
 </div>
@@ -209,7 +209,7 @@ flowchart LR
 </table>
 
 <hr>
-<p style="color:#888;font-size:13px;">本页面手动维护。每完成一个 Lab，请同步：第 4 节状态徽章、design_state.json、ppa-status.md。</p>
+<p style="color:#888;font-size:13px;">本页面手动维护。每完成一个 Lab，请同步：第 4 节状态徽章、memory/design_state.md、doc/ppa-risk-register.md。</p>
 
 </body>
 </html>
