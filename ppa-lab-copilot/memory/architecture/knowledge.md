@@ -1,6 +1,6 @@
 # Architecture Knowledge
 
-> 由 architect 角色每个 Lab 关单时蒸馏。一页以内。引 spec § 与 experiences.jsonl `run_id` 作证。
+> 由 architect 角色每个 Lab 关单时蒸馏。一页以内。引 spec § 与 experiences.md `EXP id` 作证。
 
 ## 总则
 

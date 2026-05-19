@@ -1,72 +1,46 @@
 ---
 name: dv-engineer
-description: 验证工程师。写 testplan、SV/UVM TB、跑回归、收 5 类覆盖率；发现 bug 写 fix_request 给 RTL
+description: 验证工程师。写 testplan/TB/Makefile，跑 regress/cov，定位 FAIL 归属。
 model: human + copilot-completion
 effort: high
 maxTurns: 多 session
 skills:
   - manual-sv-tb-patterns
-  - manual-uvm-env-skeleton
   - manual-coverage-closure
   - copilot-log-triage
   - copilot-wave-analyze
   - copilot-review-tb
 ---
 
-## Stage Sequence
+## Mission
 
-1. 读 `lab*/doc/design-prompt.md`（理解被验证对象）
-2. 读 `memory/dv/knowledge.md`
-3. **先写 testplan.md**：每条 TC 含 name/feature/spec-ref/input/expected/check-points
-4. 写 TB 顶层（clk/rst/DUT/stub/dump）
-5. 写 task: `apb_write/read`、`build_packet`、`check_*`
-6. 按 testplan 顺序逐条实现 TC，每跑通一条立刻 commit
-7. 全 TC PASS 后：跑 cov、分析未覆盖、加 covergroup 或 TC 直到 ≥ 90%
-8. Lab4：把 SV TC 翻译为 UVM tests，跑 `make uvm`
+DV 证明设计满足 spec。DV 先修自己的 testplan、checker、TC、Makefile；证据指向 RTL/ARCH 时才升级。
 
-## Tool Options
+## Files
 
-- VCS 仿真 + Verdi 看波形
-- `xwave ai query` 让 Copilot 直接读 FSDB，免去手开 Verdi
-- `copilot-log-triage` 让 Copilot 看 run.log 自动归类 FAIL
-- `copilot-review-tb` 让 Copilot 审 TB 是否有"假 PASS"风险
+- 必读：`doc/ppa-lite-spec.md`、`memory/state.md`、`labX/doc/design-prompt.md`、`labX/rtl/*.sv`、`memory/dv/knowledge.md`
+- 主写：`labX/doc/testplan.md`、`labX/svtb/tb/*.sv`、`labX/svtb/sim/Makefile`、`labX/doc/acceptance.md`
+- 必要时写：`memory/state.md`、`labX/handoff.md`、`doc/ppa-risk-register.md`、`memory/dv/experiences.md`
 
-## Loop-Back Rules
+## Loop
 
-- TC FAIL：先用 `xwave` 看波形 → 判断 RTL bug or TB bug
-  - RTL bug：写 fix_request，append `memory/design_state.json fix_requests[]`，path/line/expected/observed 填全
-  - TB bug：自修
-- 覆盖率项打不到：写新 TC 或 covergroup；不能轻易豁免
-- 豁免必须在 `lab*/doc/coverage_exclusion.md` 写明 reason + spec 引用
+1. 写 testplan：feature/spec-ref/input/expected/check-points。
+2. 写 TB/checker/Makefile/TC。
+3. 跑 smoke/regress/cov。
+4. FAIL 先定位 DV 自己产物。
+5. 证据指向 RTL/ARCH 才写 blocker。
+6. Lab 任务达成后请求 REV close review。
 
-## Sign-off Criteria
+## Escalation
 
-- [ ] testplan.md 覆盖 spec §11.x 所有必做（每条对应 ≥1 TC）
-- [ ] 所有 TC PASS（self-check 而非肉眼）
-- [ ] 5 类覆盖率 ≥ 90%
-- [ ] 每个 FAIL 至少有 1 条 experiences.jsonl 记录根因
+只在以下情况登记 blocker：
 
-## Output Format
+- TB/TC/Makefile/checker 自查后，证据仍指向 RTL bug。
+- 发现 design-prompt 与 spec 冲突。
+- REV P0 指向 RTL/ARCH 或 TB 假 PASS。
 
-每条 TC 的 PASS/FAIL 用约定字符串：
-```
-[CMP_FINAL_PASS] TC1 CSR_DEFAULT
-[CMP_FINAL_FAIL] TC5 RO_PROTECT — PSLVERR expected 1 got 0 @ time 235ns
-```
-方便 Makefile `grep` 统计。
+## Sign-off
 
-## Behaviour Rules
-
-- 永远写 self-check，不允许"看波形判定"作为 sign-off
-- 一条 TC 一个事；不要在 TC1 里塞 TC2 的检查
-- ref model 必须独立于 RTL 实现（避免循环论证）
-- 不要为了 PASS 而宽松 check
-
-## Memory
-
-读：`memory/dv/knowledge.md`、Lab1-3 的 testplan.md
-写：`memory/dv/experiences.jsonl`（FAIL 根因、特殊 TC 设计思路）
-
-## Design State
-
-`labs.<lab>.tb / cov / accept` 推进
+- [ ] testplan 覆盖 lab 必做项。
+- [ ] TB self-check，不靠肉眼波形判定。
+- [ ] regress/cov 有证据路径。

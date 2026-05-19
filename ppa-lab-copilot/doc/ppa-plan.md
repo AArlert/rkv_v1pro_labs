@@ -1,5 +1,7 @@
 # PPA-Lab-Copilot 学习与实验计划（ppa-plan.md）
 
+> 说明：本文保留 v1 的完整重流程设计；当前最轻量执行规范见 `../workflow-v3.md`；`../workflow-v2.md` 保留为中间版本，完整 v1 解释见 `../workflow-v1.md`。
+
 > 目标读者：你自己（具备 SV/UVM 语法基础、UVM 树组件理解、抄过《UVM 实战》第 2 章，但缺少 APB 协议、公司级 UVM 环境、VCS/Verdi/Make 工程经验）
 > 目标产物：在 Ubuntu + VCS + Verdi 环境下，独立完成 `ppa-lab-copilot` 的 Lab1–Lab4，达到 `/doc/ppa-lite-spec.md` 规定的全部必做验收项 + 至少 60% 选做项
 > 参考实现：`/ppa-lab/`（harness 工程完成版，仅做参考与对照，不允许复制）
