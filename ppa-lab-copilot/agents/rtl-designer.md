@@ -16,7 +16,7 @@ skills:
   - copilot-make-script
 ---
 
-> Workflow: [`../workflow-v5.md`](../workflow-v5.md) · 完整文件树见 workflow-v5 §3 · 模板（log/handoff）见 workflow-v5 §7
+> Workflow: [`../workflow-v6.md`](../workflow-v6.md) · 完整文件树见 [`../doc/ppa-outlook.htm`](../doc/ppa-outlook.htm) · 模板（log/handoff）见 [`../template/`](../template/)
 
 ## Inputs（监控/读取）
 
@@ -111,15 +111,8 @@ flowchart LR
 
 ## Output Format
 
-每完成一个寄存器/模块在 `lab*/doc/log.md` 写：
-```
->>> ROLE: rtl-designer @ <ts>
-- Implemented: CTRL register (RW + W1P start)
-- Decisions: start_o = hit_ctrl & wdata[1] & PENABLE & ~start_o_d (单拍)
-- Min-tb result: PASS (lab*/svtb/sim/run.log)
-- Skipped: 暂不实现 OOB PSLVERR（留到下一段）
-<<<
-```
+每完成一个寄存器/模块在 `lab*/doc/log.md` append 一段 ROLE 块（模板：[`../template/log-role.md`](../template/log-role.md)）。
+跨 Agent 回退/关单时在 `lab*/doc/handoff.md` append 交接段（模板：[`../template/handoff.md`](../template/handoff.md)）。
 
 ## Behaviour Rules
 

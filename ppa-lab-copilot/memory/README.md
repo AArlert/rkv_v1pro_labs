@@ -1,7 +1,8 @@
-# Memory — 二级记忆系统（v5）
+# Memory — 二级记忆系统（v6）
 
-> v5：继承 v4 的 `state.md` 单一来源、orchestrator 记忆位、`## RISKs` 段；新增对**人友好的标准模板**全部内嵌在 `../workflow-v5.md` §7。
-> 详细规则见 [`../workflow-v5.md`](../workflow-v5.md)。
+> v6：继承 v5 的 `state.md` 单一来源、orchestrator 记忆位、`## RISKs` 段。
+> 模板（experiences 条目 / RISK 一条）拆到 [`../template/`](../template/) 单独小文件，不再内联在 workflow-vX.md。
+> 详细规则见 [`../workflow-v6.md`](../workflow-v6.md)。
 
 ## 结构
 
@@ -44,18 +45,7 @@ mv memory/state.md.tmp memory/state.md
 
 ### experiences.md（无序列表，append-only）
 
-任何角色完成 stage / 学到一次教训 / ORCH 做出决策时，追加一个列表块：
-
-```
-- **场景**: <lab / phase / 目标>
-- **时间**: <ISO8601>
-- **操作**: <做了什么>
-- **结果**: <PASS/FAIL/blocked + 一句话>
-- **教训**: <可空>
-- **artifacts**: <文件:行 / log / 波形 / review_report 路径>
-```
-
-蒸馏到 `knowledge.md` 后**不删**。
+任何角色完成 stage / 学到一次教训 / ORCH 做出决策时，按 [`../template/experiences-entry.md`](../template/experiences-entry.md) 追加一个列表块。蒸馏到 `knowledge.md` 后**不删**。
 
 ### knowledge.md
 
@@ -76,7 +66,7 @@ mv memory/state.md.tmp memory/state.md
 - `state.md` / `knowledge.md` / `experiences.md` → **commit**
 - 临时 `*.tmp` → `.gitignore`
 
-## v3 → v5 迁移说明
+## v3 → v6 迁移说明
 
 **v3 → v4**：
 
@@ -90,10 +80,19 @@ mv memory/state.md.tmp memory/state.md
 
 | v4 | v5 |
 |---|---|
-| 模板（handoff/acceptance/log/testplan/cov_exclusion/experiences）散落或缺失 | 全部内嵌 `../workflow-v5.md` §7 |
-| Skill ↔ Agent 对应散落 | 单一矩阵 `../workflow-v5.md` §4 |
+| 模板（handoff/acceptance/log/testplan/cov_exclusion/experiences）散落或缺失 | 全部内嵌 `workflow-v5.md` §7 |
+| Skill ↔ Agent 对应散落 | 单一矩阵 `workflow-v5.md` §4 |
 | `Cursor.phase` 含 `close` 但从不使用 | 枚举去 `close`（关单由 `Labs Progress.<lab>.accept=done` 表达） |
 | EDA 工具版本无处明示 | 锁定 VCS/Verdi/Spyglass 2018 + Ubuntu 22.04 |
 | 无 Spyglass | 新增 `manual-spyglass-lint` skill；RTL Sign-off 加一条 |
+
+**v5 → v6**：
+
+| v5 | v6 |
+|---|---|
+| 模板内嵌 `workflow-v5.md` §7 | 拆到 `../template/*.md` 单独小文件；workflow 不再内联 |
+| 完整文件树在 `workflow-v5.md` §3 | 搬到 `../doc/ppa-outlook.htm` 新章 + `../doc/ppa-plan.md` §1.2 |
+| REV 不直接跑 EDA | REV 可经 `make <target>` 在本机重跑 VCS/Verdi/Spyglass |
+| ppa-plan.md 与 workflow/agents 内容重复 | 蒸馏为人用计划，删 §1.2/§1.4-1.5/§2/§9 重复段 |
 
 旧 `doc/ppa-risk-register.md` 已在 v4 移除；如需历史可查 git。

@@ -31,7 +31,7 @@
 
 <h1>PPA-Lab-Copilot 工作流概览</h1>
 
-<p>这是一个<b>个人学习 + AI 辅助</b>的 PPA-Lite（APB 包处理加速器）课程项目。本页面是仓库工作流的可视化入口与维护看板，配合 <a href="ppa-plan.md">ppa-plan.md</a> 食用。当前工作流：<a href="../workflow-v5.md"><code>workflow-v5.md</code></a>。</p>
+<p>这是一个<b>个人学习 + AI 辅助</b>的 PPA-Lite（APB 包处理加速器）课程项目。本页面是仓库工作流的可视化入口与维护看板，配合 <a href="ppa-plan.md">ppa-plan.md</a> 食用。当前工作流：<a href="../workflow-v6.md"><code>workflow-v6.md</code></a>（仅维护用；日常干活读 <a href="../agents/">agents/</a> + <a href="../template/">template/</a> + <a href="../skill/">skill/</a>）。</p>
 
 <div class="quote">
   <b>定位</b>：本仓库 = 人主导 + Copilot Agent 辅助 + xwave/xtrace 喂 EDA 数据。
@@ -237,29 +237,29 @@ gantt
 <h2>3 5 个角色协作（受 chuanseng-ng/digital-chip-design-agents 启发）</h2>
 <div class="mermaid">
 flowchart TB
-    ORCH["Orchestrator (我)<br/>读 design_state.json"]
+    ORCH["Orchestrator (我)<br/>读 memory/state.md"]
     ARCH["Architect"]
     RTL["RTL Designer"]
     DV["DV Engineer"]
-    REV["Reviewer (Copilot)"]
+    REV["Reviewer (Copilot)<br/>v6: 可经 make 调本机 EDA"]
     ORCH --> ARCH
     ORCH --> RTL
     ORCH --> DV
     ORCH --> REV
     ARCH -. design-prompt .-> RTL
-    RTL -. fix_request .-> DV
-    DV -. fix_request (bug) .-> RTL
-    REV -. review_notes .-> ORCH
+    RTL -. RISKs (state.md) .-> DV
+    DV -. RISKs (state.md) .-> RTL
+    REV -. review_report/*.md .-> ORCH
 </div>
 
 <table>
 <thead><tr><th>角色</th><th>谁演</th><th>主要交付</th><th>启用 Lab</th></tr></thead>
 <tbody>
-<tr><td>Orchestrator</td><td>我</td><td><code>memory/design_state.json</code> 更新、stage 路由</td><td>每天</td></tr>
+<tr><td>Orchestrator</td><td>我</td><td><code>memory/state.md</code> 更新、stage 路由</td><td>每天</td></tr>
 <tr><td>Architect</td><td>我</td><td><code>lab*/doc/design-prompt.md</code>、CSR 表</td><td>Lab1/2/3 第 1 天</td></tr>
-<tr><td>RTL Designer</td><td>我 + Copilot 补齐</td><td><code>lab*/rtl/*.sv</code></td><td>Lab1–3</td></tr>
+<tr><td>RTL Designer</td><td>我 + Copilot 补齐</td><td><code>lab*/rtl/*.sv</code> + Spyglass <code>lint_rtl</code></td><td>Lab1–3</td></tr>
 <tr><td>DV Engineer</td><td>我 + Copilot 补齐</td><td><code>lab*/svtb/</code>、testplan、cov</td><td>Lab1–4</td></tr>
-<tr><td>Reviewer</td><td>Copilot Agent</td><td>review_notes（P0/P1/P2）</td><td>每个 Lab close 前</td></tr>
+<tr><td>Reviewer</td><td>Copilot Agent</td><td><code>review_report/&lt;ts&gt;-&lt;trigger&gt;-&lt;target&gt;.md</code>（P0/P1/P2）</td><td>按需 + 每个 Lab close 前</td></tr>
 </tbody>
 </table>
 
@@ -286,23 +286,30 @@ flowchart TB
     <h4>doc/</h4>
     <ul>
       <li><a href="ppa-lite-spec.md">ppa-lite-spec.md</a> 权威 spec</li>
-      <li><a href="ppa-plan.md">ppa-plan.md</a> 实验计划</li>
-      <li>ppa-outlook.htm 本页</li>
-      <li>ppa-feature-matrix.md / ppa-status.md / glossary.md</li>
+      <li><a href="ppa-plan.md">ppa-plan.md</a> 8 周学习计划（人用）</li>
+      <li>ppa-outlook.htm 本页（看板 + 文件结构）</li>
     </ul>
   </div>
   <div class="card">
     <h4>agents/</h4>
     <ul>
       <li>orchestrator.md / architect.md / rtl-designer.md / dv-engineer.md / reviewer.md</li>
-      <li>每个角色都有 YAML frontmatter + Stage Sequence + Sign-off + Memory 引用</li>
+      <li>每个角色 YAML frontmatter + Stage Sequence + Sign-off + Memory；模板段指向 template/</li>
     </ul>
   </div>
   <div class="card">
     <h4>skill/</h4>
     <ul>
       <li><b>copilot-*</b>：wave-analyze / rtl-trace / log-triage / review-rtl / review-tb / make-script</li>
-      <li><b>manual-*</b>：apb-protocol / csr-attributes / vcs-flags / verdi-workflow / make-templates / sv-tb-patterns / uvm-env-skeleton / coverage-closure</li>
+      <li><b>manual-*</b>：apb-protocol / csr-attributes / vcs-flags / verdi-workflow / make-templates / sv-tb-patterns / uvm-env-skeleton / coverage-closure / spyglass-lint</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>template/ ★v6</h4>
+    <ul>
+      <li>log-role.md / log-call-rev.md / handoff.md / acceptance.md</li>
+      <li>testplan-row.md / coverage-exclusion-row.md</li>
+      <li>experiences-entry.md / risk-entry.md / review-report.md</li>
     </ul>
   </div>
   <div class="card">
@@ -315,7 +322,7 @@ flowchart TB
   <div class="card">
     <h4>lab1/ lab2/ lab3/ lab4/</h4>
     <ul>
-      <li>每个 lab：doc/ rtl/ svtb/{tb,sim} cov/</li>
+      <li>每个 lab：doc/ rtl/ svtb/{tb,sim,wave,cov,spyglass_reports}</li>
       <li>lab4 额外含 UVM env</li>
     </ul>
   </div>
@@ -328,17 +335,82 @@ flowchart TB
   </div>
 </div>
 
+<h2>5.5 项目文件结构（v6 完整树，权威）</h2>
+<p style="font-size:13px;color:#555;">v6 起这棵树是<b>权威单源</b>（与 <a href="ppa-plan.md">ppa-plan.md §1.2</a> 同步），workflow-vX.md 不再承担。</p>
+<pre style="background:#f8f9fb;padding:12px;border-radius:6px;font-size:12.5px;line-height:1.45;overflow-x:auto;">
+ppa-lab-copilot/                              ← 本仓库
+├── workflow-v1.md ... workflow-v5.md         ← 历史（工作流演进记录）
+├── workflow-v6.md                            ← <b>当前工作流（仅维护用，日常不读）</b>
+│
+├── doc/                                      ← 项目级文档（人读为主）
+│   ├── ppa-lite-spec.md                      ← 权威 spec（不可改）
+│   ├── ppa-plan.md                           ← 8 周学习计划
+│   └── ppa-outlook.htm                       ← 本页：看板 + 文件结构
+│
+├── agents/                                   ← 5 个角色定义（干活指令）
+│   ├── README.md                             ← 总览 + Skill × Agent 矩阵
+│   ├── orchestrator.md  architect.md  rtl-designer.md  dv-engineer.md
+│   └── reviewer.md                           ← v6 可经 make 调本机 EDA
+│
+├── skill/                                    ← 知识与技能卡片
+│   ├── README.md
+│   ├── copilot-{wave-analyze,rtl-trace,log-triage,review-rtl,review-tb,make-script}/SKILL.md
+│   └── manual-{apb-protocol,csr-attributes,vcs-flags,verdi-workflow,
+│               make-templates,sv-tb-patterns,uvm-env-skeleton,
+│               coverage-closure,spyglass-lint}/SKILL.md
+│
+├── template/                                 ← <b>★v6 新增</b>：复制即用的样板
+│   ├── README.md
+│   ├── log-role.md  log-call-rev.md
+│   ├── handoff.md  acceptance.md
+│   ├── testplan-row.md  coverage-exclusion-row.md
+│   ├── experiences-entry.md  risk-entry.md
+│   └── review-report.md
+│
+├── memory/                                   ← 二级记忆 + 单一状态源
+│   ├── README.md
+│   ├── state.md                              ← 【单源】Meta+Cursor+Dispatch+Labs+RISKs+History
+│   ├── orchestrator/{knowledge,experiences}.md
+│   ├── architecture/{knowledge,experiences}.md
+│   ├── rtl/{knowledge,experiences}.md
+│   └── dv/{knowledge,experiences}.md
+│
+├── lab1/  (M1 ppa_apb_slave_if + M2 ppa_packet_sram)
+│   ├── doc/
+│   │   ├── design-prompt.md   ← ARCH 主交付
+│   │   ├── testplan.md        ← DV 主交付（用 template/testplan-row.md）
+│   │   ├── acceptance.md      ← 关单自检（用 template/acceptance.md）
+│   │   ├── handoff.md         ← 跨 Agent 交接（用 template/handoff.md）
+│   │   ├── log.md             ← ROLE 切换 + 每天动态（用 template/log-role.md）
+│   │   ├── coverage_exclusion.md
+│   │   └── review_report/&lt;YYYYMMDD&gt;-&lt;HHMM&gt;-&lt;trigger&gt;-&lt;target&gt;.md
+│   ├── rtl/                   ← *.sv
+│   └── svtb/
+│       ├── tb/  sim/{Makefile,run.log,comp.log}
+│       ├── wave/*.fsdb        ← git-ignore；REV 经 xwave 读
+│       ├── cov/{*.vdb,urgReport}                ← DV 产
+│       └── spyglass_reports/moresimple/*.rpt   ← RTL 产；REV 可读/可重跑
+│
+├── lab2/  (M3 ppa_packet_proc_core)           ← 同 lab1 结构
+├── lab3/  (ppa_top 集成 + E2E TB)             ← 同上
+├── lab4/  (回归 + 覆盖率 + UVM)                ← 同上，svtb/ 内含 UVM 组件
+│
+└── tools/
+    ├── xwave/    ← BLANK2077/xwave
+    └── xtrace/   ← BLANK2077/xtrace
+</pre>
+
 <h2>6 我的日常 SOP（Orchestrator 视角）</h2>
 <div class="mermaid">
 flowchart LR
-    A["1 读 design_state.json"] --> B["2 选角色"]
-    B --> C["3 读 knowledge.md + agents/&lt;role&gt;.md"]
+    A["1 读 memory/state.md"] --> B["2 选角色 (Dispatch.role)"]
+    B --> C["3 读 agents/&lt;role&gt;.md + memory/&lt;domain&gt;/knowledge.md"]
     C --> D["4 执行 stage"]
-    D --> E["5 写 experiences.jsonl"]
-    E --> F["6 更新 design_state.json"]
-    F --> G{"触发 FR?"}
-    G -- yes --> H["7a 写 fix_request"]
-    G -- no --> I["7b 写 handoff.md"]
+    D --> E["5 append memory/&lt;domain&gt;/experiences.md<br/>(template/experiences-entry.md)"]
+    E --> F["6 更新 state.md (Cursor / Labs / History)"]
+    F --> G{"触发 RISK / 跨 Agent 回退?"}
+    G -- yes --> H["7a state.md ## RISKs +1<br/>+ lab*/doc/handoff.md (template/handoff.md)"]
+    G -- no --> I["7b 继续下一 stage"]
     H --> I
 </div>
 
@@ -365,7 +437,7 @@ flowchart LR
 </table>
 
 <hr>
-<p style="color:#888;font-size:13px;">§0 实时块由 <code>memory/state.md</code> 驱动（v4 起 / v5 仍兼容）；其他章节手动维护。每完成一个 Lab 同步：第 4 节静态徽章、<code>memory/state.md</code>、<code>ppa-status.md</code>（如有）。</p>
+<p style="color:#888;font-size:13px;">§0 实时块由 <code>memory/state.md</code> 驱动（v4 起 / v5 / v6 兼容）；其他章节手动维护。每完成一个 Lab 同步：第 4 节静态徽章、<code>memory/state.md</code>、§5.5 文件结构（如新增目录）。</p>
 
 </body>
 </html>

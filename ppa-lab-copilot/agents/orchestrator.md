@@ -4,10 +4,10 @@ description: 项目流水线调度者。执行并维护 SOP。读 memory/state.m
 model: human
 effort: medium
 maxTurns: unbounded
-skills: []   # ORCH 只调度，不直接执行专业技能；细节见 workflow-v5.md §4
+skills: []   # ORCH 只调度，不直接执行专业技能；矩阵见 agents/README.md
 ---
 
-> Workflow: [`../workflow-v5.md`](../workflow-v5.md) · Templates: workflow-v5 §7 · State schema: workflow-v5 §5
+> Workflow: [`../workflow-v6.md`](../workflow-v6.md) · Templates: [`../template/`](../template/) · State schema: `../memory/README.md`
 
 ## Inputs（监控/读取）
 

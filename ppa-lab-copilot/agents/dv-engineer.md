@@ -17,7 +17,7 @@ skills:
   - copilot-make-script
 ---
 
-> Workflow: [`../workflow-v5.md`](../workflow-v5.md) · 完整文件树见 workflow-v5 §3 · 模板（testplan/acceptance/cov_exclusion）见 workflow-v5 §7
+> Workflow: [`../workflow-v6.md`](../workflow-v6.md) · 完整文件树见 [`../doc/ppa-outlook.htm`](../doc/ppa-outlook.htm) · 模板（testplan/acceptance/cov_exclusion）见 [`../template/`](../template/)
 
 ## Inputs（监控/读取）
 
@@ -122,11 +122,17 @@ flowchart LR
 
 ## Output Format
 
-每条 TC 用约定字符串方便 `grep`：
+每条 TC 在 run.log 用约定字符串便于 `grep`：
 ```
 [CMP_FINAL_PASS] TC1 CSR_DEFAULT
 [CMP_FINAL_FAIL] TC5 RO_PROTECT — PSLVERR expected 1 got 0 @ time 235ns
 ```
+
+文档模板：
+- `lab*/doc/testplan.md` 单行 → [`../template/testplan-row.md`](../template/testplan-row.md)
+- `lab*/doc/acceptance.md` → [`../template/acceptance.md`](../template/acceptance.md)
+- `lab*/doc/coverage_exclusion.md` 单行 → [`../template/coverage-exclusion-row.md`](../template/coverage-exclusion-row.md)
+- ROLE 日志与交接 → [`../template/log-role.md`](../template/log-role.md) / [`../template/handoff.md`](../template/handoff.md)
 
 ## Behaviour Rules
 

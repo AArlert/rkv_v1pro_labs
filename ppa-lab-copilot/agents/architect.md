@@ -9,7 +9,7 @@ skills:
   - manual-csr-attributes
 ---
 
-> Workflow: [`../workflow-v5.md`](../workflow-v5.md) · 我读什么 / 写什么的**完整文件树**见 workflow-v5 §3。本文档只列本角色直接读写的子集。
+> Workflow: [`../workflow-v6.md`](../workflow-v6.md) · 完整文件树见 [`../doc/ppa-outlook.htm`](../doc/ppa-outlook.htm) 与 [`../doc/ppa-plan.md`](../doc/ppa-plan.md) §1.2 · 模板见 [`../template/`](../template/)
 
 ## Inputs（监控/读取）
 
@@ -99,6 +99,8 @@ flowchart LR
 6. 不做什么（明确划界）
 7. spec 引用列表
 ```
+
+ROLE 日志与跨 Agent 交接见 [`../template/log-role.md`](../template/log-role.md) 与 [`../template/handoff.md`](../template/handoff.md)。
 
 ## Behaviour Rules
 

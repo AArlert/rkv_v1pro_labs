@@ -1,7 +1,7 @@
-# Skills — 命名规约与索引（v5）
+# Skills — 命名规约与索引（v6）
 
 两类 skill 共用 SKILL 规范（每个 skill 一个目录，含 `SKILL.md`，带 YAML frontmatter）。
-v5 起，本 README 显式登记每条 skill 的**消费者（哪些 agent 调用）**。
+v5 起本 README 显式登记每条 skill 的**消费者（哪些 agent 调用）**；v6 不变。
 
 ## 命名
 
@@ -70,10 +70,11 @@ tools:   [依赖的外部工具（如 xwave, xtrace, vcs, verdi, spyglass）]
 
 两者均提供 `<cmd> ai query --json` 接口，输出 `<cmd>.ai.v1` JSON schema，便于 Agent 解析。
 
-## v4 → v5 变化
+## v4 → v6 变化
 
-| v4 | v5 |
-|---|---|
-| Skill 索引无 Consumers 列；agent ↔ skill 对应散落各处 | 索引加 **Consumers** 列；与 agents/README.md 矩阵互引 |
-| 无 Spyglass skill | 新增 **manual-spyglass-lint**（RTL sign-off 前必跑） |
-| 隐含约定"manual 禁 REV" | **显式**写在命名表与 README 顶部 |
+| v4 | v5 | v6 |
+|---|---|---|
+| Skill 索引无 Consumers 列；agent ↔ skill 对应散落 | 索引加 Consumers 列；与 agents/README.md 矩阵互引 | 不变 |
+| 无 Spyglass skill | 新增 `manual-spyglass-lint` | 不变 |
+| 隐含约定"manual 禁 REV" | 显式写在命名表与 README 顶部 | 不变 |
+| Spyglass / VCS / Verdi 与 REV 互动 | REV 不直接跑 EDA，只读 RTL/DV 留下的 `.rpt`/log/fsdb | **v6 起 REV 可经 `make <target>` 在本机重跑**；详见 `agents/reviewer.md` |

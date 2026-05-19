@@ -1,7 +1,7 @@
 # State (memory/state.md)
 
 <!--
-v5 单一状态源。ORCH 每 session 开头只读这一份；outlook.htm 也通过 fetch 解析这一份。
+v6 单一状态源。ORCH 每 session 开头只读这一份；outlook.htm 也通过 fetch 解析这一份。
 解析锚点：以下 H2 标题（## Cursor / ## Dispatch / ## Labs Progress / ## RISKs / ## History）
 是机器约定，**勿改名/勿改顺序**。表头列名也是机器约定。
 原子写：cp state.md{,.tmp} && 编辑 .tmp && mv .tmp state.md
@@ -12,14 +12,14 @@ v5 单一状态源。ORCH 每 session 开头只读这一份；outlook.htm 也通
 | 字段 | 值 |
 |---|---|
 | spec_version | `ppa-lite-spec.md@2026-04-13` |
-| workflow | `workflow-v5.md` |
+| workflow | `workflow-v6.md` |
 | created | 2026-05-18 |
 
 ## Cursor
 
 - **lab**: lab1
-- **phase**: arch              <!-- arch | rtl | dv | review  （v5 去除 close） -->
-- **last**: ORCH 完成 v5 迁移（skill 矩阵 / Spyglass / 人友好模板 / 完整文件树） — 2026-05-19
+- **phase**: arch              <!-- arch | rtl | dv | review  （v5 起去除 close） -->
+- **last**: ORCH 完成 v6 迁移（template/ 拆解 / ppa-plan 蒸馏 / REV 经 make 调 EDA / 文件树进 outlook） — 2026-05-19
 - **next**: 切 ARCH 角色，读 spec §2/§4，开始写 lab1/doc/design-prompt.md
 
 ## Dispatch
@@ -79,3 +79,4 @@ v4 起：合并原 doc/ppa-risk-register.md。
 | 2026-05-19T08:30 | ORCH | v3 落地 | workflow-v3.md |
 | 2026-05-19T09:00 | ORCH | v4 落地（RISKs 入 state；outlook 实时监控） | workflow-v4.md |
 | 2026-05-19T09:30 | ORCH | v5 落地（skill 矩阵；Spyglass；人友好模板；完整文件树） | workflow-v5.md |
+| 2026-05-19T10:00 | ORCH | v6 落地（template/ 拆解；ppa-plan 蒸馏；REV 经 make 调 EDA；文件树进 outlook） | workflow-v6.md |

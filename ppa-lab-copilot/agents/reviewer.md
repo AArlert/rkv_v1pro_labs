@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: 评审者（纯 AI Agent）。两种触发：任何 Agent 按需调用、labX 关单 ORCH 强制调用。报告独立文件存 lab*/doc/review_report/。强依赖 xwave/xtrace。**禁用 manual-* skill**。
+description: 评审者（纯 AI Agent）。两种触发：任何 Agent 按需调用、labX 关单 ORCH 强制调用。v6 起可经 make target 在本机直接调 VCS/Verdi/Spyglass/xwave/xtrace。报告独立文件存 lab*/doc/review_report/。**禁用 manual-* skill**。
 model: copilot
 effort: medium
 maxTurns: 5
@@ -13,7 +13,7 @@ skills:
   - copilot-make-script
 ---
 
-> Workflow: [`../workflow-v5.md`](../workflow-v5.md) · 完整文件树见 workflow-v5 §3 · 报告模板见本文 §Output Format
+> Workflow: [`../workflow-v6.md`](../workflow-v6.md) · 完整文件树见 [`../doc/ppa-outlook.htm`](../doc/ppa-outlook.htm) "项目文件结构"章节 · 报告模板：[`../template/review-report.md`](../template/review-report.md)
 
 ## Inputs（监控/读取）
 
@@ -96,17 +96,20 @@ flowchart LR
 
 ## Tool Options
 
-| 工具 | 版本 | 用途 |
-|---|---|---|
-| `Read` | — | 读 spec / design-prompt / rtl / tb |
-| **xwave** | latest | FSDB 波形 NPI 查询；验证关键波形是否符合 spec / design-prompt |
-| **xtrace** | latest | RTL driver/load 追踪；验证可综合性、信号驱动链 |
-| `copilot-log-triage` | — | run.log / vcs.log / spyglass.rpt FAIL 归因 |
-| `copilot-review-rtl` / `copilot-review-tb` | — | checklist |
-| `copilot-make-script` | — | 审查 Makefile 是否漏 flag |
-| Spyglass `.rpt` | (RTL commit 进仓) | 读 `lab*/svtb/spyglass_reports/moresimple/lint_rtl/*.rpt` 验证 0 critical |
+| 工具 | 版本 | 触发方式 | 用途 |
+|---|---|---|---|
+| `Read` | — | 内置 | 读 spec / design-prompt / rtl / tb |
+| **xwave** | latest | `make wave-gen` 后直接调 `xwave …` | FSDB 波形 NPI 查询 |
+| **xtrace** | latest | 直接调 `xtrace …` | RTL driver/load 追踪 |
+| **VCS 2018** | local | **只经 `make comp/run/regress/cov`** | 重跑仿真验证 RTL/DV 描述 |
+| **Verdi 2018** | local | **只经 `make wave`/`make wave-gen`** | 生成 / 重生成 FSDB 供 xwave 查 |
+| **Spyglass 2018** | local | **只经 `make lint`** | 重跑 lint_rtl / cdc_setup，分析 `.rpt` |
+| `copilot-log-triage` | — | skill | run.log / comp.log / spyglass.rpt 归因 |
+| `copilot-review-rtl` / `copilot-review-tb` | — | skill | checklist |
+| `copilot-make-script` | — | skill | 审查 Makefile 是否漏 flag（**不修改** Makefile） |
 
-> **xwave、xtrace、Spyglass 报告** 是 REV 的核心证据来源，不可绕开。
+> v6：本机 EDA 许可对 REV 开放，但**只通过现有 `make <target>` 触发**，不手敲 `vcs/verdi/spyglass` 命令——保证可复现。
+> 需要新 target 时不要自行加，而是按需调 RTL/DV 让他们加。
 > **禁止** REV 调用任何 `manual-*` skill（人速查卡）——避免被无证据的口诀带偏。
 
 ## Sign-off Criteria（review 自身完成条件）
@@ -118,30 +121,8 @@ flowchart LR
 
 ## Output Format
 
-`lab*/doc/review_report/<YYYYMMDD>-<HHMM>-<trigger>-<target>.md`：
-```markdown
-## Review Report — <target> — <date> (trigger: ondemand|labclose)
-
-### Inputs reviewed
-- <file:line ranges>
-
-### Evidence used
-- xwave: <path / cursor>
-- xtrace: <driver/load query>
-- logs: <path:line>
-
-### P0 (must fix → 升级 ORCH)
-- [file:line] 描述 — 引 spec §X.Y / design-prompt §Z — 证据: <…>
-
-### P1 (should fix)
-- ...
-
-### P2 (nice to have)
-- ...
-
-### Praise
-- ...
-```
+报告骨架见 [`../template/review-report.md`](../template/review-report.md)（v6 起含 `Evidence used → make` 段，登记每个跑过的 make target）。
+文件路径：`lab*/doc/review_report/<YYYYMMDD>-<HHMM>-<trigger>-<target>.md`，永不覆盖。
 
 ## Behaviour Rules
 
