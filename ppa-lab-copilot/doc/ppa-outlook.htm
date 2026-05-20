@@ -4,27 +4,218 @@
 <meta charset="UTF-8">
 <title>PPA-Lab-Copilot 工作流概览</title>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-<script>mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'strict' });</script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
+    securityLevel: 'strict'
+  });
+</script>
 <style>
-  body { font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 1100px; margin: 24px auto; padding: 0 24px; color: #222; line-height: 1.55; }
-  h1 { border-bottom: 2px solid #2c5; padding-bottom: 8px; }
-  h2 { margin-top: 36px; border-left: 4px solid #2c5; padding-left: 10px; }
-  h3 { color: #444; margin-top: 22px; }
-  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
-  th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: left; vertical-align: top; }
-  th { background: #f6f8fa; }
-  code { background: #f4f4f4; padding: 1px 5px; border-radius: 3px; font-family: "JetBrains Mono", Consolas, monospace; font-size: 90%; }
-  .mermaid { background: #fafafa; padding: 12px; border-radius: 6px; margin: 12px 0; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; color: #fff; }
-  .b-todo { background: #999; }
-  .b-wip  { background: #e8a; }
-  .b-done { background: #2c5; }
-  .legend span { margin-right: 14px; font-size: 13px; }
+  :root {
+    --canvas: #faf9f5;
+    --surface-soft: #f5f0e8;
+    --surface-card: #efe9de;
+    --surface-cream-strong: #e8e0d2;
+    --surface-dark: #181715;
+    --surface-dark-elevated: #252320;
+    --surface-dark-soft: #1f1e1b;
+    --ink: #141413;
+    --body: #3d3d3a;
+    --body-strong: #252523;
+    --muted: #6c6a64;
+    --muted-soft: #8e8b82;
+    --hairline: #e6dfd8;
+    --hairline-soft: #ebe6df;
+    --primary: #cc785c;
+    --primary-active: #a9583e;
+    --on-primary: #ffffff;
+    --on-dark: #faf9f5;
+    --on-dark-soft: #a09d96;
+    --accent-teal: #5db8a6;
+    --accent-amber: #e8a55a;
+    --success: #5db872;
+    --warning: #d4a017;
+    --error: #c64545;
+    --font-display: "Tiempos Headline", "Cormorant Garamond", "EB Garamond", Georgia, serif;
+    --font-body: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-code: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    --rounded-sm: 6px;
+    --rounded-md: 8px;
+    --rounded-lg: 12px;
+    --rounded-xl: 16px;
+    --rounded-pill: 9999px;
+    /* semantic mappings (light) */
+    --page-bg: var(--canvas);
+    --text-primary: var(--ink);
+    --text-body: var(--body);
+    --text-muted: var(--muted);
+    --text-muted-soft: var(--muted-soft);
+    --card-bg: var(--surface-card);
+    --card-border: var(--hairline);
+    --table-header-bg: var(--surface-soft);
+    --table-border: var(--hairline);
+    --code-bg: var(--surface-soft);
+    --mermaid-bg: var(--surface-soft);
+    --quote-bg: var(--surface-card);
+    --quote-border: var(--accent-amber);
+    --link-color: var(--primary);
+    --pre-bg: var(--surface-soft);
+    --input-bg: var(--canvas);
+    --input-border: var(--hairline);
+    --error-bg: #fff5f5;
+    --error-border: var(--error);
+    --error-text: #900;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page-bg: var(--surface-dark);
+      --text-primary: var(--on-dark);
+      --text-body: var(--on-dark-soft);
+      --text-muted: var(--on-dark-soft);
+      --text-muted-soft: #7a7770;
+      --card-bg: var(--surface-dark-elevated);
+      --card-border: #333230;
+      --table-header-bg: var(--surface-dark-soft);
+      --table-border: #333230;
+      --code-bg: var(--surface-dark-soft);
+      --mermaid-bg: var(--surface-dark-soft);
+      --quote-bg: var(--surface-dark-elevated);
+      --quote-border: var(--accent-amber);
+      --link-color: #e09070;
+      --pre-bg: var(--surface-dark-soft);
+      --input-bg: var(--surface-dark-soft);
+      --input-border: #333230;
+      --error-bg: #2a1515;
+      --error-border: var(--error);
+      --error-text: #f88;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.55;
+    max-width: 1100px;
+    margin: 32px auto;
+    padding: 0 24px;
+    color: var(--text-body);
+    background: var(--page-bg);
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    color: var(--text-primary);
+  }
+  h1 {
+    font-size: 36px;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+  }
+  h2 {
+    font-size: 28px;
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+    margin-top: 48px;
+    border-left: 4px solid var(--primary);
+    padding-left: 12px;
+  }
+  h3 {
+    font-size: 22px;
+    line-height: 1.3;
+    margin-top: 24px;
+  }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--table-border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--table-header-bg); font-weight: 500; color: var(--text-primary); }
+  td { color: var(--text-body); }
+  code {
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: var(--font-code);
+    font-size: 13px;
+  }
+  pre {
+    background: var(--pre-bg);
+    padding: 16px;
+    border-radius: var(--rounded-lg);
+    font-size: 12.5px;
+    line-height: 1.5;
+    overflow-x: auto;
+    font-family: var(--font-code);
+    color: var(--text-body);
+  }
+  .mermaid { background: var(--mermaid-bg); padding: 16px; border-radius: var(--rounded-lg); margin: 16px 0; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: var(--rounded-pill); font-size: 12px; font-weight: 500; color: var(--on-primary); letter-spacing: 0.3px; }
+  .b-todo { background: var(--muted-soft); }
+  .b-wip  { background: var(--accent-amber); }
+  .b-done { background: var(--success); }
+  .legend span { margin-right: 16px; font-size: 13px; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .card { border: 1px solid #ddd; border-radius: 6px; padding: 14px 16px; background: #fff; }
-  .card h4 { margin: 0 0 8px; color: #2c5; }
-  .quote { background: #fffbea; border-left: 4px solid #fb3; padding: 8px 12px; margin: 12px 0; }
-  a { color: #2563eb; }
+  @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    border: 1px solid var(--card-border);
+    border-radius: var(--rounded-lg);
+    padding: 20px;
+    background: var(--card-bg);
+  }
+  .card h4 {
+    margin: 0 0 10px;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 16px;
+    color: var(--primary);
+  }
+  .card ul { margin: 0; padding-left: 18px; }
+  .card li { margin-bottom: 4px; font-size: 14px; }
+  .quote {
+    background: var(--quote-bg);
+    border-left: 4px solid var(--quote-border);
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 0 var(--rounded-md) var(--rounded-md) 0;
+  }
+  a { color: var(--link-color); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  hr { border: none; border-top: 1px solid var(--card-border); margin: 32px 0; }
+  details summary { cursor: pointer; color: var(--link-color); font-size: 13px; }
+  textarea {
+    width: 100%;
+    background: var(--input-bg);
+    color: var(--text-body);
+    border: 1px solid var(--input-border);
+    border-radius: var(--rounded-md);
+    font-family: var(--font-code);
+    font-size: 12px;
+    padding: 10px;
+  }
+  button {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border: none;
+    border-radius: var(--rounded-md);
+    background: var(--primary);
+    color: var(--on-primary);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: var(--primary-active); }
+  #live-error {
+    padding: 10px 14px;
+    background: var(--error-bg);
+    border-left: 4px solid var(--error-border);
+    color: var(--error-text);
+    margin: 8px 0;
+    font-size: 13px;
+    border-radius: 0 var(--rounded-sm) var(--rounded-sm) 0;
+  }
 </style>
 </head>
 <body>
@@ -39,36 +230,36 @@
 </div>
 
 <h2>0 实时状态（live, from <code>memory/state.md</code>）</h2>
-<p style="font-size:13px;color:#555;">
+<p style="font-size:13px;color:var(--text-muted);">
   打开页面时自动 <code>fetch('../memory/state.md')</code> 解析并渲染下方流程图与表格。
   若以 <code>file://</code> 直接打开浏览器（CORS 拦截），请用 <code>python -m http.server</code> 在仓库根起静态服务后再访问；
   或在下方文本框粘贴 <code>state.md</code> 全文并点 "Render"。
 </p>
 <div id="live-status">
-  <div id="live-error" style="display:none;padding:8px 12px;background:#fff5f5;border-left:4px solid #f55;color:#900;margin:8px 0;font-size:13px;"></div>
+  <div id="live-error" style="display:none;"></div>
   <div class="grid" style="grid-template-columns: 1fr 1fr;">
     <div class="card">
       <h4>Cursor → Dispatch</h4>
       <div id="live-flow" class="mermaid" style="min-height:80px;">flowchart LR
     L["loading…"]
 </div>
-      <div id="live-cursor" style="font-size:13px;color:#444;"></div>
+      <div id="live-cursor" style="font-size:13px;color:var(--text-muted);"></div>
     </div>
     <div class="card">
       <h4>Open RISKs</h4>
       <ul id="live-risks" style="font-size:13px;margin:6px 0 0 18px;padding:0;"><li>loading…</li></ul>
     </div>
   </div>
-  <h4 style="margin-top:14px;color:#2c5;">Labs Progress（live）</h4>
+  <h4 style="margin-top:14px;color:var(--primary);">Labs Progress（live）</h4>
   <table id="live-labs">
     <thead><tr><th>Lab</th><th>arch</th><th>rtl</th><th>tb</th><th>cov</th><th>accept</th></tr></thead>
-    <tbody><tr><td colspan="6" style="color:#888;">loading…</td></tr></tbody>
+    <tbody><tr><td colspan="6" style="color:var(--text-muted-soft);">loading…</td></tr></tbody>
   </table>
   <details style="margin-top:10px;">
-    <summary style="cursor:pointer;color:#2563eb;font-size:13px;">手动粘贴 state.md（fetch 失败时使用）</summary>
-    <textarea id="live-paste" style="width:100%;height:140px;font-family:Consolas,monospace;font-size:12px;margin-top:8px;" placeholder="把 memory/state.md 全文粘到这里…"></textarea>
-    <button id="live-render" style="margin-top:6px;padding:4px 14px;cursor:pointer;">Render</button>
-    <button id="live-refetch" style="margin-top:6px;padding:4px 14px;cursor:pointer;">Re-fetch</button>
+    <summary style="cursor:pointer;color:var(--link-color);font-size:13px;">手动粘贴 state.md（fetch 失败时使用）</summary>
+    <textarea id="live-paste" style="height:140px;margin-top:8px;" placeholder="把 memory/state.md 全文粘到这里…"></textarea>
+    <button id="live-render" style="margin-top:6px;">Render</button>
+    <button id="live-refetch" style="margin-top:6px;">Re-fetch</button>
   </details>
 </div>
 
@@ -128,7 +319,7 @@
     var src =
       'flowchart LR\n' +
       '    A["lab: ' + lab + '"]:::cur --> B["phase: ' + phase + '"]:::cur --> C["dispatch: ' + role + '"]:::cur\n' +
-      '    classDef cur fill:#e6fff0,stroke:#2c5,stroke-width:2px;\n';
+      '    classDef cur fill:#cc785c22,stroke:#cc785c,stroke-width:2px,color:#141413;\n';
     var el = document.getElementById('live-flow');
     el.removeAttribute('data-processed');
     el.innerHTML = src;
@@ -138,28 +329,28 @@
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
   function badge(v){
     var cls = ({todo:'b-todo', wip:'b-wip', blocked:'b-wip', done:'b-done'})[v] || 'b-todo';
-    var style = v === 'blocked' ? ' style="background:#c33;"' : '';
+    var style = v === 'blocked' ? ' style="background:var(--error);"' : '';
     return '<span class="badge ' + cls + '"' + style + '>' + esc(v) + '</span>';
   }
   function renderLabs(s){
     var tb = document.querySelector('#live-labs tbody');
-    if (!s.labs.length){ tb.innerHTML = '<tr><td colspan="6" style="color:#888;">(空)</td></tr>'; return; }
+    if (!s.labs.length){ tb.innerHTML = '<tr><td colspan="6" style="color:var(--text-muted-soft);">(空)</td></tr>'; return; }
     tb.innerHTML = s.labs.map(function(l){
       return '<tr><td>'+esc(l.lab)+'</td><td>'+badge(l.arch)+'</td><td>'+badge(l.rtl)+'</td><td>'+badge(l.tb)+'</td><td>'+badge(l.cov)+'</td><td>'+badge(l.accept)+'</td></tr>';
     }).join('');
   }
   function renderRisks(s){
     var ul = document.getElementById('live-risks');
-    if (!s.risks.length){ ul.innerHTML = '<li style="color:#888;">(无)</li>'; return; }
+    if (!s.risks.length){ ul.innerHTML = '<li style="color:var(--text-muted-soft);">(无)</li>'; return; }
     ul.innerHTML = s.risks.map(function(r){
-      return '<li><b>'+esc(r.id)+'</b> ['+esc(r.from||'?')+'→'+esc(r.to||'?')+'] <code>'+esc(r['lab.phase']||'?')+'</code> '+esc(r.summary||'')+' <span style="color:#c33;">['+esc(r.status||'open')+']</span></li>';
+      return '<li><b>'+esc(r.id)+'</b> ['+esc(r.from||'?')+'→'+esc(r.to||'?')+'] <code>'+esc(r['lab.phase']||'?')+'</code> '+esc(r.summary||'')+' <span style="color:var(--error);">['+esc(r.status||'open')+']</span></li>';
     }).join('');
   }
   function renderCursor(s){
     document.getElementById('live-cursor').innerHTML =
       '<div style="margin-top:6px;"><b>last</b>: '+esc(s.cursor.last||'—')+'</div>' +
       '<div><b>next</b>: '+esc(s.cursor.next||'—')+'</div>' +
-      '<div style="color:#888;font-size:12px;margin-top:4px;">dispatch.reason: '+esc(s.dispatch.reason||'—')+'</div>';
+      '<div style="color:var(--text-muted-soft);font-size:12px;margin-top:4px;">dispatch.reason: '+esc(s.dispatch.reason||'—')+'</div>';
   }
   function render(md){
     try {
@@ -336,8 +527,8 @@ flowchart TB
 </div>
 
 <h2>5.5 项目文件结构（v6 完整树，权威）</h2>
-<p style="font-size:13px;color:#555;">v6 起这棵树是<b>权威单源</b>（与 <a href="ppa-plan.md">ppa-plan.md §1.2</a> 同步），workflow-vX.md 不再承担。</p>
-<pre style="background:#f8f9fb;padding:12px;border-radius:6px;font-size:12.5px;line-height:1.45;overflow-x:auto;">
+<p style="font-size:13px;color:var(--text-muted);">v6 起这棵树是<b>权威单源</b>（与 <a href="ppa-plan.md">ppa-plan.md §1.2</a> 同步），workflow-vX.md 不再承担。</p>
+<pre>
 ppa-lab-copilot/                              ← 本仓库
 ├── workflow-v1.md ... workflow-v5.md         ← 历史（工作流演进记录）
 ├── workflow-v6.md                            ← <b>当前工作流（仅维护用，日常不读）</b>
@@ -437,7 +628,7 @@ flowchart LR
 </table>
 
 <hr>
-<p style="color:#888;font-size:13px;">§0 实时块由 <code>memory/state.md</code> 驱动（v4 起 / v5 / v6 兼容）；其他章节手动维护。每完成一个 Lab 同步：第 4 节静态徽章、<code>memory/state.md</code>、§5.5 文件结构（如新增目录）。</p>
+<p style="color:var(--text-muted-soft);font-size:13px;">§0 实时块由 <code>memory/state.md</code> 驱动（v4 起 / v5 / v6 兼容）；其他章节手动维护。每完成一个 Lab 同步：第 4 节静态徽章、<code>memory/state.md</code>、§5.5 文件结构（如新增目录）。</p>
 
 </body>
 </html>

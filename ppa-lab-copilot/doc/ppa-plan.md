@@ -158,7 +158,7 @@ flowchart LR
 - [x] 0.1 Ubuntu 22.04 LTS 上用 `dve -full64` 确认 VCS 2018 可用
 - [x] 0.2 确认 `verdi -version`；GUI 用 `verdi &`
 - [ ] 0.3 检查 `~/.bashrc` 中 `SPYGLASS_HOME` / `PATH` 已配置；确认 `spyglass -version` 可执行；确认 `$SPYGLASS_HOME/GuideWare/latest/block/rtl_handoff` 存在
-- [ ] 0.4 克隆并编译 [xwave](https://github.com/BLANK2077/xwave) / [xtrace](https://github.com/BLANK2077/xtrace) 至 `tools/{xwave,xtrace}/`（依赖 `VERDI_HOME` 已配置）；各目录 `make clean && make`；确认 `xwave --help` / `tools/xtrace-env --help` 可跑
+- [x] 0.4 克隆并编译 [xwave](https://github.com/BLANK2077/xwave) / [xtrace](https://github.com/BLANK2077/xtrace) 至 `tools/{xwave,xtrace}/`（依赖 `VERDI_HOME` 已配置）；各目录 `make clean && make`；确认 `xwave --help` / `tools/xtrace-env --help` 可跑
 - [ ] 0.5 写最小 `hello.sv`（`initial $display("hello")`），VCS 编译 + simv 跑通；加 `$fsdbDumpvars` 跑出 `.fsdb`；用 `verdi &` 打开看
 - [ ] 0.6 把命令整理进 `skill/manual-vcs-flags/SKILL.md` 与 `skill/manual-verdi-workflow/SKILL.md`（对照已有 SKILL.md 增补本机版本细节）
 
