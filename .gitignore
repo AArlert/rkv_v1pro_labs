@@ -5,9 +5,21 @@ Thumbs.db
 *.swp
 *.swo
 
-# Common logs / transcripts
+# VCS simulation artifacts
+simv
+simv.daidir/
+csrc/
 *.log
-transcript
+*.vpd
+*.fsdb
+*.vcd
+ucli.key
+DVEfiles/
+inter.vpd
+
+# Verdi artifacts
+novas.*
+verdiLog/
 
 # Verilog/SystemVerilog simulation outputs (ModelSim/Questa)
 work/

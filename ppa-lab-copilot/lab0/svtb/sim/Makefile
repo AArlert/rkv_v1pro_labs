@@ -13,26 +13,28 @@ VFILES   = $(SIMDIR)/../tb/$(TB).sv
 #############################
 # Environment variables
 #############################
-VCS      = vcs -full64 -sverilog -debug_all -l comp.log -o simv -LDFLAGS -Wl,--no-as-needed
-VCOMP    = $(VCS)
+VERDI_PLI_DIR = $(VERDI_HOME)/share/PLI/VCS/LINUX64
+VCS      = vcs -full64 -sverilog -debug_all -l comp.log -o simv \
+           -LDFLAGS '-Wl,--no-as-needed' \
+           -P $(VERDI_PLI_DIR)/novas.tab $(VERDI_PLI_DIR)/pli.a
 RUN      = ./simv +ntb_random_seed=$(SEED) -l run.log
-RUN_OPTS = -R
-RUN_VPD  = ./simv +ntb_random_seed=$(SEED) +vcs+vpdfile=sim.vpd -l run.log -R
 
 comp:
-	$(VCOMP) $(DFILES) $(VFILES)
+	$(VCS) $(DFILES) $(VFILES)
 
 run:
-	$(RUN) $(RUN_OPTS)
+	$(RUN)
 
 rung:
-	$(RUN) -i
+	$(RUN) -gui
 
-run_vpd:
-	$(RUN_VPD)
+run_fsdb:
+	$(RUN)
 
-verdi: run_vpd
-	verdi -vpd sim.vpd &
+verdi: run_fsdb
+	verdi -ssf sim.fsdb &
 
 clean:
-	rm -rf work *.log *.wlf transcript
+	rm -rf simv simv.daidir csrc
+	rm -rf *.log *.fsdb *.vpd
+	rm -rf ucli.key novas.* DVEfiles verdiLog
