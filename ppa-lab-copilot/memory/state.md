@@ -17,26 +17,26 @@ v6 单一状态源。ORCH 每 session 开头只读这一份；outlook.htm 也通
 
 ## Cursor
 
-- **lab**: lab1
-- **phase**: arch              <!-- arch | rtl | dv | review  （v5 起去除 close） -->
+- **lab**: lab0
+- **phase**: orch              <!-- orch | arch | rtl | dv | review  （v5 起去除 close） -->
 - **last**: ORCH 完成 v6 迁移（template/ 拆解 / ppa-plan 蒸馏 / REV 经 make 调 EDA / 文件树进 outlook） — 2026-05-19
-- **next**: 切 ARCH 角色，读 spec §2/§4，开始写 lab1/doc/design-prompt.md
+- **next**: 执行 [[ppa-plan#3 第 0 周 环境与知识准备]]
 
 ## Dispatch
 
-- **role**: ARCH               <!-- ARCH | RTL | DV | REV | ORCH-decide -->
-- **reason**: 进入 lab1 架构阶段
+- **role**: ORCH               <!-- ARCH | RTL | DV | REV | ORCH-decide -->
+- **reason**: 进入 lab0 工具链安装与冒烟阶段
 
 ## Labs Progress
 
-| Lab | arch | rtl | tb | cov | accept |
-|---|---|---|---|---|---|
-| lab1 | wip  | todo | todo | todo | todo |
-| lab2 | todo | todo | todo | todo | todo |
-| lab3 | todo | todo | todo | todo | todo |
-| lab4 | todo | todo | todo | todo | todo |
+| Lab  | arch  | rtl   | tb    | cov   | accept |
+| ---- | ----- | ----- | ----- | ----- | ------ |
+| lab1 | #wip  | #todo | #todo | #todo | #todo  |
+| lab2 | #todo | #todo | #todo | #todo | #todo  |
+| lab3 | #todo | #todo | #todo | #todo | #todo  |
+| lab4 | #todo | #todo | #todo | #todo | #todo  |
 
-<!-- 取值：todo / wip / blocked / done -->
+<!-- 取值：#todo / #wip / #blocked / #done -->
 
 ## RISKs
 
@@ -72,11 +72,12 @@ v4 起：合并原 doc/ppa-risk-register.md。
 
 ## History
 
-| 时间 | role | action | ref |
-|---|---|---|---|
-| 2026-05-18T00:00 | ORCH | project initialized | doc/ppa-plan.md |
-| 2026-05-18T12:00 | ORCH | v2 落地 | workflow-v2.md |
-| 2026-05-19T08:30 | ORCH | v3 落地 | workflow-v3.md |
-| 2026-05-19T09:00 | ORCH | v4 落地（RISKs 入 state；outlook 实时监控） | workflow-v4.md |
-| 2026-05-19T09:30 | ORCH | v5 落地（skill 矩阵；Spyglass；人友好模板；完整文件树） | workflow-v5.md |
-| 2026-05-19T10:00 | ORCH | v6 落地（template/ 拆解；ppa-plan 蒸馏；REV 经 make 调 EDA；文件树进 outlook） | workflow-v6.md |
+| 时间               | role | action                                                          | ref                                |
+| ---------------- | ---- | --------------------------------------------------------------- | ---------------------------------- |
+| 2026-05-18T00:00 | ORCH | project initialized                                             | doc/ppa-plan.md                    |
+| 2026-05-18T12:00 | ORCH | v2 落地                                                           | workflow-v2.md                     |
+| 2026-05-19T08:30 | ORCH | v3 落地                                                           | workflow-v3.md                     |
+| 2026-05-19T09:00 | ORCH | v4 落地（RISKs 入 state；outlook 实时监控）                               | workflow-v4.md                     |
+| 2026-05-19T09:30 | ORCH | v5 落地（skill 矩阵；Spyglass；人友好模板；完整文件树）                            | workflow-v5.md                     |
+| 2026-05-19T10:00 | ORCH | v6 落地（template/ 拆解；ppa-plan 蒸馏；REV 经 make 调 EDA；文件树进 outlook）   | workflow-v6.md                     |
+| 2026-05-20T23:00 | ORCH | lab0 测试 vcs、verdi 可用性，调整 Makefile；debug tb.sv；蒸馏 SKILL — 跑通仿真流程 | memory/orchestrator/experiences.md |

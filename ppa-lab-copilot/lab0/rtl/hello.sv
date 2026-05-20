@@ -7,9 +7,14 @@ module hello (
         if (!rst_n) begin
             data_out <= 8'b0;
         end else begin
-            for (int i = 0; i < 8; i++) begin
-                data_out[i] <= i;
-            end
+            data_out[0] <= 0;
+            data_out[1] <= 1;
+            data_out[2] <= 0;
+            data_out[3] <= 1;
+            data_out[4] <= 0;
+            data_out[5] <= 1;
+            data_out[6] <= 0;
+            data_out[7] <= 1;
         end
     end
 endmodule

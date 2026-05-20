@@ -16,4 +16,16 @@
 - **artifacts**: memory/state.md#RISK-0002, agents/dv-engineer.md
 -->
 
-（暂无）
+```markdown
+- **场景**: lab0 测试 vcs、verdi 可用性，调整 Makefile；debug tb.sv — 跑通仿真流程
+- **时间**: 2026-05-20T23:00
+- **操作**: 
+    - 修改 Makefile，调整 vcs 和 verdi 的运行参数
+- **结果**: 仿真环境可用，Makefile 跑通
+- **教训**: 
+    - RUN_OPTS = -R — -R 是 vcs 编译器选项（编译后立即运行），不是 simv 运行时选项，传给 ./simv 无效
+    - verdi -vpd sim.vpd — -vpd 不是 Verdi 的有效参数，应使用 -ssf
+    - -LDFLAGS -Wl,--no-as-needed（未引号） — -LDFLAGS '-Wl,--no-as-needed'（加引号更安全）
+    - 严格按照 /skill/manual-vcs-flags/SKILL.md 和 /skill/manual-verdi-workflow/SKILL.md 的说明设置 Makefile
+- **artifacts**: Makefile, comp.log, run.log
+```

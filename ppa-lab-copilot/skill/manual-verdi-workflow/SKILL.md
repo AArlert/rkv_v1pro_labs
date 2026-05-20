@@ -8,33 +8,32 @@ outputs: []
 tools: [verdi]
 ---
 
-# Verdi 流程笔记（待 0 周补全）
+# Verdi 流程笔记
 
 ## TB 内 dump 语句
 
 ```systemverilog
-`ifdef DUMP_FSDB
 initial begin
-  $fsdbDumpfile("novas.fsdb");
-  $fsdbDumpvars(0, ppa_tb);
+    $fsdbDumpfile("sim.fsdb");
+    $fsdbDumpvars(0, ppa_tb);
 end
-`endif
 ```
 
 ## 启动
 
 ```bash
-verdi -ssf novas.fsdb -nologo &
-# 或
-verdi -dbdir simv.daidir -ssf novas.fsdb -nologo &
+# 跑波形
+verdi -ssf sim.fsdb -nologo &
+# 恢复窗口
+verdi -rc wave.rc &
 ```
 
 ## 我的信号分组习惯
 
-- Group: APB（PSEL/PENABLE/PADDR/PWRITE/PWDATA/PRDATA/PREADY/PSLVERR）
-- Group: CSR（每个 CSR 一行）
-- Group: FSM（state_q + 关键计数器）
-- Group: M3 result（res_*、error_*）
+- Group: APB（`PSEL/PENABLE/PADDR/PWRITE/PWDATA/PRDATA/PREADY/PSLVERR`）
+- Group: CSR（每个 `CSR` 一行）
+- Group: FSM（`state_q` + 关键计数器）
+- Group: M3 result（`res_*`、`error_*`）
 
 ## 保存窗口
 
