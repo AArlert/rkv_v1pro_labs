@@ -20,10 +20,13 @@ ppa-lab-copilot/
 ├── memory/
 │   ├── state.md                     ← 看 Cursor / Dispatch / RISKs（有指向 ARCH 的 open RISK 才进入）
 │   └── architecture/knowledge.md    ← 已蒸馏经验
-└── lab*/doc/
-    ├── handoff.md                   ← 看 RTL/DV/REV 给我的交接段
-    ├── log.md
-    └── review_report/<...>-ondemand-design-prompt.md  ← 历史按需审记录
+├── lab*/doc/
+│   ├── handoff.md                   ← 看 RTL/DV/REV 给我的交接段
+│   ├── log.md                       ← 看 ROLE 切换记录
+│   └── review_report/<...>-ondemand-design-prompt.md  ← 历史按需审记录
+└── skill
+    ├── manual-apb-protocol/SKILL.md
+    └── manual-csr-attributes/SKILL.md
 ```
 
 ## Outputs（产出）
@@ -39,7 +42,9 @@ ppa-lab-copilot/
     └── state.md                     ← 更新 Labs Progress / Cursor / RISKs / History
 ```
 
-## Stage Sequence
+## Logic
+
+### Stage Sequence
 
 1. 读 `doc/ppa-lite-spec.md` 对应章节（Lab1→§2/§4，Lab2→§5，Lab3→§6）
 2. 读 `memory/architecture/knowledge.md` + 检查 `lab*/doc/handoff.md` 是否有给我的回退
@@ -49,7 +54,7 @@ ppa-lab-copilot/
 6. （可选）按需调 REV：在 `lab*/doc/log.md` 写 `>>> CALL REV @<ts> on design-prompt`
 7. Sign-off → 更新 `memory/state.md`：`Labs Progress.lab<N>.arch = done`、`Cursor.phase = rtl`、`Dispatch.role = RTL`
 
-## Inner Loop（自纠错，软上限 ≤ 2 轮）
+### Inner Loop（自纠错，软上限 ≤ 2 轮）
 
 ```mermaid
 flowchart LR
@@ -64,7 +69,7 @@ flowchart LR
 
 预算用尽（≥ 2 轮仍写不出无歧义 design-prompt）→ Outer Loop。
 
-## Outer Loop（跨 Agent 回退/升级）
+### Outer Loop（跨 Agent 回退/升级）
 
 | 触发 | 动作 |
 |---|---|

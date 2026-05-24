@@ -97,13 +97,13 @@ ppa-lab-copilot/                              ← 本仓库
 │       ├── cov/                              ← *.vdb / urgReport（DV 产）
 │       └── spyglass_reports/                 ← moresimple/*.rpt（RTL 产；REV 可读/可重跑）
 │
-├── lab2/  (M3 ppa_packet_proc_core)           ← 同 lab1 结构
+├── lab2/  (M3 ppa_packet_proc_core)          ← 同 lab1 结构
 ├── lab3/  (ppa_top 集成 + E2E TB)             ← 同上
 ├── lab4/  (回归 + 覆盖率 + UVM)                ← 同上，svtb/ 内含 UVM 组件
 │
-└── tools/                                    ← git submodule / 软链
-    ├── xwave/                                ← BLANK2077/xwave
-    └── xtrace/                               ← BLANK2077/xtrace
+└── tools/                                    ← 工具部署日志
+    ├── xtrace-deployment-log.md              ← xtrace
+    └── xwave-deployment-log.md               ← xwave
 ```
 
 ### 1.3 推进流程（每个 Lab）
@@ -169,6 +169,16 @@ flowchart LR
 - [ ] 0.9 用 mermaid sequenceDiagram 画一次 APB 读 + 一次 APB 写，存为 `skill/manual-apb-protocol/SKILL.md` 的 Example
 - [ ] 0.10 阅读 spec §4 寄存器表；把 RW/RO/W1P/RW1C 四类各举一个本设计的例子，写到 `skill/manual-csr-attributes/SKILL.md` 的 Example
 - [ ] 0.11 阅读 spec §11.1–§11.5（4 个 Lab 的周计划与验收项）；按 [`../template/acceptance.md`](../template/acceptance.md) 思路先在脑里过一遍每个 lab 的必做项
+
+```wavedrom
+{signal: [
+  {name: 'clk', wave: 'p.....|...'},
+  {name: 'dat', wave: 'x.345x|=.x', data: ['head', 'body', 'tail', 'data']},
+  {name: 'req', wave: '0.1..0|1.0'},
+  {},
+  {name: 'ack', wave: '1.....|01.'}
+]}
+```
 
 ### 3.3 参考工程使用规范
 

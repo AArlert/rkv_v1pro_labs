@@ -9,6 +9,8 @@ tools: []
 ---
 
 # APB 3.0 笔记（待填）
+非流水线协议，所有信号转换仅与时钟上升沿相关
+每次传输至少需要 2 个周期
 
 ## SETUP→ACCESS 时序（mermaid sequenceDiagram）
 

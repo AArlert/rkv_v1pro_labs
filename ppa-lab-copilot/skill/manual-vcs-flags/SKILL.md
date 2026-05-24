@@ -2,10 +2,11 @@
 name: manual-vcs-flags
 description: VCS 编译/仿真常用 flag 速查
 license: MIT
-when_to_use: 写 Makefile 或在命令行临时跑 vcs 时
+when_to_use: 写 Makefile / 在命令行临时跑 vcs
 inputs: []
 outputs: []
-tools: [vcs]
+tools:
+  - vcs
 ---
 
 # VCS Flag 速查
@@ -17,7 +18,7 @@ tools: [vcs]
 | SV                   | `-full64 -sverilog -timescale=1ns/1ps`                                                   |        |
 | 调试可见                 | `-debug_access+all -kdb -lca`                                                            |        |
 | 输出                   | `-l comp.log -o simv`                                                                    |        |
-| 版本特定编译选项(防 undefine) | `-LDFLAGS '-Wl,--no-as-needed'`                                                          | 一定要加   |
+| 特定版本编译选项(防 undefine) | `-LDFLAGS '-Wl,--no-as-needed'`                                                          | 一定要加   |
 | FSDB                 | `-P $VERDI_HOME/share/PLI/VCS/LINUX64/novas.tab $VERDI_HOME/share/PLI/VCS/LINUX64/pli.a` |        |
 | 覆盖率                  | `-cm line+cond+fsm+branch+tgl -cm_hier cov.cfg`                                          | 待实验和蒸馏 |
 | UVM                  | `-ntb_opts uvm-1.2`                                                                      | 待实验和蒸馏 |
