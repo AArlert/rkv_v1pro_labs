@@ -1,0 +1,10 @@
+# lab4 regression list —— 一行一个 UVM_TESTNAME
+csr_default_test
+pkt_mem_write_test
+res_read_test
+pkt_proc_legal_test
+pkt_proc_overflow_test
+pkt_proc_busy_done_test
+e2e_smoke_test
+e2e_two_frames_test
+e2e_status_test
