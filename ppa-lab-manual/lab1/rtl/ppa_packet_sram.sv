@@ -10,10 +10,12 @@
 module ppa_packet_sram (
     input  logic        clk,
     input  logic        rst_n,        // 复位（低有效，来自 ppa_top.PRESETn 映射）
+    
     // 写端口（来自 M1）
     input  logic        wr_en,
     input  logic [2:0]  wr_addr,
     input  logic [31:0] wr_data,
+    
     // 读端口（来自 M3）
     input  logic        rd_en,
     input  logic [2:0]  rd_addr,
